@@ -1,0 +1,5 @@
+file_name,exp12_label,exp20_ridge_label,exp26_best_label,ResNet18_prob1,DenseNet121_prob1,EffNetB0_prob1,ConvNeXt12_prob1,ConvNeXt18_prob1
+test_0244.png,0,1,0,0.9972,0.8717,0.2184,0.154,0.3639
+test_0267.png,0,1,1,0.26,0.2797,0.9304,0.3922,0.8109
+test_0371.png,0,1,1,0.5462,0.3449,0.5159,0.2915,0.9655
+test_0535.png,0,0,0,0.9934,0.6525,0.4207,0.1289,0.0847

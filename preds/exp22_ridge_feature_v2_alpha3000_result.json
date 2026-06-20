@@ -1,0 +1,54 @@
+{
+  "exp_id": "exp22",
+  "method": "RidgeClassifier feature v2",
+  "alpha": 3000.0,
+  "features": [
+    "resnet18_prob",
+    "resnet18_rank",
+    "densenet121_prob",
+    "densenet121_rank",
+    "efficientnet_b0_prob",
+    "efficientnet_b0_rank",
+    "convnext12_prob",
+    "convnext12_rank",
+    "convnext18_full_prob",
+    "convnext18_full_rank",
+    "mean_prob",
+    "std_prob",
+    "max_prob",
+    "min_prob",
+    "range_prob",
+    "conv12_minus_full",
+    "conv12_minus_densenet",
+    "full_minus_densenet"
+  ],
+  "valid_metrics": {
+    "accuracy": 0.9827586206896551,
+    "precision": 0.9960732984293194,
+    "recall": 0.9806701030927835,
+    "f1": 0.9883116883116884,
+    "confusion_matrix": [
+      [
+        265,
+        3
+      ],
+      [
+        15,
+        761
+      ]
+    ]
+  },
+  "test_pred_counts": {
+    "0": 221,
+    "1": 403
+  },
+  "diff_vs_ridge": 4,
+  "diff_vs_exp12": 18,
+  "zero_to_one_vs_exp12": 15,
+  "one_to_zero_vs_exp12": 3,
+  "paths": {
+    "submission": "submissions/exp22_ridge_feature_v2_alpha3000_submit.csv",
+    "changed_vs_ridge": "preds/exp22_ridge_feature_v2_alpha3000_changed_vs_ridge.csv",
+    "changed_vs_exp12": "preds/exp22_ridge_feature_v2_alpha3000_changed_vs_exp12.csv"
+  }
+}

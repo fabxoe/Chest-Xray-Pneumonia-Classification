@@ -1,0 +1,47 @@
+{
+  "exp_id": "exp23",
+  "method": "RidgeClassifier feature pruning",
+  "alpha": 100.0,
+  "models": [
+    "convnext12",
+    "densenet121",
+    "resnet18"
+  ],
+  "features": [
+    "convnext12_prob",
+    "convnext12_rank",
+    "densenet121_prob",
+    "densenet121_rank",
+    "resnet18_prob",
+    "resnet18_rank"
+  ],
+  "valid_metrics": {
+    "accuracy": 0.9875478927203065,
+    "precision": 0.9948119325551232,
+    "recall": 0.9884020618556701,
+    "f1": 0.9915966386554622,
+    "confusion_matrix": [
+      [
+        264,
+        4
+      ],
+      [
+        9,
+        767
+      ]
+    ]
+  },
+  "test_pred_counts": {
+    "0": 222,
+    "1": 402
+  },
+  "diff_vs_ridge": 3,
+  "diff_vs_exp12": 21,
+  "zero_to_one_vs_exp12": 16,
+  "one_to_zero_vs_exp12": 5,
+  "paths": {
+    "submission": "submissions/exp23_ridge_pruned_cnx_den_res_alpha100_submit.csv",
+    "changed_vs_ridge": "preds/exp23_ridge_pruned_cnx_den_res_alpha100_changed_vs_ridge.csv",
+    "changed_vs_exp12": "preds/exp23_ridge_pruned_cnx_den_res_alpha100_changed_vs_exp12.csv"
+  }
+}

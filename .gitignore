@@ -1,0 +1,28 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Local Python environment
+.venv/
+.python-version
+
+# Large data files
+train/
+test/
+
+# Model checkpoints and binary weights
+models/
+*.pt
+*.pth
+*.ckpt
+
+# Local caches
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Temporary outputs
+tmp/
+temp/

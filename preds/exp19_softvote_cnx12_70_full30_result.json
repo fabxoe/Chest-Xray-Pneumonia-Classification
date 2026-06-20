@@ -1,0 +1,37 @@
+{
+  "exp_id": "exp19",
+  "method": "soft_voting",
+  "weights": {
+    "exp12_convnext_tiny": 0.7,
+    "exp18_full_finetune": 0.3
+  },
+  "valid_metrics": {
+    "accuracy": 0.9827586206896551,
+    "precision": 0.9960732984293194,
+    "recall": 0.9806701030927835,
+    "f1": 0.9883116883116884,
+    "confusion_matrix": [
+      [
+        265,
+        3
+      ],
+      [
+        15,
+        761
+      ]
+    ]
+  },
+  "test_pred_counts": {
+    "0": 227,
+    "1": 397
+  },
+  "diff_vs_exp12": 6,
+  "zero_to_one": 6,
+  "one_to_zero": 0,
+  "paths": {
+    "submission": "submissions/exp19_softvote_cnx12_70_full30_submit.csv",
+    "valid_probs": "preds/exp19_softvote_cnx12_70_full30_valid_probs.csv",
+    "test_probs": "preds/exp19_softvote_cnx12_70_full30_test_probs.csv",
+    "changed_vs_exp12": "preds/exp19_softvote_cnx12_70_full30_changed_vs_exp12.csv"
+  }
+}

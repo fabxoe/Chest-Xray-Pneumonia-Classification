@@ -1,0 +1,18 @@
+{
+  "exp20_fp":4,
+  "exp20_fn":9,
+  "exp26_fp":3,
+  "exp26_fn":12,
+  "selected_samples":[
+    "train_0770.png",
+    "train_1329.png",
+    "train_0841.png",
+    "train_1229.png",
+    "train_1831.png",
+    "train_4685.png",
+    "train_3253.png",
+    "train_1381.png",
+    "train_2325.png",
+    "train_4170.png"
+  ]
+}

@@ -1,0 +1,119 @@
+{
+  "exp_id": "exp40",
+  "model": "swin_tiny_head_probe",
+  "best_epoch": 4,
+  "history": [
+    {
+      "loss": 0.5096957906224262,
+      "accuracy": 0.8754789272030651,
+      "precision": 0.9486111111111111,
+      "recall": 0.8801546391752577,
+      "f1": 0.9131016042780749,
+      "confusion_matrix": [
+        [
+          231,
+          37
+        ],
+        [
+          93,
+          683
+        ]
+      ],
+      "epoch": 1,
+      "train_loss": 0.6218693602119402
+    },
+    {
+      "loss": 0.394198184725882,
+      "accuracy": 0.8879310344827587,
+      "precision": 0.981021897810219,
+      "recall": 0.865979381443299,
+      "f1": 0.919917864476386,
+      "confusion_matrix": [
+        [
+          255,
+          13
+        ],
+        [
+          104,
+          672
+        ]
+      ],
+      "epoch": 2,
+      "train_loss": 0.4809226100248207
+    },
+    {
+      "loss": 0.3279947542596137,
+      "accuracy": 0.8984674329501916,
+      "precision": 0.9799426934097422,
+      "recall": 0.8814432989690721,
+      "f1": 0.9280868385345997,
+      "confusion_matrix": [
+        [
+          254,
+          14
+        ],
+        [
+          92,
+          684
+        ]
+      ],
+      "epoch": 3,
+      "train_loss": 0.39976094184534433
+    },
+    {
+      "loss": 0.2856780545807433,
+      "accuracy": 0.8994252873563219,
+      "precision": 0.9827338129496402,
+      "recall": 0.8801546391752577,
+      "f1": 0.9286199864038069,
+      "confusion_matrix": [
+        [
+          256,
+          12
+        ],
+        [
+          93,
+          683
+        ]
+      ],
+      "epoch": 4,
+      "train_loss": 0.34667604661627904
+    }
+  ],
+  "final_metrics": {
+    "loss": 0.2856780545807433,
+    "accuracy": 0.8994252873563219,
+    "precision": 0.9827338129496402,
+    "recall": 0.8801546391752577,
+    "f1": 0.9286199864038069,
+    "confusion_matrix": [
+      [
+        256,
+        12
+      ],
+      [
+        93,
+        683
+      ]
+    ]
+  },
+  "test_pred_counts": {
+    "0": 235,
+    "1": 389
+  },
+  "paths": {
+    "model": "models/exp40_swin_tiny_best.pt",
+    "valid_probs": "preds/exp40_swin_tiny_valid_probs.csv",
+    "test_probs": "preds/exp40_swin_tiny_test_probs.csv",
+    "submission": "submissions/exp40_swin_tiny_submit.csv"
+  },
+  "settings": {
+    "backbone_lr": 1e-05,
+    "head_lr": 5e-05,
+    "weight_decay": 0.0001,
+    "batch_size": 24,
+    "epochs": 4,
+    "trainable": "head_only"
+  },
+  "elapsed_sec": 465.6
+}

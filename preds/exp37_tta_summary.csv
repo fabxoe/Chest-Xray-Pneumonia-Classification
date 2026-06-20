@@ -1,0 +1,5 @@
+model,tta,valid_accuracy_before,valid_accuracy_tta,valid_recall_before,valid_recall_tta,valid_fp_tta,valid_fn_tta,test_label0_tta,test_label1_tta,changed_test_vs_original,valid_probs,test_probs,elapsed_sec
+resnet18,orig+hflip,0.9865900383141762,0.985632183908046,0.990979381443299,0.9896907216494846,7,8,216,408,11,preds/exp37_tta_resnet18_valid_probs.csv,preds/exp37_tta_resnet18_test_probs.csv,34.1
+efficientnet_b0,orig+hflip,0.9760536398467433,0.975095785440613,0.979381443298969,0.9806701030927835,11,15,267,357,30,preds/exp37_tta_efficientnet_b0_valid_probs.csv,preds/exp37_tta_efficientnet_b0_test_probs.csv,34.3
+convnext12,orig+hflip,0.9808429118773946,0.9837164750957854,0.979381443298969,0.9819587628865979,3,14,229,395,6,preds/exp37_tta_convnext12_valid_probs.csv,preds/exp37_tta_convnext12_test_probs.csv,50.8
+convnext18_full,orig+hflip,0.9798850574712644,0.9798850574712644,0.9768041237113402,0.9768041237113402,3,18,222,402,3,preds/exp37_tta_convnext18_full_valid_probs.csv,preds/exp37_tta_convnext18_full_test_probs.csv,56.3
