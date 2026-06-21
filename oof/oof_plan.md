@@ -186,10 +186,24 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - EXP-51 최고 대비 변경 1개
   - 변경 샘플: `test_0490` 1->0
   - 민감 샘플 3개 모두 0 유지
+  - 제출 결과 leaderboard `0.9567307692`, EXP-51 대비 +1샘플 개선
 - 2순위 후보: `oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv`
   - EXP-51 최고 대비 변경 2개
   - 변경 샘플: `test_0201`, `test_0490` 1->0
+  - 제출 결과 leaderboard `0.9551282051`, EXP-52 1순위보다 하락
 - EXP-52의 4개 추가 변경 후보는 EXP-51 공격 후보와 같은 방향이라 우선순위 낮음.
+- EXP-52 결과 기반 보호 샘플:
+  - `test_0025=0`
+  - `test_0539=0`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0201=1`
+- EXP-53에서 EXP-52 winner 기준 constraint low-change search 완료.
+  - 탐색 row 수: 1,012
+  - 보호 샘플 5개 유지, label 1 개수 395~399, 변경 수 1~3개 조건 적용
+  - 최종 candidate 수: 0
+  - 제출 파일 없음
+  - 결론: 현재 ConvNeXt+EfficientNet OOF 조합 안에서는 추가 미세 후보보다 새 seed OOF 정보원 확보가 우선
 
 ## 추가 우선순위 메모
 
