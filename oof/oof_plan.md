@@ -204,6 +204,21 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 최종 candidate 수: 0
   - 제출 파일 없음
   - 결론: 현재 ConvNeXt+EfficientNet OOF 조합 안에서는 추가 미세 후보보다 새 seed OOF 정보원 확보가 우선
+- EXP-54에서 ConvNeXt-Tiny seed123 5-fold OOF 완료.
+  - OOF accuracy: 0.98102
+  - OOF confusion matrix: `[[1305, 36], [63, 3812]]`
+  - test mean label 0/1: 221/403
+  - 단독 mean은 `test_0539=1`, `test_0490=1`이라 제출 보류
+  - stacking diversity feature로 사용
+- EXP-55에서 ConvNeXt seed123 포함 OOF stacking 완료.
+  - candidate count: 332
+  - 1순위 후보: `oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`
+    - meta-CV accuracy 0.98677
+    - 현재 최고 EXP-52 대비 변경 1개: `test_0222` 1->0
+    - 보호 샘플 5개 모두 유지
+  - 2순위 후보: `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+    - 현재 최고 EXP-52 대비 변경 1개: `test_0504` 1->0
+  - 제출 우선순위는 EXP-55 1순위 후보가 가장 높음
 
 ## 추가 우선순위 메모
 

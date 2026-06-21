@@ -81,6 +81,8 @@
 | EXP-51 | ConvNeXt+ResNet+EfficientNet OOF stacking | 3-model OOF 기반 Ridge/Logistic meta-CV, subset 포함 비교 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv | 보수 후보가 EXP-26 대비 +2샘플 개선, 공격 후보는 EXP-26과 동점 |
 | EXP-52 | EXP-51 low-change search | ConvNeXt+EfficientNet OOF 후보 주변 threshold/regularization 미세 탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9567307692 | oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv | EXP-51 대비 test_0490만 1->0 변경해 +1샘플 개선 |
 | EXP-53 | EXP-52 constraint low-change search | EXP-52 winner 기준 보호 샘플 5개 유지, 변경 1~3개 후보 탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 규칙을 만족하는 비중복 후보 0개 |
+| EXP-54 | ConvNeXt seed123 5-fold OOF | ConvNeXt-Tiny 동일 설정, seed123으로 5-fold OOF/test mean 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98102 OOF | 미제출 | oof/submissions/exp54_convnext_tiny_seed123_mean_submit.csv | 단독은 test_0539/test_0490을 1로 예측해 보류, stacking feature로 사용 |
+| EXP-55 | ConvNeXt seed OOF stacking | EXP-54 seed123 + EfficientNet/기존 ConvNeXt OOF 기반 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 제출 후보 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | 보호 샘플 유지, 현재 최고 대비 test_0222만 1->0 변경 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3359,6 +3361,108 @@ oof/preds/exp53_constraint_low_change_summary.csv
 
 EXP-53에서는 보호 샘플 5개를 유지하면서 EXP-52 winner와 다른 제출 후보가 나오지 않았다. 즉, 현재 ConvNeXt+EfficientNet OOF 조합 안에서는 추가 low-change 제출 후보를 억지로 만들기보다 새 정보원을 확보하는 편이 낫다. 다음 단계는 ConvNeXt 계열 seed OOF 추가 학습이다.
 
+## EXP-54. ConvNeXt seed123 5-fold OOF
+
+### 목적
+
+EXP-53에서 현재 ConvNeXt+EfficientNet OOF 조합 안의 추가 low-change 후보가 없었기 때문에, 새 정보원 확보를 위해 ConvNeXt-Tiny seed123 5-fold OOF를 추가로 생성했다. 모델 구조와 학습 설정은 EXP-46과 동일하게 유지하고 seed만 바꿔 diversity를 확보하는 것이 목적이다.
+
+### 설정
+
+- 모델: ImageNet pretrained ConvNeXt-Tiny
+- 학습 범위: `features[-1] + classifier`
+- seed: 123
+- folds: 5-fold, `oof/folds_seed42.csv` 사용
+- epoch: 6
+- batch size: 32
+- optimizer: AdamW
+- learning rate: 5e-5
+- loss: Weighted CrossEntropyLoss
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| OOF accuracy | 0.98102 |
+| OOF precision | 0.99064 |
+| OOF recall | 0.98374 |
+| OOF F1 | 0.98718 |
+| OOF confusion matrix | `[[1305, 36], [63, 3812]]` |
+| test label 0/1 | 221 / 403 |
+
+보호 샘플 확인:
+
+| sample | pred | prob_1 |
+|---|---:|---:|
+| `test_0244` | 0 | 0.47937 |
+| `test_0025` | 0 | 0.44476 |
+| `test_0539` | 1 | 0.91007 |
+| `test_0490` | 1 | 0.59618 |
+| `test_0201` | 1 | 0.67760 |
+
+### 저장 파일
+
+```text
+scripts/run_exp54_convnext_seed123_oof.py
+oof/preds/exp54_convnext_tiny_seed123_oof_probs.csv
+oof/preds/exp54_convnext_tiny_seed123_test_probs_mean.csv
+oof/submissions/exp54_convnext_tiny_seed123_mean_submit.csv
+```
+
+### 해석
+
+EXP-54 단독 mean 제출은 `test_0539`와 `test_0490`을 1로 예측한다. 특히 `test_0490=0`은 EXP-52에서 public score 개선과 연결되었으므로, EXP-54 단독 제출은 우선순위가 낮다. 다만 OOF accuracy가 EXP-46보다 높고 seed가 다르므로 stacking feature로는 의미가 있다.
+
+## EXP-55. ConvNeXt seed OOF stacking
+
+### 목적
+
+EXP-54 seed123 ConvNeXt OOF를 기존 ConvNeXt/ EfficientNet-B0 OOF feature에 추가했을 때, 현재 최고 EXP-52보다 더 나은 low-change 후보가 생기는지 확인했다.
+
+### 설정
+
+- 입력 feature:
+  - 기존 ConvNeXt OOF
+  - ConvNeXt seed123 OOF
+  - EfficientNet-B0 OOF
+- meta-model:
+  - RidgeClassifier
+  - LogisticRegression
+- threshold 탐색: decision score 기준 `-0.10 ~ 0.20`
+- 보호 샘플:
+  - `test_0025=0`
+  - `test_0539=0`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0201=1`
+- 후보 조건:
+  - 현재 최고 EXP-52 대비 변경 1~8개
+  - 우선 후보는 변경 1~3개
+  - test label 1 개수 395~399
+  - meta-CV accuracy floor 0.98558 이상
+
+### 주요 후보
+
+| 후보 파일 | meta-CV accuracy | recall | FP/FN | test label 0/1 | 현재 최고 대비 변경 | 변경 샘플 |
+|---|---:|---:|---:|---:|---:|---|
+| `oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv` | 0.98677 | 0.98994 | 30/39 | 228/396 | 1 | `test_0222`: 1->0 |
+| `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv` | 0.98658 | 0.98968 | 30/40 | 228/396 | 1 | `test_0504`: 1->0 |
+
+### 저장 파일
+
+```text
+scripts/run_exp55_convnext_seed_stacking.py
+oof/preds/exp55_convnext_seed_stacking_summary.csv
+oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv
+oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv
+```
+
+### 해석
+
+EXP-55 1순위는 `exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`다. 이 후보는 새 seed123 ConvNeXt와 EfficientNet-B0의 probability/rank를 사용하며, 현재 최고 대비 `test_0222` 하나만 1에서 0으로 바꾼다. 보호 샘플 5개를 모두 유지하고 meta-CV accuracy도 EXP-52보다 약간 높다.
+
+2순위 `exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`는 새 seed123을 쓰지 않는 compact feature 후보이며, `test_0504` 하나만 1에서 0으로 바꾼다. 1순위 제출 결과가 하락하지 않거나 다음 low-change 후보가 필요할 때 확인한다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3465,6 +3569,15 @@ EXP-53에서는 보호 샘플 5개를 유지하면서 EXP-52 winner와 다른 �
 - `oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv` 제출 결과 leaderboard score `0.9551282051`로 하락
 - EXP-52 결과를 바탕으로 `test_0490=0`, `test_0201=1`을 보호 조건에 추가
 - EXP-53 constraint low-change search 완료, 보호 샘플 5개를 유지하는 비중복 후보가 없어 제출 파일 없음
+- EXP-54 ConvNeXt seed123 5-fold OOF 완료, OOF accuracy `0.98102`
+- EXP-54 단독 mean은 `test_0539=1`, `test_0490=1`로 제출 우선순위 낮음
+- EXP-55 ConvNeXt seed123 포함 OOF stacking 완료
+- EXP-55 1순위 후보: `oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`
+  - meta-CV accuracy `0.98677`
+  - 현재 최고 EXP-52 대비 `test_0222` 하나만 1->0
+  - 보호 샘플 5개 모두 유지
+- EXP-55 2순위 후보: `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+  - 현재 최고 EXP-52 대비 `test_0504` 하나만 1->0
 
 ## 리더보드 제출 기록
 
