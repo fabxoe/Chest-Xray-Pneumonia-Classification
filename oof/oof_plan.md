@@ -228,6 +228,12 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0201=1`
     - `test_0222=1`
   - `test_0504` 후보는 바로 제출하지 않고 새 보호 조건 기반 constrained search 이후 판단
+- EXP-56에서 `test_0222=1`까지 보호한 low-change search 완료.
+  - 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+  - meta-CV accuracy 0.98658
+  - 현재 최고 EXP-52 대비 변경 1개: `test_0504` 1->0
+  - 보호 샘플 6개 모두 유지
+  - 제출 우선순위: 현재 1순위 후보
 
 ## 추가 우선순위 메모
 

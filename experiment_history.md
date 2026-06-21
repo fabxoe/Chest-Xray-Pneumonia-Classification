@@ -83,6 +83,7 @@
 | EXP-53 | EXP-52 constraint low-change search | EXP-52 winner 기준 보호 샘플 5개 유지, 변경 1~3개 후보 탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 규칙을 만족하는 비중복 후보 0개 |
 | EXP-54 | ConvNeXt seed123 5-fold OOF | ConvNeXt-Tiny 동일 설정, seed123으로 5-fold OOF/test mean 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98102 OOF | 미제출 | oof/submissions/exp54_convnext_tiny_seed123_mean_submit.csv | 단독은 test_0539/test_0490을 1로 예측해 보류, stacking feature로 사용 |
 | EXP-55 | ConvNeXt seed OOF stacking | EXP-54 seed123 + EfficientNet/기존 ConvNeXt OOF 기반 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | test_0222만 1->0 변경했지만 하락 |
+| EXP-56 | 보호 샘플 기반 low-change search | EXP-55 결과 반영, test_0222=1까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 제출 후보 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | 보호 조건 유지, 현재 최고 대비 test_0504만 1->0 변경 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3465,6 +3466,48 @@ EXP-55 1순위 `exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`는 새 se
 
 2순위 `exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`는 새 seed123을 쓰지 않는 compact feature 후보이며, `test_0504` 하나만 1에서 0으로 바꾼다. 다만 EXP-55 1순위가 하락했으므로, 2순위도 바로 제출하기보다는 `test_0222=1` 보호 조건을 포함한 다음 constrained search 이후에 판단한다.
 
+## EXP-56. 보호 샘플 기반 low-change search
+
+### 목적
+
+EXP-55 제출에서 `test_0222: 1->0` 변경이 public score 하락과 연결되었으므로, `test_0222=1`을 새 보호 조건으로 추가했다. 이후 기존 EXP-55 feature 공간에서 현재 최고 EXP-52 대비 1~3개만 바꾸는 후보를 다시 탐색했다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv`
+- 입력 feature:
+  - 기존 ConvNeXt OOF
+  - ConvNeXt seed123 OOF
+  - EfficientNet-B0 OOF
+- meta-model:
+  - RidgeClassifier
+  - LogisticRegression
+- 보호 샘플:
+  - `test_0025=0`
+  - `test_0539=0`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0201=1`
+  - `test_0222=1`
+
+### 결과
+
+| 후보 파일 | meta-CV accuracy | recall | FP/FN | test label 0/1 | 현재 최고 대비 변경 | 변경 샘플 |
+|---|---:|---:|---:|---:|---:|---|
+| `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv` | 0.98658 | 0.98968 | 30/40 | 228/396 | 1 | `test_0504`: 1->0 |
+
+### 저장 파일
+
+```text
+scripts/run_exp56_protected_low_change_search.py
+oof/preds/exp56_protected_low_change_summary.csv
+oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv
+```
+
+### 해석
+
+EXP-56은 현재 보호 조건을 모두 유지하면서 `test_0504` 하나만 1에서 0으로 바꾸는 후보를 만들었다. EXP-55에서 하락한 `test_0222`는 1로 유지되므로 EXP-55 1순위와는 다른 독립적인 1샘플 후보다. 기대 이득은 작지만 변경 수가 1개라 제출 리스크도 제한적이다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3582,6 +3625,11 @@ EXP-55 1순위 `exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`는 새 se
 - EXP-55 결과를 바탕으로 `test_0222=1`을 보호 조건에 추가
 - EXP-55 2순위 후보: `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
   - 현재 최고 EXP-52 대비 `test_0504` 하나만 1->0
+- EXP-56 보호 샘플 기반 low-change search 완료
+- EXP-56 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+  - meta-CV accuracy `0.98658`
+  - 현재 최고 EXP-52 대비 `test_0504` 하나만 1->0
+  - `test_0222=1` 포함 보호 샘플 6개 모두 유지
 
 ## 리더보드 제출 기록
 
