@@ -70,6 +70,11 @@
 | EXP-40 | Swin-Tiny 추가 실험 | ImageNet pretrained Swin-Tiny head-only probe 및 stacking 추가 확인 | 4 | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.89943 | 미제출 | submissions/exp40_swin_tiny_submit.csv | 단독 성능 낮고 stacking 후보도 test_0244를 1로 변경 |
 | EXP-41 | 5-fold OOF 설계 | StratifiedKFold 5분할 생성, OOF 저장 포맷과 meta-model 입력 구조 정의 | - | - | - | 설계 | - | 제출 없음 | - | OOF Ridge/Logistic/TabM 기반 마련 |
 | EXP-42 | EfficientNetV2-S 단일 split | ImageNet pretrained EfficientNetV2-S, features[7]+classifier probe | 6 | AdamW | 1e-5 / 5e-5 | Weighted CrossEntropyLoss | 0.87261 | 미제출 | submissions/exp42_efficientnet_v2_s_submit.csv | FN이 크게 증가해 단독/stacking 후보 비추천 |
+| EXP-43 | RegNetY-3.2GF 단일 split | ImageNet pretrained RegNetY-3.2GF, trunk_output.block4+fc 학습 | 6 | AdamW | 1e-5 / 5e-5 | Weighted CrossEntropyLoss | 0.95211 | 미제출 | submissions/exp43_regnet_y_3_2gf_submit.csv | 단독 제출은 약하지만 민감 샘플 3개 유지, stacking 후보 |
+| EXP-44 | RegNetY 포함 Ridge stacking | EXP-26 core에서 ResNet18 제거, EfficientNet/ConvNeXt/RegNetY prob+rank 사용 | - | - | - | RidgeClassifier alpha=150 | 0.98659 | 0.9503205128 | submissions/exp44_regnet_drop_resnet18_add_reg_alpha150_submit.csv | 민감 샘플 3개 유지했지만 EXP-26보다 하락 |
+| EXP-45 | ConvNeXt OOF fold0 smoke test | 5-fold OOF pipeline 검증, fold0만 학습 및 OOF/test probability 저장 | 6 | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98467 | 제출 없음 | oof/submissions/exp45_convnext_tiny_fold0_submit.csv | OOF 파일 포맷 검증 완료, fold당 약 7.2분 |
+| EXP-46 | ConvNeXt 5-fold OOF 완성 | fold1~4 학습 후 fold0 포함 OOF/test mean probability 병합 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97795 OOF | 미제출 | oof/submissions/exp46_convnext_tiny_mean_submit.csv | OOF 5216 rows, test mean 624 rows 생성 |
+| EXP-47 | OOF Ridge baseline | ConvNeXt OOF prob 기반 RidgeClassifier alpha/feature 탐색 | - | - | - | RidgeClassifier | 0.98025 OOF | 미제출 | oof/submissions/exp47_prob1_only_alpha1000_submit.csv | OOF score는 개선됐지만 민감 샘플 0244/0025를 1로 변경 |
 
 ## EXP-00. 원본 Baseline
 
@@ -2726,6 +2731,353 @@ EfficientNetV2-S는 이번 제한 fine-tuning 설정에서 pneumonia class recal
 
 EfficientNetV2-S는 더 큰 pretrained CNN 구조이지만, 마지막 block만 학습한 설정에서는 validation accuracy가 0.87261로 낮았고 FN이 크게 증가했다. 이는 모델 크기 자체보다 fine-tuning 범위와 데이터 적응이 중요하다는 점을 보여준다. 따라서 이번 결과만으로 EfficientNetV2-S가 부적합하다고 단정하기보다는, 현재 학습 설정에서는 제출 후보로 사용하기 어렵다고 해석하는 것이 적절하다.
 
+## EXP-43. RegNetY-3.2GF 단일 split
+
+### 목적
+
+RegNetY 계열을 추가해 ResNet, DenseNet, EfficientNet, ConvNeXt와 다른 CNN 구조의 diversity를 확보할 수 있는지 확인했다. 원래 후보는 RegNetY-4GF였지만 현재 torchvision에는 4GF weight가 없어서 가장 가까운 `RegNetY-3.2GF`를 사용했다.
+
+### 설정
+
+- 모델: `torchvision.models.regnet_y_3_2gf(weights=IMAGENET1K_V1)`
+- 학습 범위: `trunk_output.block4 + fc`
+- trainable params: 4,806,794 / 17,926,364
+- epoch: 6
+- optimizer: AdamW
+- lr: final block `1e-5`, fc `5e-5`
+- weight decay: `1e-4`
+- loss: Weighted CrossEntropyLoss
+- augmentation: resize 224, horizontal flip, rotation 5도
+- split seed: 42
+- train seed: 42
+
+### 결과
+
+| metric | value |
+|---|---:|
+| best epoch | 6 |
+| validation accuracy | 0.95211 |
+| precision | 0.99054 |
+| recall | 0.94459 |
+| f1 | 0.96702 |
+| confusion matrix | `[[261, 7], [43, 733]]` |
+| test label 0 | 301 |
+| test label 1 | 323 |
+| EXP-26 대비 test 변경 수 | 83 |
+
+민감 샘플 예측:
+
+```text
+test_0244: 0
+test_0025: 0
+test_0539: 0
+```
+
+### 저장 파일
+
+```text
+scripts/run_exp43_regnet_y_3_2gf.py
+models/exp43_regnet_y_3_2gf_best.pt
+preds/exp43_regnet_y_3_2gf_valid_probs.csv
+preds/exp43_regnet_y_3_2gf_test_probs.csv
+preds/exp43_regnet_y_3_2gf_result.json
+preds/exp43_regnet_y_3_2gf_summary.csv
+preds/exp43_regnet_y_3_2gf_changed_vs_exp26.csv
+submissions/exp43_regnet_y_3_2gf_submit.csv
+```
+
+### 해석
+
+RegNetY-3.2GF는 EXP-42 EfficientNetV2-S보다 훨씬 안정적으로 학습되었지만, validation accuracy 0.95211은 기존 최고 단독 모델인 ConvNeXt-Tiny나 Ridge stacking보다 낮다. confusion matrix 기준 FN은 43개로 EXP-42의 122개보다 크게 줄었지만, 여전히 단독 제출 후보로 보기에는 부족하다.
+
+긍정적인 점은 public에서 민감하게 관리하던 `test_0244`, `test_0025`, `test_0539`를 모두 0으로 유지했다는 것이다. 따라서 단독 제출보다는 EXP-26/ConvNeXt 계열과 결합하는 stacking diversity 후보로 평가하는 것이 적절하다.
+
+### 과제용 해석
+
+RegNetY-3.2GF는 EfficientNetV2-S보다 validation 성능과 FN 측면에서 더 안정적인 결과를 보였다. 그러나 기존 최고 모델들에 비해 전체 accuracy는 낮으므로 단독 분류 모델로 채택하기보다는, 서로 다른 CNN 구조의 예측 차이를 활용하는 앙상블 또는 stacking 후보로 보는 것이 타당하다. 의료 이미지 분류에서는 accuracy뿐 아니라 FN 증가 여부를 함께 확인해야 하며, 이번 실험에서는 FN이 EXP-42보다 줄었다는 점이 의미 있다.
+
+## EXP-44. RegNetY 포함 Ridge stacking
+
+### 목적
+
+EXP-43 RegNetY-3.2GF 단독 성능은 낮았지만, 민감 샘플을 모두 0으로 유지했다. 따라서 단독 제출이 아니라 EXP-26 stacking feature에 RegNetY 정보를 추가했을 때 보완 정보로 작동하는지 확인했다.
+
+### 설정
+
+- meta-model: RidgeClassifier
+- 기준 후보: EXP-26 Ridge without DenseNet
+- 사용 feature: `efficientnet_b0`, `convnext12`, `convnext18_full`, `regnet_y_3_2gf`의 `prob + rank`
+- 제외 feature: `resnet18`
+- alpha: 150
+- 제출 파일: `submissions/exp44_regnet_drop_resnet18_add_reg_alpha150_submit.csv`
+
+### 결과
+
+| metric | value |
+|---|---:|
+| validation accuracy | 0.98659 |
+| precision | 0.99609 |
+| recall | 0.98582 |
+| f1 | 0.99093 |
+| confusion matrix | `[[265, 3], [11, 765]]` |
+| EXP-26 대비 test 변경 수 | 5 |
+
+민감 샘플 예측:
+
+```text
+test_0244: 0
+test_0025: 0
+test_0539: 0
+```
+
+EXP-26 대비 변경 샘플:
+
+```text
+test_0049: 0 -> 1
+test_0060: 1 -> 0
+test_0172: 1 -> 0
+test_0342: 1 -> 0
+test_0504: 1 -> 0
+```
+
+### 저장 파일
+
+```text
+scripts/run_exp44_regnet_stacking_search.py
+preds/exp44_regnet_stacking_summary.csv
+preds/exp44_regnet_drop_resnet18_add_reg_alpha150_test_scores.csv
+preds/exp44_regnet_drop_resnet18_add_reg_alpha150_changed_vs_exp26.csv
+submissions/exp44_regnet_drop_resnet18_add_reg_alpha150_submit.csv
+```
+
+### 해석
+
+EXP-44는 validation accuracy가 EXP-26의 0.98563보다 약간 높은 0.98659이며, 민감 샘플 3개를 모두 0으로 유지했다. 변경 수가 5개로 과하지 않고, 기존에 위험했던 `test_0025`, `test_0539`를 건드리지 않는 점은 긍정적이다.
+
+하지만 실제 leaderboard score는 0.9503205128로 EXP-26의 0.9519230769보다 낮았다. 민감 샘플 3개를 유지해도 나머지 5개 변경이 public 정답과 맞지 않았을 가능성이 있다. 특히 이 결과는 validation 점수의 소폭 개선만으로 public 성능 향상을 단정하기 어렵다는 점을 다시 보여준다.
+
+### 과제용 해석
+
+RegNetY 단독 모델은 성능이 낮았지만, stacking에서는 일부 보완 정보를 제공할 가능성을 보였다. 특히 validation 기준으로 EXP-26보다 소폭 높은 성능을 보였고, public에서 민감하게 관리하던 샘플의 예측을 유지했다. 다만 test 정답은 알 수 없으므로, 이 결과는 성능 개선 가능성을 보인 후보로 해석하고 실제 일반화 성능은 leaderboard 제출 결과로 확인해야 한다.
+
+## EXP-45. ConvNeXt OOF fold0 smoke test
+
+### 목적
+
+5-fold OOF 전체 학습을 바로 돌리기 전에, ConvNeXt-Tiny로 fold 0 하나만 학습해 OOF pipeline이 정상 작동하는지 확인했다. 이 실험의 목적은 leaderboard 제출이 아니라 fold split, 저장 파일 포맷, row 수, 학습 시간을 검증하는 것이다.
+
+### 설정
+
+- 모델: ConvNeXt-Tiny ImageNet pretrained
+- 학습 범위: 마지막 stage `features[-1]` + classifier
+- fold: 0
+- train size: 4,172
+- valid size: 1,044
+- epoch: 6
+- optimizer: AdamW
+- lr: `5e-5`
+- loss: Weighted CrossEntropyLoss
+- augmentation: resize 224, horizontal flip, rotation 7도
+
+### 결과
+
+| metric | value |
+|---|---:|
+| best epoch | 6 |
+| validation accuracy | 0.98467 |
+| precision | 0.99608 |
+| recall | 0.98323 |
+| f1 | 0.98961 |
+| confusion matrix | `[[266, 3], [13, 762]]` |
+| elapsed sec | 433.2 |
+| fold당 예상 시간 | 약 7.2분 |
+| 5-fold 예상 시간 | 약 36분 |
+
+### 포맷 검증
+
+```text
+oof rows: 1044
+oof duplicated file_name: 0
+oof fold value: {0: 1044}
+test rows: 624
+test duplicated file_name: 0
+test fold value: {0: 624}
+```
+
+민감 샘플 예측:
+
+```text
+test_0244: 0, prob_1=0.10542
+test_0025: 0, prob_1=0.12887
+test_0539: 1, prob_1=0.94032
+```
+
+### 저장 파일
+
+```text
+scripts/run_exp45_convnext_oof_fold0_smoke.py
+oof/models/exp45_convnext_tiny_fold0.pt
+oof/preds/exp45_convnext_tiny_fold0_oof_probs.csv
+oof/preds/exp45_convnext_tiny_fold0_test_probs.csv
+oof/preds/exp45_convnext_tiny_fold0_result.json
+oof/preds/exp45_convnext_tiny_fold0_summary.csv
+oof/submissions/exp45_convnext_tiny_fold0_submit.csv
+```
+
+### 해석
+
+OOF fold0 smoke test는 정상적으로 통과했다. OOF probability 파일은 fold0 validation 샘플 1,044개를 중복 없이 포함했고, test probability 파일도 624개 샘플을 정상 저장했다. 따라서 다음 단계에서는 fold 1~4까지 같은 구조로 확장해 ConvNeXt-Tiny 5-fold OOF probability를 완성할 수 있다.
+
+주의할 점은 fold0 단일 결과가 기존 단일 validation 결과와 직접 비교 가능한 최종 성능은 아니라는 점이다. OOF의 목적은 모든 train 샘플에 대해 out-of-fold prediction을 만들어 meta-model의 과적합을 줄이는 것이다.
+
+### 과제용 해석
+
+OOF smoke test를 통해 5-fold 학습 구조가 정상적으로 작동하는지 확인했다. fold0 기준 validation accuracy는 0.98467이었고, OOF probability와 test probability가 기대한 row 수로 저장되었다. 이는 이후 Ridge/Logistic/TabM meta-model을 단일 validation이 아닌 OOF 기반 feature로 학습하기 위한 준비 단계이다.
+
+## EXP-46. ConvNeXt 5-fold OOF 완성
+
+### 목적
+
+EXP-45에서 fold0 smoke test가 통과했으므로, fold1~4를 추가로 학습해 ConvNeXt-Tiny 5-fold OOF probability를 완성했다. 이 결과는 이후 OOF Ridge/Logistic/TabM meta-model의 첫 입력 feature로 사용한다.
+
+### 설정
+
+- 모델: ConvNeXt-Tiny ImageNet pretrained
+- 학습 범위: 마지막 stage `features[-1]` + classifier
+- folds: 0~4
+- epoch: 각 fold 6
+- optimizer: AdamW
+- lr: `5e-5`
+- loss: Weighted CrossEntropyLoss
+- augmentation: resize 224, horizontal flip, rotation 7도
+
+### Fold별 결과
+
+| fold | best epoch | valid accuracy | precision | recall | f1 | confusion matrix |
+|---:|---:|---:|---:|---:|---:|---|
+| 0 | 6 | 0.98467 | 0.99608 | 0.98323 | 0.98961 | `[[266, 3], [13, 762]]` |
+| 1 | 6 | 0.97700 | 0.99474 | 0.97419 | 0.98436 | - |
+| 2 | 5 | 0.97028 | 0.98819 | 0.97161 | 0.97983 | - |
+| 3 | 5 | 0.98082 | 0.98839 | 0.98581 | 0.98710 | - |
+| 4 | 5 | 0.97700 | 0.99474 | 0.97419 | 0.98436 | - |
+
+### OOF 병합 결과
+
+| metric | value |
+|---|---:|
+| OOF rows | 5,216 |
+| OOF duplicate file_name | 0 |
+| test by fold rows | 3,120 |
+| test mean rows | 624 |
+| OOF accuracy | 0.97795 |
+| OOF precision | 0.99240 |
+| OOF recall | 0.97781 |
+| OOF f1 | 0.98505 |
+| OOF confusion matrix | `[[1312, 29], [86, 3789]]` |
+| test mean label 0 | 227 |
+| test mean label 1 | 397 |
+
+민감 샘플 test mean:
+
+```text
+test_0244: pred=0, prob_1=0.42179
+test_0025: pred=0, prob_1=0.35498
+test_0539: pred=1, prob_1=0.84474
+```
+
+### 저장 파일
+
+```text
+scripts/run_exp46_convnext_oof_remaining_folds.py
+oof/preds/exp46_convnext_tiny_oof_probs.csv
+oof/preds/exp46_convnext_tiny_test_probs_by_fold.csv
+oof/preds/exp46_convnext_tiny_test_probs_mean.csv
+oof/preds/exp46_convnext_tiny_fold_summary.csv
+oof/preds/exp46_convnext_tiny_combined_result.json
+oof/submissions/exp46_convnext_tiny_mean_submit.csv
+```
+
+### 해석
+
+ConvNeXt-Tiny 5-fold OOF 결과는 전체 train 5,216개 샘플에 대해 out-of-fold prediction을 완성했다는 점이 핵심이다. OOF accuracy는 0.97795로 단일 validation 최고값보다 낮지만, 이는 각 샘플을 해당 샘플을 학습하지 않은 모델로 예측했기 때문에 더 보수적인 추정에 가깝다.
+
+test mean 예측은 `test_0244`, `test_0025`를 0으로 유지했고 `test_0539`는 1로 예측했다. `test_0539`는 과거 EXP-34에서 0->1 변경이 하락했던 민감 샘플이므로, OOF mean 단독 제출은 바로 추천하지 않는다. 다음 단계는 이 OOF feature를 기준으로 Ridge/Logistic OOF meta-model을 만드는 것이다.
+
+### 과제용 해석
+
+5-fold OOF는 각 학습 샘플을 해당 샘플을 학습하지 않은 모델로 예측하게 하므로, 단일 validation 기반 stacking보다 과적합 위험을 줄일 수 있다. 이번 실험에서는 ConvNeXt-Tiny의 OOF probability를 전체 train set 5,216개에 대해 생성했고, OOF accuracy는 0.97795였다. 이는 최종 제출 성능을 직접 보장하는 값은 아니지만, 이후 meta-model 학습을 더 공정하게 수행하기 위한 기반 데이터로 의미가 있다.
+
+## EXP-47. OOF Ridge baseline
+
+### 목적
+
+EXP-46에서 만든 ConvNeXt 5-fold OOF probability를 사용해 OOF 기반 meta-model 파이프라인을 검증했다. 아직 OOF feature가 ConvNeXt 하나뿐이므로 본격적인 multi-model stacking이라기보다는 OOF Ridge baseline 성격이다.
+
+### 설정
+
+- 입력: `oof/preds/exp46_convnext_tiny_oof_probs.csv`
+- test 입력: `oof/preds/exp46_convnext_tiny_test_probs_mean.csv`
+- meta-model: RidgeClassifier
+- alpha 탐색: `0.3~3000`
+- feature 후보:
+  - `prob_1`
+  - `prob_1 + rank`
+  - `prob_0 + prob_1 + rank`
+  - `prob_1 + margin`
+  - `prob_1 + rank + margin + uncertainty`
+
+### 기준 direct ConvNeXt OOF mean
+
+| metric | value |
+|---|---:|
+| OOF accuracy | 0.97795 |
+| precision | 0.99240 |
+| recall | 0.97781 |
+| f1 | 0.98505 |
+| confusion matrix | `[[1312, 29], [86, 3789]]` |
+| test label 0 | 227 |
+| test label 1 | 397 |
+| test_0244 | 0 |
+| test_0025 | 0 |
+| test_0539 | 1 |
+
+### 최고 OOF Ridge 후보
+
+| spec | alpha | OOF accuracy | precision | recall | f1 | test label 0 | test label 1 | 민감 샘플 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `prob1_only` | 1000 | 0.98025 | 0.98759 | 0.98581 | 0.98670 | 194 | 430 | 0244=1, 0025=1, 0539=1 |
+| `prob1_margin` | 3000 | 0.98006 | 0.98987 | 0.98323 | 0.98654 | 205 | 419 | 0244=1, 0025=1, 0539=1 |
+| `prob1_rank_margin_unc` | 30 | 0.98006 | 0.99012 | 0.98297 | 0.98653 | 207 | 417 | 0244=1, 0025=1, 0539=1 |
+
+민감 샘플을 유지하는 가장 높은 후보:
+
+| spec | alpha | OOF accuracy | precision | recall | f1 | test label 0 | test label 1 | 민감 샘플 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `prob1_margin` | 1000 | 0.97872 | 0.99164 | 0.97961 | 0.98559 | 218 | 406 | 0244=0, 0025=0, 0539=1 |
+
+### 저장 파일
+
+```text
+scripts/run_exp47_oof_ridge_baseline.py
+oof/preds/exp47_oof_ridge_baseline_summary.csv
+oof/submissions/exp47_prob1_only_alpha1000_submit.csv
+oof/submissions/exp47_prob1_margin_alpha3000_submit.csv
+oof/submissions/exp47_prob1_rank_alpha1000_submit.csv
+oof/submissions/exp47_prob1_rank_margin_unc_alpha30_submit.csv
+oof/submissions/exp47_prob1_rank_margin_unc_alpha3000_submit.csv
+oof/submissions/exp47_prob1_margin_alpha1000_submit.csv
+```
+
+### 해석
+
+OOF Ridge는 direct ConvNeXt mean보다 OOF accuracy를 0.97795에서 0.98025까지 올렸다. 하지만 최고 후보들은 `test_0244`와 `test_0025`를 모두 1로 바꾼다. 두 샘플은 이전 public 결과에서 0 유지가 더 안전했던 샘플이므로, 최고 OOF score 후보를 바로 제출하기는 위험하다.
+
+민감 샘플을 유지하는 후보는 `prob1_margin alpha1000`이며 OOF accuracy는 0.97872다. direct보다 약간 높지만 여전히 `test_0539`는 1로 유지한다. 따라서 EXP-47은 제출용 실험이라기보다 OOF Ridge 파이프라인 검증 성공으로 보는 것이 맞다. 다음 단계에서는 OOF feature에 ResNet18 또는 EfficientNet-B0를 추가해 multi-model OOF stacking으로 확장해야 한다.
+
+### 과제용 해석
+
+ConvNeXt 단일 OOF probability만으로 RidgeClassifier를 학습했을 때 OOF accuracy는 소폭 개선되었다. 그러나 test 민감 샘플의 예측이 불리한 방향으로 바뀌는 후보가 많아, validation 또는 OOF 점수만으로 제출 성능을 단정하기 어렵다. 이 실험은 OOF 기반 meta-model 구조가 작동함을 확인한 baseline이며, 실제 성능 개선을 위해서는 서로 다른 모델의 OOF feature를 추가하는 것이 필요하다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -2801,6 +3153,12 @@ EfficientNetV2-S는 더 큰 pretrained CNN 구조이지만, 마지막 block만 �
 - baseline 노트북에 `13-19. EXP-41 5-fold OOF 설계` 섹션 추가
 - EXP-42 EfficientNetV2-S 단일 split probe 완료, FN 증가와 민감 샘플 변경으로 제출 보류
 - Lion optimizer 비교는 calibration/selective TTA 계열 실험 전 우선순위에 추가
+- EXP-43 RegNetY-3.2GF 단일 split probe 완료, 단독 제출은 보류하고 stacking diversity 후보로 기록
+- EXP-44 RegNetY 포함 Ridge stacking 후보 생성, EXP-26 대비 5개 변경 및 민감 샘플 3개 유지
+- `submissions/exp44_regnet_drop_resnet18_add_reg_alpha150_submit.csv` 제출 결과 leaderboard score `0.9503205128` 확인, EXP-26보다 하락
+- EXP-45 ConvNeXt-Tiny OOF fold0 smoke test 완료, OOF/test probability 포맷 검증 통과
+- EXP-46 ConvNeXt-Tiny 5-fold OOF 완성, OOF 5,216 rows와 test mean 624 rows 생성
+- EXP-47 OOF Ridge baseline 완료, 최고 OOF 후보는 민감 샘플을 바꿔 제출 보류
 
 ## 리더보드 제출 기록
 
@@ -2836,3 +3194,4 @@ EfficientNetV2-S는 더 큰 pretrained CNN 구조이지만, 마지막 block만 �
 | 28 | submissions/exp34_ridge_threshold_m0p02_submit.csv | EXP-26 threshold -0.02 | 0.98563 | 0.9503205128 | 19 | `test_0539.png` 1개만 0->1 변경했지만 하락 |
 | 29 | submissions/exp36_fixed0244_core_prob_only_alpha100_submit.csv | test_0244 고정 probability-only Ridge | 0.98946 | 0.9503205128 | 19 | `test_0025.png` 1개만 0->1 변경했지만 하락 |
 | 30 | submissions/exp38_tta_all_prob_only_alpha50_submit.csv | TTA probability-only Ridge | 0.98851 | 0.9487179487 | 19 | `test_0244`는 유지했지만 `test_0025` 0->1 포함으로 하락 |
+| 31 | submissions/exp44_regnet_drop_resnet18_add_reg_alpha150_submit.csv | RegNetY 포함 Ridge stacking | 0.98659 | 0.9503205128 | 19 | 민감 샘플 3개는 유지했지만 EXP-26보다 하락 |

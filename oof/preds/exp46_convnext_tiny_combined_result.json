@@ -1,0 +1,43 @@
+{
+  "exp_id": "exp46",
+  "model": "convnext_tiny",
+  "oof_rows": 5216,
+  "oof_duplicate_file_names": 0,
+  "test_by_fold_rows": 3120,
+  "test_mean_rows": 624,
+  "oof_metrics": {
+    "accuracy": 0.97795245398773,
+    "precision": 0.9924044002095338,
+    "recall": 0.9778064516129032,
+    "f1": 0.9850513453789159,
+    "confusion_matrix": [
+      [
+        1312,
+        29
+      ],
+      [
+        86,
+        3789
+      ]
+    ]
+  },
+  "test_mean_pred_counts": {
+    "0": 227,
+    "1": 397
+  },
+  "sensitive": {
+    "test_0244.png": {
+      "pred": 0,
+      "prob_1": 0.4217865251004696
+    },
+    "test_0025.png": {
+      "pred": 0,
+      "prob_1": 0.3549818605184555
+    },
+    "test_0539.png": {
+      "pred": 1,
+      "prob_1": 0.8447436332702637
+    }
+  },
+  "submission": "oof/submissions/exp46_convnext_tiny_mean_submit.csv"
+}

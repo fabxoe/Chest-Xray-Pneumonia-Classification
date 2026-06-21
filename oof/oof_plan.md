@@ -126,14 +126,34 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
 
 ## 다음 실행 단계
 
-1. ConvNeXt-Tiny OOF 학습 스크립트 작성
-2. fold 0만 먼저 smoke test
-3. fold 0 결과 파일 포맷 검증
-4. 5 folds 전체 학습
-5. OOF Ridge/Logistic baseline 생성
+1. OOF Logistic baseline 생성
+2. ResNet18 OOF 추가
+3. ConvNeXt + ResNet18 OOF Ridge stacking
+4. ConvNeXt + ResNet18 OOF Logistic stacking
+5. 필요하면 EfficientNet-B0 OOF 추가
+
+## 진행 상태
+
+- EXP-45에서 ConvNeXt-Tiny fold0 smoke test 완료.
+- fold0 validation accuracy: 0.98467
+- fold0 OOF rows: 1,044
+- fold0 test rows: 624
+- fold0 elapsed: 433.2 sec
+- 예상 5-fold 전체 시간: 약 36분
+- EXP-46에서 ConvNeXt-Tiny 5-fold OOF 완료.
+- 전체 OOF rows: 5,216
+- OOF accuracy: 0.97795
+- OOF confusion matrix: `[[1312, 29], [86, 3789]]`
+- test mean rows: 624
+- test mean 민감 샘플: `test_0244=0`, `test_0025=0`, `test_0539=1`
+- EXP-47에서 ConvNeXt 단일 OOF Ridge baseline 완료.
+- 최고 OOF Ridge: `prob1_only alpha=1000`, OOF accuracy 0.98025
+- 최고 OOF Ridge는 `test_0244=1`, `test_0025=1`로 바꿔 제출 보류.
+- 민감 샘플 유지 후보: `prob1_margin alpha=1000`, OOF accuracy 0.97872
 
 ## 추가 우선순위 메모
 
 - EfficientNetV2-S `features[7]+classifier` 단일 split probe는 validation accuracy 0.87261로 낮고 FN이 크게 증가했다. 현재 설정은 단독/stacking 후보에서 제외한다.
 - EfficientNetV2-S를 다시 시도한다면 마지막 block만이 아니라 `features[6]+features[7]+classifier`처럼 더 넓은 fine-tuning으로 재평가한다.
+- RegNetY-3.2GF `trunk_output.block4+fc` probe는 validation accuracy 0.95211로 단독 제출은 약하지만, 민감 샘플 `test_0244`, `test_0025`, `test_0539`를 모두 0으로 유지해 stacking diversity 후보로 남긴다.
 - Lion optimizer 비교는 AdamW 기본선을 유지한 뒤, 8순위 실험 전에 추가한다. 우선 대상은 ConvNeXt-Tiny 또는 RegNetY처럼 단독 validation이 안정적인 모델로 한다.

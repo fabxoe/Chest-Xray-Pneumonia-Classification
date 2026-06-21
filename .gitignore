@@ -13,6 +13,7 @@ test/
 
 # Model checkpoints and binary weights
 models/
+oof/models/
 *.pt
 *.pth
 *.ckpt
