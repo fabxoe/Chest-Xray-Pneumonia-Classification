@@ -173,6 +173,13 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - meta-CV accuracy 0.98677
   - EXP-26 대비 변경 8개
   - 민감 샘플 3개 모두 0 유지
+- 제출 결과:
+  - `exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv`: leaderboard 0.9551282051
+  - `exp51_ridge_cnx_eff_prob_only_50_submit.csv`: leaderboard 0.9519230769
+- 해석:
+  - Logistic 보수 후보가 EXP-26 대비 +2샘플 개선했다.
+  - Ridge 공격 후보는 EXP-26과 동점이었다.
+  - meta-CV 최고 후보보다 변경 수가 적은 후보가 public에서 더 좋았으므로, 다음 OOF stacking도 low-change 후보를 우선 제출한다.
 
 ## 추가 우선순위 메모
 

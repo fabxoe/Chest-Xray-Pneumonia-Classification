@@ -78,7 +78,7 @@
 | EXP-48 | ResNet18 5-fold OOF | pretrained ResNet18 layer4+fc를 fold별 학습, OOF/test mean 저장 | 6 x 5 folds | AdamW | 1e-4 | Weighted CrossEntropyLoss | 0.98524 OOF | 미제출 | oof/submissions/exp48_resnet18_mean_submit.csv | OOF는 강하지만 민감 샘플 0244/0025/0539를 모두 1로 예측해 단독 제출 보류 |
 | EXP-49 | ConvNeXt+ResNet OOF stacking | EXP-46/48 OOF feature로 Ridge/Logistic meta-CV 비교 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 미제출 | oof/submissions/exp49_ridge_prob_only_1_submit.csv | meta-CV는 높지만 상위 후보가 test_0539를 1로 유지해 제출 보류 |
 | EXP-50 | EfficientNet-B0 5-fold OOF | features[5:]+classifier fine-tuning으로 B0 OOF/test mean 저장 | 6 x 5 folds | AdamW | 5e-5 / 1e-4 | Weighted CrossEntropyLoss | 0.98505 OOF | 미제출 | oof/submissions/exp50_efficientnet_b0_mean_submit.csv | 민감 샘플 0244/0025/0539를 모두 0으로 유지, stacking 보완축 |
-| EXP-51 | ConvNeXt+ResNet+EfficientNet OOF stacking | 3-model OOF 기반 Ridge/Logistic meta-CV, subset 포함 비교 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 제출 후보 | oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv | ResNet 제외 ConvNeXt+EfficientNet 후보가 민감 샘플 3개 유지, EXP-26 대비 4~8개 변경 |
+| EXP-51 | ConvNeXt+ResNet+EfficientNet OOF stacking | 3-model OOF 기반 Ridge/Logistic meta-CV, subset 포함 비교 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv | 보수 후보가 EXP-26 대비 +2샘플 개선, 공격 후보는 EXP-26과 동점 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3246,6 +3246,15 @@ EXP-51에서 가장 안정적인 흐름은 ResNet을 제외한 ConvNeXt+Efficien
 
 제출 우선순위는 보수적으로는 `exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv`, 공격적으로는 `exp51_ridge_cnx_eff_prob_only_50_submit.csv`가 적합하다. 전자는 EXP-26 대비 변경이 4개로 적고 recall이 높으며, 후자는 meta-CV accuracy가 가장 높지만 EXP-26 대비 8개를 모두 1->0으로 바꾼다.
 
+### 리더보드 결과
+
+| 제출 파일 | Leaderboard Score | 기존 EXP-26 대비 | 해석 |
+|---|---:|---:|---|
+| `exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv` | 0.9551282051 | +0.0032051282, +2샘플 | 최고점 갱신 |
+| `exp51_ridge_cnx_eff_prob_only_50_submit.csv` | 0.9519230769 | 동점 | meta-CV는 더 높았지만 public 개선 없음 |
+
+EXP-51 결과는 OOF 기반 stacking 방향이 타당했음을 보여준다. 다만 meta-CV accuracy가 가장 높았던 공격 후보보다, EXP-26 대비 변경 수가 4개로 적었던 Logistic 후보가 public에서 더 좋았다. 따라서 다음 실험에서도 OOF 점수 최고 후보를 바로 제출하기보다, 변경 수와 민감 샘플 유지 여부를 함께 보는 전략을 유지한다.
+
 ### 과제용 해석
 
 5-fold OOF 기반 stacking은 각 모델의 train set 전체 예측을 더 공정하게 meta-model에 제공한다는 장점이 있다. 이번 실험에서는 ConvNeXt와 EfficientNet-B0 조합이 민감 샘플을 안정적으로 유지하면서 meta-CV accuracy 0.98677까지 도달했다. 다만 public leaderboard에서는 1~2개 샘플 차이로 순위가 바뀔 수 있으므로, OOF 점수만으로 최종 우위를 단정하지 않고 EXP-26 대비 변경 샘플을 함께 확인해야 한다.
@@ -3346,6 +3355,9 @@ EXP-51에서 가장 안정적인 흐름은 ResNet을 제외한 ConvNeXt+Efficien
 - EXP-51에서는 ResNet 제외 ConvNeXt+EfficientNet 후보가 가장 안정적이며, 제출 후보 10개 생성
 - 보수적 제출 후보: `oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv`
 - 공격적 제출 후보: `oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv`
+- `oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv` 제출 결과 leaderboard score `0.9551282051`로 최고점 갱신
+- `oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv` 제출 결과 leaderboard score `0.9519230769`로 EXP-26과 동점
+- public 결과상 변경 수가 적은 보수 후보가 더 좋았으므로, 다음 제출도 low-change 후보를 우선한다
 
 ## 리더보드 제출 기록
 
@@ -3382,3 +3394,5 @@ EXP-51에서 가장 안정적인 흐름은 ResNet을 제외한 ConvNeXt+Efficien
 | 29 | submissions/exp36_fixed0244_core_prob_only_alpha100_submit.csv | test_0244 고정 probability-only Ridge | 0.98946 | 0.9503205128 | 19 | `test_0025.png` 1개만 0->1 변경했지만 하락 |
 | 30 | submissions/exp38_tta_all_prob_only_alpha50_submit.csv | TTA probability-only Ridge | 0.98851 | 0.9487179487 | 19 | `test_0244`는 유지했지만 `test_0025` 0->1 포함으로 하락 |
 | 31 | submissions/exp44_regnet_drop_resnet18_add_reg_alpha150_submit.csv | RegNetY 포함 Ridge stacking | 0.98659 | 0.9503205128 | 19 | 민감 샘플 3개는 유지했지만 EXP-26보다 하락 |
+| 32 | oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv | OOF Logistic, ConvNeXt+EfficientNet prob/rank | 0.98639 meta-CV | 0.9551282051 | 19 | 최고점 갱신, EXP-26 대비 +2샘플 |
+| 33 | oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv | OOF Ridge, ConvNeXt+EfficientNet prob only | 0.98677 meta-CV | 0.9519230769 | 19 | EXP-26과 동점, meta-CV 최고가 public 최고는 아니었음 |
