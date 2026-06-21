@@ -216,9 +216,18 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - meta-CV accuracy 0.98677
     - 현재 최고 EXP-52 대비 변경 1개: `test_0222` 1->0
     - 보호 샘플 5개 모두 유지
+    - 제출 결과 leaderboard 0.9551282051, 현재 최고보다 하락
   - 2순위 후보: `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
     - 현재 최고 EXP-52 대비 변경 1개: `test_0504` 1->0
-  - 제출 우선순위는 EXP-55 1순위 후보가 가장 높음
+  - EXP-55 결과를 바탕으로 `test_0222=1`도 보호 조건에 추가
+  - 다음 탐색 보호 샘플:
+    - `test_0025=0`
+    - `test_0539=0`
+    - `test_0244=0`
+    - `test_0490=0`
+    - `test_0201=1`
+    - `test_0222=1`
+  - `test_0504` 후보는 바로 제출하지 않고 새 보호 조건 기반 constrained search 이후 판단
 
 ## 추가 우선순위 메모
 

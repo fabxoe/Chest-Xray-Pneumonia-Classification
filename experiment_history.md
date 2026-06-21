@@ -82,7 +82,7 @@
 | EXP-52 | EXP-51 low-change search | ConvNeXt+EfficientNet OOF 후보 주변 threshold/regularization 미세 탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9567307692 | oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv | EXP-51 대비 test_0490만 1->0 변경해 +1샘플 개선 |
 | EXP-53 | EXP-52 constraint low-change search | EXP-52 winner 기준 보호 샘플 5개 유지, 변경 1~3개 후보 탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 규칙을 만족하는 비중복 후보 0개 |
 | EXP-54 | ConvNeXt seed123 5-fold OOF | ConvNeXt-Tiny 동일 설정, seed123으로 5-fold OOF/test mean 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98102 OOF | 미제출 | oof/submissions/exp54_convnext_tiny_seed123_mean_submit.csv | 단독은 test_0539/test_0490을 1로 예측해 보류, stacking feature로 사용 |
-| EXP-55 | ConvNeXt seed OOF stacking | EXP-54 seed123 + EfficientNet/기존 ConvNeXt OOF 기반 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 제출 후보 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | 보호 샘플 유지, 현재 최고 대비 test_0222만 1->0 변경 |
+| EXP-55 | ConvNeXt seed OOF stacking | EXP-54 seed123 + EfficientNet/기존 ConvNeXt OOF 기반 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | test_0222만 1->0 변경했지만 하락 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3459,9 +3459,11 @@ oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv
 
 ### 해석
 
-EXP-55 1순위는 `exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`다. 이 후보는 새 seed123 ConvNeXt와 EfficientNet-B0의 probability/rank를 사용하며, 현재 최고 대비 `test_0222` 하나만 1에서 0으로 바꾼다. 보호 샘플 5개를 모두 유지하고 meta-CV accuracy도 EXP-52보다 약간 높다.
+EXP-55 1순위 `exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`는 새 seed123 ConvNeXt와 EfficientNet-B0의 probability/rank를 사용하며, 현재 최고 대비 `test_0222` 하나만 1에서 0으로 바꾼다. 보호 샘플 5개를 모두 유지하고 meta-CV accuracy도 EXP-52보다 약간 높았다.
 
-2순위 `exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`는 새 seed123을 쓰지 않는 compact feature 후보이며, `test_0504` 하나만 1에서 0으로 바꾼다. 1순위 제출 결과가 하락하지 않거나 다음 low-change 후보가 필요할 때 확인한다.
+실제 제출 결과 leaderboard score는 `0.9551282051`로 현재 최고 EXP-52의 `0.9567307692`보다 하락했다. 따라서 public 기준에서는 `test_0222=1`을 유지하는 편이 유리했을 가능성이 높다. 이후 low-change 탐색에서는 `test_0222=1`도 보호 조건에 추가한다.
+
+2순위 `exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`는 새 seed123을 쓰지 않는 compact feature 후보이며, `test_0504` 하나만 1에서 0으로 바꾼다. 다만 EXP-55 1순위가 하락했으므로, 2순위도 바로 제출하기보다는 `test_0222=1` 보호 조건을 포함한 다음 constrained search 이후에 판단한다.
 
 ## 데일리 로그
 
@@ -3576,6 +3578,8 @@ EXP-55 1순위는 `exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`다. �
   - meta-CV accuracy `0.98677`
   - 현재 최고 EXP-52 대비 `test_0222` 하나만 1->0
   - 보호 샘플 5개 모두 유지
+- `oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv` 제출 결과 leaderboard score `0.9551282051`로 하락
+- EXP-55 결과를 바탕으로 `test_0222=1`을 보호 조건에 추가
 - EXP-55 2순위 후보: `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
   - 현재 최고 EXP-52 대비 `test_0504` 하나만 1->0
 
@@ -3618,3 +3622,4 @@ EXP-55 1순위는 `exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv`다. �
 | 33 | oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv | OOF Ridge, ConvNeXt+EfficientNet prob only | 0.98677 meta-CV | 0.9519230769 | 19 | EXP-26과 동점, meta-CV 최고가 public 최고는 아니었음 |
 | 34 | oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv | OOF Logistic, ConvNeXt+EfficientNet prob only low-change | 0.98658 meta-CV | 0.9567307692 | 19 | 최고점 갱신, EXP-51 대비 `test_0490` 1개만 1->0 |
 | 35 | oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet prob/margin low-change | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0201`까지 1->0으로 바꿔 하락 |
+| 36 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | OOF Ridge, ConvNeXt seed123+EfficientNet prob/rank | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0222` 1개만 1->0으로 바꿨지만 하락 |
