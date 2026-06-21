@@ -79,6 +79,7 @@
 | EXP-49 | ConvNeXt+ResNet OOF stacking | EXP-46/48 OOF feature로 Ridge/Logistic meta-CV 비교 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 미제출 | oof/submissions/exp49_ridge_prob_only_1_submit.csv | meta-CV는 높지만 상위 후보가 test_0539를 1로 유지해 제출 보류 |
 | EXP-50 | EfficientNet-B0 5-fold OOF | features[5:]+classifier fine-tuning으로 B0 OOF/test mean 저장 | 6 x 5 folds | AdamW | 5e-5 / 1e-4 | Weighted CrossEntropyLoss | 0.98505 OOF | 미제출 | oof/submissions/exp50_efficientnet_b0_mean_submit.csv | 민감 샘플 0244/0025/0539를 모두 0으로 유지, stacking 보완축 |
 | EXP-51 | ConvNeXt+ResNet+EfficientNet OOF stacking | 3-model OOF 기반 Ridge/Logistic meta-CV, subset 포함 비교 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv | 보수 후보가 EXP-26 대비 +2샘플 개선, 공격 후보는 EXP-26과 동점 |
+| EXP-52 | EXP-51 low-change search | ConvNeXt+EfficientNet OOF 후보 주변 threshold/regularization 미세 탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 후보 | oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv | 현재 최고 대비 1개 변경 후보 생성, test_0490만 1->0 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3259,6 +3260,55 @@ EXP-51 결과는 OOF 기반 stacking 방향이 타당했음을 보여준다. 다
 
 5-fold OOF 기반 stacking은 각 모델의 train set 전체 예측을 더 공정하게 meta-model에 제공한다는 장점이 있다. 이번 실험에서는 ConvNeXt와 EfficientNet-B0 조합이 민감 샘플을 안정적으로 유지하면서 meta-CV accuracy 0.98677까지 도달했다. 다만 public leaderboard에서는 1~2개 샘플 차이로 순위가 바뀔 수 있으므로, OOF 점수만으로 최종 우위를 단정하지 않고 EXP-26 대비 변경 샘플을 함께 확인해야 한다.
 
+## EXP-52. EXP-51 low-change search
+
+### 목적
+
+EXP-51 보수 후보가 leaderboard 최고점 `0.9551282051`을 기록했으므로, 같은 ConvNeXt+EfficientNet OOF 조합 주변에서 변경 수를 더 작게 제한한 후보를 탐색했다. 새 학습은 하지 않고 Ridge/Logistic regularization과 decision threshold만 조정했다.
+
+### 설정
+
+- 기준 최고 후보: `exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv`
+- 입력 feature:
+  - `cnx_prob1 + eff_prob1`
+  - `cnx_prob1 + eff_prob1 + cnx_rank + eff_rank`
+  - `cnx_prob1 + eff_prob1 + margin`
+- meta-model:
+  - RidgeClassifier
+  - LogisticRegression
+- threshold: `-0.10 ~ 0.25`
+- 필터:
+  - `test_0244=0`, `test_0025=0`, `test_0539=0`
+  - EXP-26 대비 변경 2~8개
+  - EXP-51 최고 후보와 완전 중복 제외
+
+### 주요 후보
+
+| 후보 파일 | meta-CV accuracy | recall | FP/FN | test label 0/1 | EXP-26 대비 변경 | EXP-51 대비 변경 | 변경 샘플 |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv` | 0.98658 | 0.99045 | 33/37 | 227/397 | 5 | 1 | `test_0490`: 1->0 |
+| `oof/submissions/exp52_ridge_cnx_eff_prob_only_p500_t0p025_submit.csv` | 0.98677 | 0.98942 | 28/41 | 227/397 | 5 | 1 | `test_0490`: 1->0 |
+| `oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv` | 0.98677 | 0.98736 | 20/49 | 228/396 | 6 | 2 | `test_0201`, `test_0490`: 1->0 |
+| `oof/submissions/exp52_ridge_cnx_eff_prob_margin_p300_t0p0_submit.csv` | 0.98677 | 0.98710 | 19/50 | 230/394 | 8 | 4 | `test_0141`, `test_0201`, `test_0222`, `test_0490`: 1->0 |
+
+### 저장 파일
+
+```text
+scripts/run_exp52_low_change_search.py
+oof/preds/exp52_low_change_summary.csv
+oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv
+oof/submissions/exp52_ridge_cnx_eff_prob_only_p500_t0p025_submit.csv
+oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv
+```
+
+### 해석
+
+EXP-52의 가장 보수적인 후보는 현재 최고 EXP-51에서 `test_0490` 하나만 1에서 0으로 바꾼다. 이는 리더보드에서 1샘플 개선 또는 1샘플 하락이 가능한 후보이므로, 제출 리스크는 낮지만 기대 상승폭도 작다.
+
+공격 후보는 EXP-51 최고 대비 `test_0141`, `test_0201`, `test_0222`, `test_0490`까지 4개를 추가로 0으로 바꾼다. 이 패턴은 EXP-51 ridge 공격 후보와 같은 변경 묶음이며 public에서 EXP-26과 동점으로 끝났기 때문에 우선 제출 후보로는 낮게 본다.
+
+제출 우선순위는 `exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv`가 1순위다. 같은 예측을 내는 중복 파일이 있으므로 하나만 제출하면 된다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3358,6 +3408,9 @@ EXP-51 결과는 OOF 기반 stacking 방향이 타당했음을 보여준다. 다
 - `oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv` 제출 결과 leaderboard score `0.9551282051`로 최고점 갱신
 - `oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv` 제출 결과 leaderboard score `0.9519230769`로 EXP-26과 동점
 - public 결과상 변경 수가 적은 보수 후보가 더 좋았으므로, 다음 제출도 low-change 후보를 우선한다
+- EXP-52에서 EXP-51 최고 후보 주변 low-change 탐색 완료
+- EXP-52 1순위 후보는 `oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv`
+- EXP-52 1순위 후보는 EXP-51 최고 대비 `test_0490` 하나만 1->0으로 변경
 
 ## 리더보드 제출 기록
 

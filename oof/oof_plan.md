@@ -180,6 +180,16 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - Logistic 보수 후보가 EXP-26 대비 +2샘플 개선했다.
   - Ridge 공격 후보는 EXP-26과 동점이었다.
   - meta-CV 최고 후보보다 변경 수가 적은 후보가 public에서 더 좋았으므로, 다음 OOF stacking도 low-change 후보를 우선 제출한다.
+- EXP-52에서 EXP-51 최고 후보 주변 low-change 탐색 완료.
+- 1순위 후보: `oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv`
+  - meta-CV accuracy 0.98658
+  - EXP-51 최고 대비 변경 1개
+  - 변경 샘플: `test_0490` 1->0
+  - 민감 샘플 3개 모두 0 유지
+- 2순위 후보: `oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv`
+  - EXP-51 최고 대비 변경 2개
+  - 변경 샘플: `test_0201`, `test_0490` 1->0
+- EXP-52의 4개 추가 변경 후보는 EXP-51 공격 후보와 같은 방향이라 우선순위 낮음.
 
 ## 추가 우선순위 메모
 
