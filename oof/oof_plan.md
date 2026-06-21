@@ -150,6 +150,29 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
 - 최고 OOF Ridge: `prob1_only alpha=1000`, OOF accuracy 0.98025
 - 최고 OOF Ridge는 `test_0244=1`, `test_0025=1`로 바꿔 제출 보류.
 - 민감 샘플 유지 후보: `prob1_margin alpha=1000`, OOF accuracy 0.97872
+- EXP-48에서 ResNet18 5-fold OOF 완료.
+- OOF accuracy: 0.98524
+- OOF confusion matrix: `[[1304, 37], [40, 3835]]`
+- test mean 민감 샘플: `test_0244=1`, `test_0025=1`, `test_0539=1`
+- ResNet18 OOF는 강하지만 단독 제출보다 stacking feature로 사용한다.
+- EXP-49에서 ConvNeXt+ResNet OOF Ridge/Logistic stacking 완료.
+- 최고 meta-CV accuracy: 0.98735
+- 상위 후보가 `test_0539=1`을 유지해 제출 보류.
+- EXP-50에서 EfficientNet-B0 5-fold OOF 완료.
+- 초기 `features[7:]+classifier` 설정은 fold0 best 0.9301로 낮아 중단했고, `features[5:]+classifier`로 재실행했다.
+- OOF accuracy: 0.98505
+- OOF confusion matrix: `[[1312, 29], [49, 3826]]`
+- test mean 민감 샘플: `test_0244=0`, `test_0025=0`, `test_0539=0`
+- EXP-51에서 ConvNeXt+ResNet+EfficientNet OOF stacking 완료.
+- 가장 안정적인 계열은 ResNet을 제외한 ConvNeXt+EfficientNet subset이다.
+- 보수적 후보: `oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv`
+  - meta-CV accuracy 0.98639
+  - EXP-26 대비 변경 4개
+  - 민감 샘플 3개 모두 0 유지
+- 공격적 후보: `oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv`
+  - meta-CV accuracy 0.98677
+  - EXP-26 대비 변경 8개
+  - 민감 샘플 3개 모두 0 유지
 
 ## 추가 우선순위 메모
 
@@ -157,3 +180,5 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
 - EfficientNetV2-S를 다시 시도한다면 마지막 block만이 아니라 `features[6]+features[7]+classifier`처럼 더 넓은 fine-tuning으로 재평가한다.
 - RegNetY-3.2GF `trunk_output.block4+fc` probe는 validation accuracy 0.95211로 단독 제출은 약하지만, 민감 샘플 `test_0244`, `test_0025`, `test_0539`를 모두 0으로 유지해 stacking diversity 후보로 남긴다.
 - Lion optimizer 비교는 AdamW 기본선을 유지한 뒤, 8순위 실험 전에 추가한다. 우선 대상은 ConvNeXt-Tiny 또는 RegNetY처럼 단독 validation이 안정적인 모델로 한다.
+- 10시간 초과 장기 실험은 바로 실행하지 않고, 목적/기대 이득/근거/계산 비용/중단 조건/제출 기준을 먼저 작성한 뒤 검토한다.
+- 장기 실험 후보 우선순위는 ConvNeXt 계열 OOF seed 추가, ConvNeXt V2 Tiny, EfficientNetV2-S 재설계, DINOv2 feature extractor 순으로 본다.

@@ -75,6 +75,10 @@
 | EXP-45 | ConvNeXt OOF fold0 smoke test | 5-fold OOF pipeline 검증, fold0만 학습 및 OOF/test probability 저장 | 6 | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98467 | 제출 없음 | oof/submissions/exp45_convnext_tiny_fold0_submit.csv | OOF 파일 포맷 검증 완료, fold당 약 7.2분 |
 | EXP-46 | ConvNeXt 5-fold OOF 완성 | fold1~4 학습 후 fold0 포함 OOF/test mean probability 병합 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97795 OOF | 미제출 | oof/submissions/exp46_convnext_tiny_mean_submit.csv | OOF 5216 rows, test mean 624 rows 생성 |
 | EXP-47 | OOF Ridge baseline | ConvNeXt OOF prob 기반 RidgeClassifier alpha/feature 탐색 | - | - | - | RidgeClassifier | 0.98025 OOF | 미제출 | oof/submissions/exp47_prob1_only_alpha1000_submit.csv | OOF score는 개선됐지만 민감 샘플 0244/0025를 1로 변경 |
+| EXP-48 | ResNet18 5-fold OOF | pretrained ResNet18 layer4+fc를 fold별 학습, OOF/test mean 저장 | 6 x 5 folds | AdamW | 1e-4 | Weighted CrossEntropyLoss | 0.98524 OOF | 미제출 | oof/submissions/exp48_resnet18_mean_submit.csv | OOF는 강하지만 민감 샘플 0244/0025/0539를 모두 1로 예측해 단독 제출 보류 |
+| EXP-49 | ConvNeXt+ResNet OOF stacking | EXP-46/48 OOF feature로 Ridge/Logistic meta-CV 비교 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 미제출 | oof/submissions/exp49_ridge_prob_only_1_submit.csv | meta-CV는 높지만 상위 후보가 test_0539를 1로 유지해 제출 보류 |
+| EXP-50 | EfficientNet-B0 5-fold OOF | features[5:]+classifier fine-tuning으로 B0 OOF/test mean 저장 | 6 x 5 folds | AdamW | 5e-5 / 1e-4 | Weighted CrossEntropyLoss | 0.98505 OOF | 미제출 | oof/submissions/exp50_efficientnet_b0_mean_submit.csv | 민감 샘플 0244/0025/0539를 모두 0으로 유지, stacking 보완축 |
+| EXP-51 | ConvNeXt+ResNet+EfficientNet OOF stacking | 3-model OOF 기반 Ridge/Logistic meta-CV, subset 포함 비교 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 제출 후보 | oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv | ResNet 제외 ConvNeXt+EfficientNet 후보가 민감 샘플 3개 유지, EXP-26 대비 4~8개 변경 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3078,6 +3082,174 @@ OOF Ridge는 direct ConvNeXt mean보다 OOF accuracy를 0.97795에서 0.98025까
 
 ConvNeXt 단일 OOF probability만으로 RidgeClassifier를 학습했을 때 OOF accuracy는 소폭 개선되었다. 그러나 test 민감 샘플의 예측이 불리한 방향으로 바뀌는 후보가 많아, validation 또는 OOF 점수만으로 제출 성능을 단정하기 어렵다. 이 실험은 OOF 기반 meta-model 구조가 작동함을 확인한 baseline이며, 실제 성능 개선을 위해서는 서로 다른 모델의 OOF feature를 추가하는 것이 필요하다.
 
+## EXP-48. ResNet18 5-fold OOF
+
+### 목적
+
+ConvNeXt OOF만으로는 모델 다양성이 부족하므로, 기존에 강했던 ResNet18 layer4+fc 구조를 5-fold OOF로 확장했다.
+
+### 설정
+
+- 모델: ImageNet pretrained ResNet18
+- 학습 범위: `layer4 + fc`
+- fold: `oof/folds_seed42.csv`의 5-fold stratified split
+- epoch: fold별 6
+- optimizer: `AdamW(lr=1e-4, weight_decay=1e-4)`
+- augmentation: resize 224, horizontal flip, rotation 7도
+- loss: weighted CrossEntropyLoss
+
+### 결과
+
+| metric | value |
+|---|---:|
+| OOF accuracy | 0.98524 |
+| precision | 0.99044 |
+| recall | 0.98968 |
+| f1 | 0.99006 |
+| confusion matrix | `[[1304, 37], [40, 3835]]` |
+| test label 0 | 184 |
+| test label 1 | 440 |
+| test_0244 | 1 |
+| test_0025 | 1 |
+| test_0539 | 1 |
+
+### 저장 파일
+
+```text
+scripts/run_exp48_resnet18_oof.py
+oof/preds/exp48_resnet18_oof_probs.csv
+oof/preds/exp48_resnet18_test_probs_mean.csv
+oof/preds/exp48_resnet18_combined_result.json
+oof/submissions/exp48_resnet18_mean_submit.csv
+```
+
+### 해석
+
+ResNet18 OOF는 ConvNeXt OOF보다 accuracy와 recall이 높아 강한 OOF feature가 되었다. 하지만 test 평균 예측이 `test_0244`, `test_0025`, `test_0539`를 모두 1로 바꾼다. 이 세 샘플은 기존 public 결과 기준 0 유지가 더 안전했던 민감 샘플이므로, ResNet18 OOF 단독 제출은 보류한다. 핵심 가치는 단독 제출이 아니라 OOF stacking의 보완 feature다.
+
+## EXP-49. ConvNeXt + ResNet OOF stacking
+
+### 목적
+
+EXP-46 ConvNeXt OOF와 EXP-48 ResNet18 OOF를 결합해 OOF 기반 Ridge/Logistic meta-model을 검증했다. meta-model도 fold별 CV로 평가해, OOF feature 전체에 fit한 training score만 보지 않도록 했다.
+
+### 설정
+
+- 입력 모델: ConvNeXt-Tiny OOF, ResNet18 OOF
+- meta-model: RidgeClassifier, LogisticRegression
+- feature: `prob_1`, rank, margin, uncertainty, 모델 간 통계 feature
+- 평가: `fold` 기준 meta-CV
+- 제출 기준: `test_0244`, `test_0025`, `test_0539` 유지 여부와 EXP-26 대비 변경 수 확인
+
+### 주요 결과
+
+| 후보 | meta-CV accuracy | precision | recall | f1 | test label 0/1 | EXP-26 대비 변경 | 민감 샘플 |
+|---|---:|---:|---:|---:|---:|---:|---|
+| `prob_only ridge alpha=1` | 0.98735 | 0.99301 | 0.98994 | 0.99147 | 189/435 | 35 | 0244=1, 0025=0, 0539=1 |
+| `prob_margin ridge alpha=3` | 0.98716 | 0.99301 | 0.98968 | 0.99134 | 189/435 | 35 | 0244=1, 0025=0, 0539=1 |
+
+### 저장 파일
+
+```text
+scripts/run_exp49_oof_convnext_resnet_stacking.py
+oof/preds/exp49_convnext_resnet_oof_stacking_summary.csv
+oof/submissions/exp49_ridge_prob_only_1_submit.csv
+```
+
+### 해석
+
+ConvNeXt+ResNet 조합은 meta-CV accuracy가 높지만, 상위 후보들이 `test_0539`를 1로 유지하고 `test_0244`도 1로 바꾸는 경향이 있었다. 이전 public 결과에서 `test_0539`의 0->1 변경은 하락과 연결되었으므로, EXP-49 후보는 제출 우선순위가 낮다. 다음 단계에서는 `test_0539`를 0으로 강하게 잡는 EfficientNet-B0 OOF를 추가하는 것이 타당하다.
+
+## EXP-50. EfficientNet-B0 5-fold OOF
+
+### 목적
+
+기존 EXP-06 EfficientNet-B0가 단독 leaderboard는 낮았지만 stacking에서 보완 정보를 제공했으므로, 이를 5-fold OOF로 확장했다.
+
+### 설정
+
+- 모델: ImageNet pretrained EfficientNet-B0
+- 초기 시도: `features[7:] + classifier`만 학습
+- 초기 결과: fold0 best accuracy 0.9301로 낮아 중단
+- 최종 설정: `features[5:] + classifier` 학습
+- optimizer: AdamW
+- LR: feature `5e-5`, classifier `1e-4`
+- epoch: fold별 6
+
+### 결과
+
+| metric | value |
+|---|---:|
+| OOF accuracy | 0.98505 |
+| precision | 0.99248 |
+| recall | 0.98735 |
+| f1 | 0.98991 |
+| confusion matrix | `[[1312, 29], [49, 3826]]` |
+| test label 0 | 245 |
+| test label 1 | 379 |
+| test_0244 | 0 |
+| test_0025 | 0 |
+| test_0539 | 0 |
+
+### 저장 파일
+
+```text
+scripts/run_exp50_efficientnet_b0_oof.py
+oof/preds/exp50_efficientnet_b0_oof_probs.csv
+oof/preds/exp50_efficientnet_b0_test_probs_mean.csv
+oof/preds/exp50_efficientnet_b0_combined_result.json
+oof/submissions/exp50_efficientnet_b0_mean_submit.csv
+```
+
+### 해석
+
+EfficientNet-B0 OOF는 ResNet18보다 recall은 낮지만 precision이 높고, 민감 샘플 3개를 모두 0으로 유지했다. 이는 EXP-49에서 문제가 된 ResNet의 과한 label 1 경향을 보정할 수 있는 좋은 보완 정보다. 단독 제출보다는 ConvNeXt와 결합한 OOF stacking 후보로 보는 것이 맞다.
+
+## EXP-51. ConvNeXt + ResNet + EfficientNet OOF stacking
+
+### 목적
+
+EXP-46, EXP-48, EXP-50의 OOF probability를 결합해 multi-model OOF stacking 후보를 만들었다. 전체 3모델뿐 아니라 ResNet 제외, EfficientNet 제외 등 subset도 함께 비교했다.
+
+### 설정
+
+- 입력 모델: ConvNeXt-Tiny OOF, ResNet18 OOF, EfficientNet-B0 OOF
+- meta-model: RidgeClassifier, LogisticRegression
+- feature: probability, rank, margin, uncertainty, direct prediction, subset별 통계
+- 평가: fold 기준 meta-CV
+- 후보 필터:
+  - `test_0244=0`, `test_0025=0`, `test_0539=0`
+  - test label 1 개수 380~420
+  - EXP-26 대비 변경 수 1~24
+
+### 주요 후보
+
+| 후보 파일 | meta-CV accuracy | precision | recall | f1 | FP/FN | test label 0/1 | EXP-26 대비 변경 | 민감 샘플 |
+|---|---:|---:|---:|---:|---:|---:|---:|---|
+| `oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv` | 0.98677 | 0.99506 | 0.98710 | 0.99106 | 19/50 | 230/394 | 8 | 0244=0, 0025=0, 0539=0 |
+| `oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv` | 0.98639 | 0.99198 | 0.98968 | 0.99083 | 31/40 | 226/398 | 4 | 0244=0, 0025=0, 0539=0 |
+| `oof/submissions/exp51_ridge_cnx_eff_prob_only_300_submit.csv` | 0.98658 | 0.99326 | 0.98865 | 0.99095 | 26/44 | 228/396 | 6 | 0244=0, 0025=0, 0539=0 |
+
+### 저장 파일
+
+```text
+scripts/run_exp51_oof_3model_stacking.py
+oof/preds/exp51_oof_3model_stacking_summary.csv
+oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv
+oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv
+oof/submissions/exp51_ridge_cnx_eff_prob_only_300_submit.csv
+```
+
+### 해석
+
+EXP-51에서 가장 안정적인 흐름은 ResNet을 제외한 ConvNeXt+EfficientNet 조합이었다. ResNet18은 OOF 성능은 강하지만 test 민감 샘플을 모두 1로 밀어 올리는 경향이 있었고, EfficientNet-B0는 민감 샘플을 0으로 유지했다. 따라서 EXP-51의 제출 후보는 단순히 meta-CV accuracy가 가장 높은 후보만 보지 말고, EXP-26 대비 변경 수와 민감 샘플 유지 여부를 함께 기준으로 삼아야 한다.
+
+제출 우선순위는 보수적으로는 `exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv`, 공격적으로는 `exp51_ridge_cnx_eff_prob_only_50_submit.csv`가 적합하다. 전자는 EXP-26 대비 변경이 4개로 적고 recall이 높으며, 후자는 meta-CV accuracy가 가장 높지만 EXP-26 대비 8개를 모두 1->0으로 바꾼다.
+
+### 과제용 해석
+
+5-fold OOF 기반 stacking은 각 모델의 train set 전체 예측을 더 공정하게 meta-model에 제공한다는 장점이 있다. 이번 실험에서는 ConvNeXt와 EfficientNet-B0 조합이 민감 샘플을 안정적으로 유지하면서 meta-CV accuracy 0.98677까지 도달했다. 다만 public leaderboard에서는 1~2개 샘플 차이로 순위가 바뀔 수 있으므로, OOF 점수만으로 최종 우위를 단정하지 않고 EXP-26 대비 변경 샘플을 함께 확인해야 한다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3159,6 +3331,21 @@ ConvNeXt 단일 OOF probability만으로 RidgeClassifier를 학습했을 때 OOF
 - EXP-45 ConvNeXt-Tiny OOF fold0 smoke test 완료, OOF/test probability 포맷 검증 통과
 - EXP-46 ConvNeXt-Tiny 5-fold OOF 완성, OOF 5,216 rows와 test mean 624 rows 생성
 - EXP-47 OOF Ridge baseline 완료, 최고 OOF 후보는 민감 샘플을 바꿔 제출 보류
+
+### 2026-06-21
+
+- EXP-43~47 산출물과 기록을 git commit `ae3fc1b`로 저장
+- EXP-48 ResNet18 5-fold OOF 완료, OOF accuracy `0.98524`
+- EXP-48은 OOF 성능은 강하지만 민감 샘플 `test_0244`, `test_0025`, `test_0539`를 모두 1로 예측해 단독 제출 보류
+- EXP-49 ConvNeXt+ResNet OOF Ridge/Logistic stacking 완료
+- EXP-49는 meta-CV 최고 `0.98735`까지 도달했지만 `test_0539`를 1로 유지해 제출 우선순위 낮음
+- EXP-50 EfficientNet-B0 OOF 초기 설정 `features[7:]+classifier`는 fold0 `0.9301`로 낮아 중단
+- EXP-50을 `features[5:]+classifier`, feature LR `5e-5`, classifier LR `1e-4`로 재설정 후 5-fold OOF 완료
+- EXP-50 OOF accuracy `0.98505`, 민감 샘플 3개를 모두 0으로 유지
+- EXP-51 ConvNeXt+ResNet+EfficientNet OOF stacking 완료
+- EXP-51에서는 ResNet 제외 ConvNeXt+EfficientNet 후보가 가장 안정적이며, 제출 후보 10개 생성
+- 보수적 제출 후보: `oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv`
+- 공격적 제출 후보: `oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv`
 
 ## 리더보드 제출 기록
 

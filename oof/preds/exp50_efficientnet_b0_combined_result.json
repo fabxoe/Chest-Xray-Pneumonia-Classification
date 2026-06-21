@@ -1,0 +1,43 @@
+{
+  "exp_id": "exp50",
+  "model": "efficientnet_b0",
+  "oof_rows": 5216,
+  "oof_duplicate_file_names": 0,
+  "test_by_fold_rows": 3120,
+  "test_mean_rows": 624,
+  "oof_metrics": {
+    "accuracy": 0.9850460122699386,
+    "precision": 0.9924773022049287,
+    "recall": 0.9873548387096774,
+    "f1": 0.9899094437257439,
+    "confusion_matrix": [
+      [
+        1312,
+        29
+      ],
+      [
+        49,
+        3826
+      ]
+    ]
+  },
+  "test_mean_pred_counts": {
+    "0": 245,
+    "1": 379
+  },
+  "sensitive": {
+    "test_0244.png": {
+      "pred": 0,
+      "prob_1": 0.185591983795166
+    },
+    "test_0025.png": {
+      "pred": 0,
+      "prob_1": 0.22468113973736759
+    },
+    "test_0539.png": {
+      "pred": 0,
+      "prob_1": 0.02763327143620694
+    }
+  },
+  "submission": "oof/submissions/exp50_efficientnet_b0_mean_submit.csv"
+}
