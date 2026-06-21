@@ -243,6 +243,14 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0201=1`
     - `test_0222=1`
     - `test_0504=0`
+- EXP-57에서 EXP-56 winner 기준 보호 샘플 7개 유지 low-change search 완료.
+  - 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+  - 탐색 row 수: 7,956
+  - 최고 meta-CV accuracy: 0.98696
+  - 보호 샘플 7개 유지, label 1 개수 395~399, 현재 최고 대비 변경 수 1~2개 조건 적용
+  - 최종 candidate 수: 0
+  - 제출 파일 없음
+  - 결론: 현재 ConvNeXt/ConvNeXt seed123/EfficientNet-B0 OOF feature 공간에서는 추가 low-change 후보가 소진된 것으로 판단. 다음은 calibration 짧은 확인 또는 새 OOF 정보원 추가가 우선.
 
 ## 추가 우선순위 메모
 

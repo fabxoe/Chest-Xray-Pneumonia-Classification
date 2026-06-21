@@ -84,6 +84,7 @@
 | EXP-54 | ConvNeXt seed123 5-fold OOF | ConvNeXt-Tiny 동일 설정, seed123으로 5-fold OOF/test mean 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98102 OOF | 미제출 | oof/submissions/exp54_convnext_tiny_seed123_mean_submit.csv | 단독은 test_0539/test_0490을 1로 예측해 보류, stacking feature로 사용 |
 | EXP-55 | ConvNeXt seed OOF stacking | EXP-54 seed123 + EfficientNet/기존 ConvNeXt OOF 기반 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | test_0222만 1->0 변경했지만 하락 |
 | EXP-56 | 보호 샘플 기반 low-change search | EXP-55 결과 반영, test_0222=1까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9583333333 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | test_0504만 1->0 변경해 +1샘플 개선 |
+| EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3510,6 +3511,52 @@ EXP-56은 현재 보호 조건을 모두 유지하면서 `test_0504` 하나만 1
 
 실제 제출 결과 leaderboard score는 `0.9583333333`으로 상승했다. EXP-52의 `0.9567307692` 대비 정확히 `1/624` 개선되었으므로, public 기준에서는 `test_0504=0` 방향이 맞았을 가능성이 높다. 이후 탐색에서는 `test_0504=0`도 보호 조건에 추가한다.
 
+## EXP-57. EXP-56 기준 보호 샘플 low-change search
+
+### 목적
+
+EXP-56이 새 최고점이 되었으므로, `test_0504=0`까지 보호 조건에 추가한 뒤 같은 OOF feature 공간에서 추가 1~2개 변경 후보가 있는지 확인했다. 목표는 public에서 확인된 방향을 되돌리지 않으면서, 현재 최고 후보보다 아주 적은 샘플만 바꾸는 후보를 찾는 것이었다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 기준 score 파일: `oof/preds/exp56_ridge_cnx_eff_compact_p3000_t0p025_test_scores.csv`
+- 입력 feature:
+  - 기존 ConvNeXt OOF
+  - ConvNeXt seed123 OOF
+  - EfficientNet-B0 OOF
+- meta-model:
+  - RidgeClassifier
+  - LogisticRegression
+- 보호 샘플:
+  - `test_0025=0`
+  - `test_0539=0`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0201=1`
+  - `test_0222=1`
+  - `test_0504=0`
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 7,956 |
+| 최고 meta-CV accuracy | 0.98696 |
+| 보호 샘플 7개 유지 후보 | 0 |
+| 저장된 제출 파일 | 0 |
+
+### 저장 파일
+
+```text
+scripts/run_exp57_protected_low_change_search.py
+oof/preds/exp57_protected_low_change_summary.csv
+```
+
+### 해석
+
+EXP-57에서는 meta-CV가 높은 후보들이 존재했지만, 상위 후보들이 보호 샘플 중 하나 이상을 깨서 제출 후보에서 제외되었다. 따라서 현재 ConvNeXt/ConvNeXt seed123/EfficientNet-B0 OOF feature 공간 안에서는 public 결과로 확인된 guardrail을 유지하면서 추가로 제출할 만한 low-change 후보가 없다. 다음 단계는 같은 공간의 threshold 미세 탐색보다 calibration을 짧게 확인하거나, 새 정보원 OOF를 추가하는 방향이 더 타당하다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3634,6 +3681,10 @@ EXP-56은 현재 보호 조건을 모두 유지하면서 `test_0504` 하나만 1
   - `test_0222=1` 포함 보호 샘플 6개 모두 유지
 - `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv` 제출 결과 leaderboard score `0.9583333333`으로 최고점 갱신
 - EXP-56 결과를 바탕으로 `test_0504=0`을 보호 조건에 추가
+- EXP-57에서 EXP-56 winner 기준 보호 샘플 7개 유지 low-change search 완료
+  - 최고 meta-CV accuracy `0.98696`
+  - 보호 샘플 7개를 모두 유지하는 비중복 후보 0개
+  - 제출 파일 없음
 
 ## 리더보드 제출 기록
 
