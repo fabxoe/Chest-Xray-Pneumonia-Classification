@@ -1,0 +1,72 @@
+{
+  "exp_id": "exp67",
+  "model": "regnet_y_3_2gf",
+  "oof_rows": 5216,
+  "oof_duplicate_file_names": 0,
+  "test_by_fold_rows": 3120,
+  "test_mean_rows": 624,
+  "oof_metrics": {
+    "accuracy": 0.9616564417177914,
+    "precision": 0.9903923138510808,
+    "recall": 0.9576774193548387,
+    "f1": 0.9737601679349253,
+    "confusion_matrix": [
+      [
+        1305,
+        36
+      ],
+      [
+        164,
+        3711
+      ]
+    ]
+  },
+  "test_mean_pred_counts": {
+    "0": 273,
+    "1": 351
+  },
+  "watched_samples": {
+    "test_0025.png": {
+      "pred": 0,
+      "prob_1": 0.1708927378058433
+    },
+    "test_0539.png": {
+      "pred": 0,
+      "prob_1": 0.0994336389005184
+    },
+    "test_0244.png": {
+      "pred": 1,
+      "prob_1": 0.5702909350395202
+    },
+    "test_0490.png": {
+      "pred": 1,
+      "prob_1": 0.7260971784591674
+    },
+    "test_0201.png": {
+      "pred": 1,
+      "prob_1": 0.5241557419300079
+    },
+    "test_0222.png": {
+      "pred": 0,
+      "prob_1": 0.3345649868249893
+    },
+    "test_0504.png": {
+      "pred": 0,
+      "prob_1": 0.4306624233722687
+    },
+    "test_0141.png": {
+      "pred": 0,
+      "prob_1": 0.03453491404652592
+    },
+    "test_0188.png": {
+      "pred": 0,
+      "prob_1": 0.4433147430419922
+    },
+    "test_0568.png": {
+      "pred": 0,
+      "prob_1": 0.16334688663482663
+    }
+  },
+  "changed_vs_exp56_count": 69,
+  "submission": "oof/submissions/exp67_regnet_y_3_2gf_mean_submit.csv"
+}

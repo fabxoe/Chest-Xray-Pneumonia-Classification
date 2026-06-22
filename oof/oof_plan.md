@@ -326,3 +326,28 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - EXP-58에서 하락한 방향인 `test_0188=1`, `test_0568=1` 동시 변경도 피함.
   - 제출 결과 leaderboard score: `0.9567307692`
   - 판단: EXP-56 최고점 `0.9583333333`보다 하락했으므로 `test_0141=0` 방향은 public에서 이득이 아니었다. 이후 low-change 탐색에서는 `test_0141=1`을 우선 유지한다.
+- EXP-67 RegNetY-3.2GF 5-fold OOF 완료.
+  - 목적: ConvNeXt/EfficientNet과 다른 CNN family의 OOF 정보원 확보
+  - fine-tuning 범위: `trunk_output.block4 + fc`
+  - OOF accuracy: 0.96166
+  - OOF confusion matrix: `[[1305, 36], [164, 3711]]`
+  - test mean label 0/1: 273/351
+  - EXP-56 대비 test 변경 수: 69개
+  - 단독 mean은 제출 제외:
+    - FN이 164개로 많음
+    - `test_0244=1`, `test_0490=1`, `test_0222=0`, `test_0141=0`으로 보호 방향 일부를 깸
+  - 유지한 방향:
+    - `test_0025=0`
+    - `test_0539=0`
+    - `test_0201=1`
+    - `test_0504=0`
+    - `test_0188=0`
+    - `test_0568=0`
+- EXP-68 RegNetY 포함 OOF stacking 완료.
+  - 추가 정보원: EXP-67 RegNetY OOF/test probability
+  - 보호 샘플은 EXP-66 결과를 반영해 `test_0141=1`까지 8개로 확장
+  - 탐색 row 수: 3724
+  - 최고 meta-CV accuracy: 0.98735
+  - 보호 샘플 8개 유지 candidate 수: 0
+  - 제출 파일 없음
+  - 해석: RegNetY feature는 일부 meta-CV를 올렸지만, 상위 후보가 `test_0539`, `test_0490`, `test_0504`, `test_0141` 등 보호 방향을 자주 깨므로 현재 guardrail 안에서는 제출 후보로 쓰기 어렵다.

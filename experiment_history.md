@@ -88,6 +88,8 @@
 | EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 0.9551282051 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | test_0188/test_0568 0->1 변경 후 하락 |
 | EXP-65 | ConvNeXt V2 Tiny 5-fold OOF | timm ConvNeXt V2 Tiny, stage3+head fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97680 OOF | 미제출 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | 단독 mean은 보호 샘플 다수 1로 변경해 제출 보류, stacking diversity 후보 |
 | EXP-66 | ConvNeXt V2 포함 OOF stacking | EXP-65 ConvNeXt V2 OOF를 기존 ConvNeXt/EfficientNet OOF feature에 제한적으로 추가 | - | - | - | RidgeClassifier alpha=10 | 0.98696 meta-CV | 0.9567307692 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | test_0141만 1->0 변경했지만 EXP-56보다 하락 |
+| EXP-67 | RegNetY-3.2GF 5-fold OOF | torchvision RegNetY-3.2GF block4+fc fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 1e-5 / 5e-5 | Weighted CrossEntropyLoss | 0.96166 OOF | 미제출 | oof/submissions/exp67_regnet_y_3_2gf_mean_submit.csv | FN 164개, EXP-56 대비 69개 변경으로 단독 제출 제외 |
+| EXP-68 | RegNetY 포함 OOF stacking | EXP-67 RegNetY OOF를 기존 ConvNeXt/EfficientNet OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 제출 없음 | - | 보호 샘플 8개 유지 후보 0개 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3767,6 +3769,123 @@ EXP-66은 ConvNeXt V2를 단독 후보로 쓰지 않고 보조 feature로만 사
 
 meta-CV는 EXP-56보다 약간 높고 변경 수도 1개라 제출 후보로는 합리적이었다. 그러나 실제 leaderboard score는 `0.9567307692`로 EXP-56의 `0.9583333333`보다 낮았다. 따라서 public 기준에서는 `test_0141`을 1에서 0으로 바꾸는 방향이 이득이 아니었고, 최고 기준은 계속 EXP-56으로 유지한다.
 
+## EXP-67. RegNetY-3.2GF 5-fold OOF
+
+### 목적
+
+RegNetY 계열은 단일 split에서 단독 성능은 낮았지만, 일부 민감 샘플을 0으로 보는 경향이 있었다. 기존 ConvNeXt/EfficientNet 계열과 다른 오류 방향을 가진 CNN family를 확보하기 위해 5-fold OOF 모델로 확장했다.
+
+### 설정
+
+- 모델: `torchvision.models.regnet_y_3_2gf`
+- 입력 크기: 224
+- fine-tuning 범위: `trunk_output.block4 + fc`
+- trainable params: 약 4.81M
+- optimizer: AdamW
+- LR: block4 `1e-5`, fc `5e-5`
+- loss: Weighted CrossEntropyLoss
+- epoch: 6 x 5 folds
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| OOF accuracy | 0.96166 |
+| OOF precision | 0.99039 |
+| OOF recall | 0.95768 |
+| OOF F1 | 0.97376 |
+| OOF confusion matrix | `[[1305, 36], [164, 3711]]` |
+| test mean label 0/1 | 273/351 |
+| EXP-56 대비 test 변경 수 | 69 |
+
+Fold별 결과:
+
+| fold | best epoch | valid accuracy | recall | confusion matrix | test label 0/1 |
+|---:|---:|---:|---:|---|---:|
+| 0 | 6 | 0.97031 | 0.96774 | `[[263, 6], [25, 750]]` | 251/373 |
+| 1 | 6 | 0.96644 | 0.96258 | `[[262, 6], [29, 746]]` | 261/363 |
+| 2 | 6 | 0.95110 | 0.94323 | `[[261, 7], [44, 731]]` | 290/334 |
+| 3 | 5 | 0.96261 | 0.96258 | `[[258, 10], [29, 746]]` | 292/332 |
+| 4 | 5 | 0.95781 | 0.95226 | `[[261, 7], [37, 738]]` | 279/345 |
+
+보호/관찰 샘플 test mean:
+
+| sample | pred | prob_1 | 해석 |
+|---|---:|---:|---|
+| `test_0025` | 0 | 0.1709 | 보호 방향 유지 |
+| `test_0539` | 0 | 0.0994 | 보호 방향 유지 |
+| `test_0244` | 1 | 0.5703 | 보호 방향 0을 깸 |
+| `test_0490` | 1 | 0.7261 | 보호 방향 0을 깸 |
+| `test_0201` | 1 | 0.5242 | 보호 방향 유지 |
+| `test_0222` | 0 | 0.3346 | 보호 방향 1을 깸 |
+| `test_0504` | 0 | 0.4307 | 보호 방향 유지 |
+| `test_0141` | 0 | 0.0345 | EXP-66 결과상 유지해야 할 1 방향을 깸 |
+| `test_0188` | 0 | 0.4433 | EXP-58 하락 방향 회피 |
+| `test_0568` | 0 | 0.1633 | EXP-58 하락 방향 회피 |
+
+### 저장 파일
+
+```text
+scripts/run_exp67_regnet_y_3_2gf_oof.py
+oof/preds/exp67_regnet_y_3_2gf_oof_probs.csv
+oof/preds/exp67_regnet_y_3_2gf_test_probs_by_fold.csv
+oof/preds/exp67_regnet_y_3_2gf_test_probs_mean.csv
+oof/preds/exp67_regnet_y_3_2gf_combined_result.json
+oof/preds/exp67_regnet_y_3_2gf_changed_vs_exp56.csv
+oof/submissions/exp67_regnet_y_3_2gf_mean_submit.csv
+```
+
+### 해석
+
+EXP-67 RegNetY OOF는 precision은 높지만 recall이 낮아 FN이 164개로 많다. test mean도 label 1을 351개만 예측해 현재 최고 후보보다 훨씬 보수적이다. 따라서 단독 제출은 제외한다.
+
+다만 `test_0025`, `test_0539`, `test_0188`, `test_0568`을 0으로 강하게 보는 특성이 있어, EXP-68에서 stacking 보조 feature로만 사용했다.
+
+## EXP-68. RegNetY 포함 OOF stacking
+
+### 목적
+
+EXP-67 RegNetY 단독 mean은 약하지만, 기존 ConvNeXt/EfficientNet 계열이 흔들리는 일부 샘플에서 보정 정보가 될 수 있는지 확인했다. EXP-66 결과를 반영해 `test_0141=1`까지 보호 조건에 추가했다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- feature:
+  - ConvNeXt OOF probability
+  - ConvNeXt seed123 OOF probability
+  - EfficientNet-B0 OOF probability
+  - RegNetY-3.2GF OOF probability/rank/margin
+  - core/all mean, std, vote_sum
+- meta-model: RidgeClassifier / LogisticRegression
+- 필터:
+  - 보호 샘플 8개 유지
+  - `test_0188`, `test_0568` 동시 1 제외
+  - test label 1 개수 394~400
+  - EXP-56 대비 변경 수 1~6개
+  - meta-CV floor 유지
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 3724 |
+| 최고 meta-CV accuracy | 0.98735 |
+| 보호 샘플 8개 유지 candidate | 0 |
+| 저장된 제출 파일 | 0 |
+
+상위 후보들은 meta-CV가 높았지만 보호 샘플을 깼다. 특히 후보 필터 범위 안에서 `test_0490`, `test_0504`, `test_0141`, `test_0539`가 자주 반대 방향으로 움직였다.
+
+### 저장 파일
+
+```text
+scripts/run_exp68_regnet_stacking.py
+oof/preds/exp68_regnet_stacking_summary.csv
+```
+
+### 해석
+
+RegNetY는 새 CNN family로서 오류 방향 다양성은 제공했지만, 현재 public 결과 기반 보호 규칙 안에서는 제출 가능한 low-change 후보를 만들지 못했다. 따라서 RegNetY 계열은 당장 제출 후보로 쓰기보다, 이후 더 넓은 OOF pool에서 feature importance를 보고 선택적으로 사용하는 편이 낫다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3926,6 +4045,17 @@ meta-CV는 EXP-56보다 약간 높고 변경 수도 1개라 제출 후보로는 
   - 보호 샘플 7개와 `test_0188/test_0568=0` 모두 유지
   - 제출 결과 leaderboard score `0.9567307692`
   - EXP-56 최고점보다 하락했으므로 `test_0141=1` 방향을 우선 유지
+- EXP-67 RegNetY-3.2GF 5-fold OOF 완료
+  - OOF accuracy `0.96166`, recall `0.95768`
+  - confusion matrix `[[1305, 36], [164, 3711]]`
+  - test mean label 0/1: `273/351`
+  - EXP-56 대비 변경 샘플 69개
+  - 단독 mean은 FN이 많고 보호 샘플 일부를 깨서 제출 제외
+- EXP-68 RegNetY 포함 OOF stacking 완료
+  - 최고 meta-CV accuracy `0.98735`
+  - 보호 샘플 8개 유지 candidate 0개
+  - 제출 파일 없음
+  - RegNetY는 현재 guardrail 안에서는 제출 후보를 만들지 못함
 
 ## 리더보드 제출 기록
 
