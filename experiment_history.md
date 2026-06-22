@@ -87,6 +87,7 @@
 | EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
 | EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 0.9551282051 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | test_0188/test_0568 0->1 변경 후 하락 |
 | EXP-65 | ConvNeXt V2 Tiny 5-fold OOF | timm ConvNeXt V2 Tiny, stage3+head fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97680 OOF | 미제출 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | 단독 mean은 보호 샘플 다수 1로 변경해 제출 보류, stacking diversity 후보 |
+| EXP-66 | ConvNeXt V2 포함 OOF stacking | EXP-65 ConvNeXt V2 OOF를 기존 ConvNeXt/EfficientNet OOF feature에 제한적으로 추가 | - | - | - | RidgeClassifier alpha=10 | 0.98696 meta-CV | 제출 대기 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | EXP-56 대비 test_0141만 1->0 변경, 보호 샘플 7개 유지 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3687,6 +3688,85 @@ EXP-65 ConvNeXt V2 Tiny는 학습 자체는 안정적으로 완료되었지만, 
 
 따라서 EXP-65 단독 mean 제출은 하지 않는다. 다만 ConvNeXt V2가 기존 모델과 다른 방향으로 판단하는 샘플이 많기 때문에, EXP-66에서는 stacking feature로 제한적으로 넣어 보고 보호 샘플 조건을 유지하는 후보만 검토한다.
 
+## EXP-66. ConvNeXt V2 포함 OOF stacking
+
+### 목적
+
+EXP-65 ConvNeXt V2 Tiny 단독 mean은 보호 샘플을 많이 깨서 제출 후보로 부적절했다. 하지만 기존 ConvNeXt/EfficientNet 계열과 다른 오류 방향을 가질 수 있으므로, 단독 예측이 아니라 stacking feature로 제한적으로 넣어 추가 정보가 되는지 확인했다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 추가 feature:
+  - 기존 ConvNeXt OOF probability
+  - ConvNeXt seed123 OOF probability
+  - EfficientNet-B0 OOF probability
+  - ConvNeXt V2 Tiny OOF probability
+  - core/all mean, std, ConvNeXt V2와 core mean 차이
+- meta-model: RidgeClassifier / LogisticRegression 탐색
+- 제출 후보 필터:
+  - EXP-56 대비 변경 수 1~6개
+  - 보호 샘플 7개 유지
+  - `test_0188`, `test_0568`을 동시에 1로 바꾸는 후보 제외
+  - test label 1 개수 394~400
+  - meta-CV가 EXP-56 기준에서 크게 낮지 않을 것
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| candidate count | 6 |
+| unique submission count | 1 |
+| best meta-CV accuracy | 0.98696 |
+| best meta-CV precision | 0.99377 |
+| best meta-CV recall | 0.98865 |
+| best meta-CV F1 | 0.99120 |
+| best meta-CV confusion matrix | `[[1317, 24], [44, 3831]]` |
+| test label 0/1 | 229/395 |
+| EXP-56 대비 변경 수 | 1 |
+
+1순위 후보:
+
+```text
+oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv
+```
+
+EXP-56 대비 변경 샘플:
+
+| sample | EXP-56 | EXP-66 | decision score |
+|---|---:|---:|---:|
+| `test_0141.png` | 1 | 0 | 0.08557 |
+
+보호 샘플 확인:
+
+| sample | EXP-66 label |
+|---|---:|
+| `test_0025.png` | 0 |
+| `test_0539.png` | 0 |
+| `test_0244.png` | 0 |
+| `test_0490.png` | 0 |
+| `test_0201.png` | 1 |
+| `test_0222.png` | 1 |
+| `test_0504.png` | 0 |
+| `test_0188.png` | 0 |
+| `test_0568.png` | 0 |
+
+### 저장 파일
+
+```text
+scripts/run_exp66_convnextv2_stacking.py
+oof/preds/exp66_convnextv2_stacking_summary.csv
+oof/preds/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_test_scores.csv
+oof/preds/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_changed_vs_current_best.csv
+oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv
+```
+
+### 해석
+
+EXP-66은 ConvNeXt V2를 단독 후보로 쓰지 않고 보조 feature로만 사용했을 때 의미가 있는지 확인한 실험이다. 결과적으로 보호 샘플 7개를 모두 유지하면서 EXP-56 대비 `test_0141` 하나만 1에서 0으로 바꾸는 후보가 생성되었다.
+
+meta-CV는 EXP-56보다 약간 높고 변경 수도 1개라 제출 후보로는 합리적이다. 다만 public에서 이미 검증된 샘플이 아니라 새로운 1개 변경이므로, 제출하더라도 기대 개선 폭은 최대 1샘플 수준이며 하락 가능성도 있다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3839,6 +3919,12 @@ EXP-65 ConvNeXt V2 Tiny는 학습 자체는 안정적으로 완료되었지만, 
   - EXP-56 대비 변경 샘플 30개
   - 보호 샘플 다수를 1로 바꿔 단독 mean 제출은 보류
   - 다음 단계는 EXP-66에서 protected stacking feature로 제한 사용
+- EXP-66 ConvNeXt V2 포함 OOF stacking 완료
+  - 1순위 후보: `oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv`
+  - meta-CV accuracy `0.98696`
+  - EXP-56 대비 `test_0141` 하나만 1->0 변경
+  - 보호 샘플 7개와 `test_0188/test_0568=0` 모두 유지
+  - 제출 후보로는 합리적이나 기대 개선 폭은 최대 1샘플 수준
 
 ## 리더보드 제출 기록
 

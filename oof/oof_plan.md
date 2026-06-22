@@ -299,3 +299,29 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0201=1`
     - `test_0222=1`
   - 다음 작업: EXP-66에서 ConvNeXt V2 feature를 낮은 가중치/제약 조건으로 stacking에 추가하고, 보호 샘플을 모두 유지하는 후보만 검토.
+- EXP-66 ConvNeXt V2 포함 OOF stacking 완료.
+  - 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+  - 추가 정보원: EXP-65 ConvNeXt V2 Tiny OOF/test probability
+  - 탐색 feature:
+    - 기존 ConvNeXt, ConvNeXt seed123, EfficientNet-B0 probability
+    - ConvNeXt V2 probability
+    - core/all probability mean, std
+    - ConvNeXt V2와 core mean 차이
+  - 최종 candidate 수: 6
+  - unique submission 수: 1
+  - 1순위 후보: `oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv`
+  - meta-CV accuracy: 0.98696
+  - meta-CV confusion matrix: `[[1317, 24], [44, 3831]]`
+  - test label 0/1: 229/395
+  - EXP-56 대비 변경 1개:
+    - `test_0141`: 1->0
+  - 보호 샘플 7개 유지:
+    - `test_0025=0`
+    - `test_0539=0`
+    - `test_0244=0`
+    - `test_0490=0`
+    - `test_0201=1`
+    - `test_0222=1`
+    - `test_0504=0`
+  - EXP-58에서 하락한 방향인 `test_0188=1`, `test_0568=1` 동시 변경도 피함.
+  - 판단: 제출 후보로는 합리적이지만, public에서 검증되지 않은 `test_0141` 단일 변경이므로 기대 개선 폭은 최대 1샘플 수준.
