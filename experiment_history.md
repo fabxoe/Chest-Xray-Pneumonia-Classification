@@ -85,7 +85,7 @@
 | EXP-55 | ConvNeXt seed OOF stacking | EXP-54 seed123 + EfficientNet/기존 ConvNeXt OOF 기반 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | test_0222만 1->0 변경했지만 하락 |
 | EXP-56 | 보호 샘플 기반 low-change search | EXP-55 결과 반영, test_0222=1까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9583333333 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | test_0504만 1->0 변경해 +1샘플 개선 |
 | EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
-| EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 미제출 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | EXP-56 대비 test_0188/test_0568만 0->1 변경 |
+| EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 0.9551282051 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | test_0188/test_0568 0->1 변경 후 하락 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3605,7 +3605,9 @@ oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv
 
 ### 해석
 
-EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-56 대비 두 샘플만 `0->1`로 바꾼다. 두 샘플이 모두 맞으면 public 기준 최대 `+2/624` 개선 가능성이 있지만, 둘 다 틀리면 `-2/624` 하락할 수 있다. meta-CV accuracy는 EXP-56보다 약간 낮지만 recall이 높아진 후보이므로, 제출 우선순위는 높지만 EXP-56을 대체할 확정 후보로 보지는 않는다.
+EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-56 대비 두 샘플만 `0->1`로 바꾼다. 두 샘플이 모두 맞으면 public 기준 최대 `+2/624` 개선 가능성이 있었지만, 실제 제출 결과 leaderboard score는 `0.9551282051`로 하락했다.
+
+따라서 public 기준에서는 `test_0188` 또는 `test_0568` 중 최소 하나 이상은 `0`을 유지하는 편이 유리했을 가능성이 높다. EXP-58 결과는 calibration 자체가 무효라는 뜻이라기보다는, 현재 보호 샘플을 유지하면서 recall을 더 올리는 방향이 public에서는 과한 FP 증가로 이어질 수 있음을 보여준다. 현재 최고 후보는 계속 EXP-56이다.
 
 ## 데일리 로그
 
@@ -3740,6 +3742,9 @@ EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-
   - meta-CV accuracy `0.98639`
   - EXP-56 현재 최고 대비 `test_0188`, `test_0568` 두 개만 0->1 변경
   - 보호 샘플 7개 모두 유지
+- `oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv` 제출 결과 leaderboard score `0.9551282051`
+  - EXP-56 최고점 `0.9583333333`보다 하락
+  - `test_0188`, `test_0568`을 모두 1로 바꾸는 후보는 이후 우선순위 하락
 
 ## 리더보드 제출 기록
 
@@ -3782,3 +3787,4 @@ EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-
 | 35 | oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet prob/margin low-change | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0201`까지 1->0으로 바꿔 하락 |
 | 36 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | OOF Ridge, ConvNeXt seed123+EfficientNet prob/rank | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0222` 1개만 1->0으로 바꿨지만 하락 |
 | 37 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet compact | 0.98658 meta-CV | 0.9583333333 | 19 | 최고점 갱신, `test_0504` 1개만 1->0 |
+| 38 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | Calibrated SVC, OOF margin stats | 0.98639 meta-CV | 0.9551282051 | 19 | `test_0188`, `test_0568` 두 개를 0->1로 바꿨지만 하락 |
