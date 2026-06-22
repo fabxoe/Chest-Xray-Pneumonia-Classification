@@ -274,3 +274,12 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
 - Lion optimizer 비교는 AdamW 기본선을 유지한 뒤, 8순위 실험 전에 추가한다. 우선 대상은 ConvNeXt-Tiny 또는 RegNetY처럼 단독 validation이 안정적인 모델로 한다.
 - 10시간 초과 장기 실험은 바로 실행하지 않고, 목적/기대 이득/근거/계산 비용/중단 조건/제출 기준을 먼저 작성한 뒤 검토한다.
 - 장기 실험 후보 우선순위는 ConvNeXt 계열 OOF seed 추가, ConvNeXt V2 Tiny, EfficientNetV2-S 재설계, DINOv2 feature extractor 순으로 본다.
+- EXP-65 ConvNeXt V2 Tiny 사전 검토 완료.
+  - `timm==1.0.27` 추가 및 pretrained loading 확인
+  - 권장 모델: `convnextv2_tiny.fcmae_ft_in22k_in1k`
+  - 224 입력, 파라미터 약 27.87M
+  - 1차 fine-tuning 범위: `stage3 + head`
+  - trainable params 약 15.49M
+  - 예상 비용: 5-fold OOF 약 40~70분
+  - 10시간 초과 장기 실험 게이트 대상은 아님
+  - 다음 작업: `scripts/run_exp65_convnextv2_tiny_oof.py` 작성 후 fold0 smoke test

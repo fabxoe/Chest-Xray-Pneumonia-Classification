@@ -86,6 +86,7 @@
 | EXP-56 | 보호 샘플 기반 low-change search | EXP-55 결과 반영, test_0222=1까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9583333333 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | test_0504만 1->0 변경해 +1샘플 개선 |
 | EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
 | EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 0.9551282051 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | test_0188/test_0568 0->1 변경 후 하락 |
+| EXP-65 | ConvNeXt V2 Tiny 사전 검토 | timm pretrained 로딩, trainable 범위, 계산 비용, 실행 기준 검토 | - | - | - | 사전 검토 | - | 제출 없음 | oof/exp65_convnextv2_tiny_precheck.md | stage3+head 5-fold OOF를 다음 실행 후보로 판단 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3747,6 +3748,13 @@ EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-
 - `oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv` 제출 결과 leaderboard score `0.9551282051`
   - EXP-56 최고점 `0.9583333333`보다 하락
   - `test_0188`, `test_0568`을 모두 1로 바꾸는 후보는 이후 우선순위 하락
+- EXP-65 ConvNeXt V2 Tiny 사전 검토 완료
+  - `timm==1.0.27` 추가
+  - `convnextv2_tiny.fcmae_ft_in22k_in1k` pretrained 로딩 성공
+  - 파라미터 약 27.87M, stage3+head trainable 약 15.49M
+  - 224 입력, ImageNet mean/std 사용 가능
+  - 예상 비용은 stage3+head 5-fold 기준 약 40~70분
+  - 다음 실행 후보는 fold0 smoke 후 5-fold OOF
 
 ## 리더보드 제출 기록
 
