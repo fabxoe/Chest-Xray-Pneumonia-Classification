@@ -87,7 +87,7 @@
 | EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
 | EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 0.9551282051 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | test_0188/test_0568 0->1 변경 후 하락 |
 | EXP-65 | ConvNeXt V2 Tiny 5-fold OOF | timm ConvNeXt V2 Tiny, stage3+head fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97680 OOF | 미제출 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | 단독 mean은 보호 샘플 다수 1로 변경해 제출 보류, stacking diversity 후보 |
-| EXP-66 | ConvNeXt V2 포함 OOF stacking | EXP-65 ConvNeXt V2 OOF를 기존 ConvNeXt/EfficientNet OOF feature에 제한적으로 추가 | - | - | - | RidgeClassifier alpha=10 | 0.98696 meta-CV | 제출 대기 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | EXP-56 대비 test_0141만 1->0 변경, 보호 샘플 7개 유지 |
+| EXP-66 | ConvNeXt V2 포함 OOF stacking | EXP-65 ConvNeXt V2 OOF를 기존 ConvNeXt/EfficientNet OOF feature에 제한적으로 추가 | - | - | - | RidgeClassifier alpha=10 | 0.98696 meta-CV | 0.9567307692 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | test_0141만 1->0 변경했지만 EXP-56보다 하락 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3765,7 +3765,7 @@ oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv
 
 EXP-66은 ConvNeXt V2를 단독 후보로 쓰지 않고 보조 feature로만 사용했을 때 의미가 있는지 확인한 실험이다. 결과적으로 보호 샘플 7개를 모두 유지하면서 EXP-56 대비 `test_0141` 하나만 1에서 0으로 바꾸는 후보가 생성되었다.
 
-meta-CV는 EXP-56보다 약간 높고 변경 수도 1개라 제출 후보로는 합리적이다. 다만 public에서 이미 검증된 샘플이 아니라 새로운 1개 변경이므로, 제출하더라도 기대 개선 폭은 최대 1샘플 수준이며 하락 가능성도 있다.
+meta-CV는 EXP-56보다 약간 높고 변경 수도 1개라 제출 후보로는 합리적이었다. 그러나 실제 leaderboard score는 `0.9567307692`로 EXP-56의 `0.9583333333`보다 낮았다. 따라서 public 기준에서는 `test_0141`을 1에서 0으로 바꾸는 방향이 이득이 아니었고, 최고 기준은 계속 EXP-56으로 유지한다.
 
 ## 데일리 로그
 
@@ -3924,7 +3924,8 @@ meta-CV는 EXP-56보다 약간 높고 변경 수도 1개라 제출 후보로는 
   - meta-CV accuracy `0.98696`
   - EXP-56 대비 `test_0141` 하나만 1->0 변경
   - 보호 샘플 7개와 `test_0188/test_0568=0` 모두 유지
-  - 제출 후보로는 합리적이나 기대 개선 폭은 최대 1샘플 수준
+  - 제출 결과 leaderboard score `0.9567307692`
+  - EXP-56 최고점보다 하락했으므로 `test_0141=1` 방향을 우선 유지
 
 ## 리더보드 제출 기록
 
@@ -3968,3 +3969,4 @@ meta-CV는 EXP-56보다 약간 높고 변경 수도 1개라 제출 후보로는 
 | 36 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | OOF Ridge, ConvNeXt seed123+EfficientNet prob/rank | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0222` 1개만 1->0으로 바꿨지만 하락 |
 | 37 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet compact | 0.98658 meta-CV | 0.9583333333 | 13 | 최고점 갱신, `test_0504` 1개만 1->0 |
 | 38 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | Calibrated SVC, OOF margin stats | 0.98639 meta-CV | 0.9551282051 | 19 | `test_0188`, `test_0568` 두 개를 0->1로 바꿨지만 하락 |
+| 39 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | ConvNeXt V2 포함 OOF Ridge stacking | 0.98696 meta-CV | 0.9567307692 | 13 | `test_0141` 1개만 1->0으로 바꿨지만 EXP-56보다 하락 |
