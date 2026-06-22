@@ -187,6 +187,7 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 변경 샘플: `test_0490` 1->0
   - 민감 샘플 3개 모두 0 유지
   - 제출 결과 leaderboard `0.9567307692`, EXP-51 대비 +1샘플 개선
+  - 당시 public leaderboard 최고 순위 14위
 - 2순위 후보: `oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv`
   - EXP-51 최고 대비 변경 2개
   - 변경 샘플: `test_0201`, `test_0490` 1->0

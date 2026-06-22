@@ -3712,6 +3712,7 @@ EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-
 - EXP-52 1순위 후보는 `oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv`
 - EXP-52 1순위 후보는 EXP-51 최고 대비 `test_0490` 하나만 1->0으로 변경
 - `oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv` 제출 결과 leaderboard score `0.9567307692`로 최고점 갱신
+- 당시 최고 순위는 public leaderboard 기준 14위였음
 - `oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv` 제출 결과 leaderboard score `0.9551282051`로 하락
 - EXP-52 결과를 바탕으로 `test_0490=0`, `test_0201=1`을 보호 조건에 추가
 - EXP-53 constraint low-change search 완료, 보호 샘플 5개를 유지하는 비중복 후보가 없어 제출 파일 없음
@@ -3784,7 +3785,7 @@ EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-
 | 31 | submissions/exp44_regnet_drop_resnet18_add_reg_alpha150_submit.csv | RegNetY 포함 Ridge stacking | 0.98659 | 0.9503205128 | 19 | 민감 샘플 3개는 유지했지만 EXP-26보다 하락 |
 | 32 | oof/submissions/exp51_logistic_cnx_eff_prob_rank_0p3_submit.csv | OOF Logistic, ConvNeXt+EfficientNet prob/rank | 0.98639 meta-CV | 0.9551282051 | 19 | 최고점 갱신, EXP-26 대비 +2샘플 |
 | 33 | oof/submissions/exp51_ridge_cnx_eff_prob_only_50_submit.csv | OOF Ridge, ConvNeXt+EfficientNet prob only | 0.98677 meta-CV | 0.9519230769 | 19 | EXP-26과 동점, meta-CV 최고가 public 최고는 아니었음 |
-| 34 | oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv | OOF Logistic, ConvNeXt+EfficientNet prob only low-change | 0.98658 meta-CV | 0.9567307692 | 19 | 최고점 갱신, EXP-51 대비 `test_0490` 1개만 1->0 |
+| 34 | oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv | OOF Logistic, ConvNeXt+EfficientNet prob only low-change | 0.98658 meta-CV | 0.9567307692 | 14 | 최고점 갱신, EXP-51 대비 `test_0490` 1개만 1->0 |
 | 35 | oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet prob/margin low-change | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0201`까지 1->0으로 바꿔 하락 |
 | 36 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | OOF Ridge, ConvNeXt seed123+EfficientNet prob/rank | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0222` 1개만 1->0으로 바꿨지만 하락 |
 | 37 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet compact | 0.98658 meta-CV | 0.9583333333 | 13 | 최고점 갱신, `test_0504` 1개만 1->0 |
