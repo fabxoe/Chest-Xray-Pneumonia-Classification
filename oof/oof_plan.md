@@ -283,3 +283,19 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 예상 비용: 5-fold OOF 약 40~70분
   - 10시간 초과 장기 실험 게이트 대상은 아님
   - 다음 작업: `scripts/run_exp65_convnextv2_tiny_oof.py` 작성 후 fold0 smoke test
+- EXP-65 ConvNeXt V2 Tiny stage3+head 5-fold OOF 완료.
+  - OOF accuracy: 0.97680
+  - OOF confusion matrix: `[[1299, 42], [79, 3796]]`
+  - test mean label 0/1: 208/416
+  - 총 학습 시간: 약 95.3분
+  - EXP-56 대비 test 변경 수: 30개
+  - 단독 mean은 다음 보호 방향을 깨므로 제출 보류:
+    - `test_0025=0`
+    - `test_0539=0`
+    - `test_0244=0`
+    - `test_0490=0`
+    - `test_0504=0`
+  - 유지한 보호 방향:
+    - `test_0201=1`
+    - `test_0222=1`
+  - 다음 작업: EXP-66에서 ConvNeXt V2 feature를 낮은 가중치/제약 조건으로 stacking에 추가하고, 보호 샘플을 모두 유지하는 후보만 검토.

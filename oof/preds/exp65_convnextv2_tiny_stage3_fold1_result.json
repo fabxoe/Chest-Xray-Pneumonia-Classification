@@ -1,0 +1,194 @@
+{
+  "exp_id": "exp65",
+  "model": "convnextv2_tiny_stage3",
+  "timm_model": "convnextv2_tiny.fcmae_ft_in22k_in1k",
+  "fold": 1,
+  "seed": 43,
+  "img_size": 224,
+  "epochs": 6,
+  "lr": 5e-05,
+  "best_epoch": 5,
+  "history": [
+    {
+      "loss": 0.09238850488706937,
+      "accuracy": 0.9606903163950143,
+      "precision": 0.9657360406091371,
+      "recall": 0.9819354838709677,
+      "f1": 0.9737683941138836,
+      "confusion_matrix": [
+        [
+          241,
+          27
+        ],
+        [
+          14,
+          761
+        ]
+      ],
+      "epoch": 1,
+      "train_loss": 0.18475098177172886
+    },
+    {
+      "loss": 0.06511187860103769,
+      "accuracy": 0.975071907957814,
+      "precision": 0.9921156373193167,
+      "recall": 0.9741935483870968,
+      "f1": 0.9830729166666666,
+      "confusion_matrix": [
+        [
+          262,
+          6
+        ],
+        [
+          20,
+          755
+        ]
+      ],
+      "epoch": 2,
+      "train_loss": 0.09223081518465413
+    },
+    {
+      "loss": 0.0869893679236377,
+      "accuracy": 0.9683604985618408,
+      "precision": 0.9973190348525469,
+      "recall": 0.96,
+      "f1": 0.9783037475345168,
+      "confusion_matrix": [
+        [
+          266,
+          2
+        ],
+        [
+          31,
+          744
+        ]
+      ],
+      "epoch": 3,
+      "train_loss": 0.07500554412101673
+    },
+    {
+      "loss": 0.08771353622153759,
+      "accuracy": 0.9693192713326941,
+      "precision": 0.9986577181208054,
+      "recall": 0.96,
+      "f1": 0.9789473684210527,
+      "confusion_matrix": [
+        [
+          267,
+          1
+        ],
+        [
+          31,
+          744
+        ]
+      ],
+      "epoch": 4,
+      "train_loss": 0.05986296560587627
+    },
+    {
+      "loss": 0.06517577867987115,
+      "accuracy": 0.9769894534995206,
+      "precision": 0.9960369881109643,
+      "recall": 0.9729032258064516,
+      "f1": 0.9843342036553525,
+      "confusion_matrix": [
+        [
+          265,
+          3
+        ],
+        [
+          21,
+          754
+        ]
+      ],
+      "epoch": 5,
+      "train_loss": 0.050608909576631354
+    },
+    {
+      "loss": 0.17060287101042465,
+      "accuracy": 0.9434324065196549,
+      "precision": 1.0,
+      "recall": 0.9238709677419354,
+      "f1": 0.960429242119383,
+      "confusion_matrix": [
+        [
+          268,
+          0
+        ],
+        [
+          59,
+          716
+        ]
+      ],
+      "epoch": 6,
+      "train_loss": 0.04160255438949678
+    }
+  ],
+  "final_metrics": {
+    "loss": 0.06517577867987115,
+    "accuracy": 0.9769894534995206,
+    "precision": 0.9960369881109643,
+    "recall": 0.9729032258064516,
+    "f1": 0.9843342036553525,
+    "confusion_matrix": [
+      [
+        265,
+        3
+      ],
+      [
+        21,
+        754
+      ]
+    ]
+  },
+  "train_size": 4173,
+  "valid_size": 1043,
+  "test_pred_counts": {
+    "0": 214,
+    "1": 410
+  },
+  "watched_samples": {
+    "test_0025.png": {
+      "pred": 1,
+      "prob_1": 0.9098026752471924
+    },
+    "test_0539.png": {
+      "pred": 1,
+      "prob_1": 0.9898120760917664
+    },
+    "test_0244.png": {
+      "pred": 1,
+      "prob_1": 0.9986012578010559
+    },
+    "test_0490.png": {
+      "pred": 1,
+      "prob_1": 0.9911386370658875
+    },
+    "test_0201.png": {
+      "pred": 1,
+      "prob_1": 0.992591381072998
+    },
+    "test_0222.png": {
+      "pred": 1,
+      "prob_1": 0.8903520107269287
+    },
+    "test_0504.png": {
+      "pred": 1,
+      "prob_1": 0.9279203414916992
+    },
+    "test_0188.png": {
+      "pred": 1,
+      "prob_1": 0.611967921257019
+    },
+    "test_0568.png": {
+      "pred": 0,
+      "prob_1": 0.049986351281404495
+    }
+  },
+  "paths": {
+    "model": "oof/models/exp65_convnextv2_tiny_stage3_fold1.pt",
+    "oof_probs": "oof/preds/exp65_convnextv2_tiny_stage3_fold1_oof_probs.csv",
+    "test_probs": "oof/preds/exp65_convnextv2_tiny_stage3_fold1_test_probs.csv"
+  },
+  "elapsed_sec": 1057.4
+}

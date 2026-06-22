@@ -86,7 +86,7 @@
 | EXP-56 | 보호 샘플 기반 low-change search | EXP-55 결과 반영, test_0222=1까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9583333333 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | test_0504만 1->0 변경해 +1샘플 개선 |
 | EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
 | EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 0.9551282051 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | test_0188/test_0568 0->1 변경 후 하락 |
-| EXP-65 | ConvNeXt V2 Tiny 사전 검토 | timm pretrained 로딩, trainable 범위, 계산 비용, 실행 기준 검토 | - | - | - | 사전 검토 | - | 제출 없음 | oof/exp65_convnextv2_tiny_precheck.md | stage3+head 5-fold OOF를 다음 실행 후보로 판단 |
+| EXP-65 | ConvNeXt V2 Tiny 5-fold OOF | timm ConvNeXt V2 Tiny, stage3+head fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97680 OOF | 미제출 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | 단독 mean은 보호 샘플 다수 1로 변경해 제출 보류, stacking diversity 후보 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3610,6 +3610,83 @@ EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-
 
 따라서 public 기준에서는 `test_0188` 또는 `test_0568` 중 최소 하나 이상은 `0`을 유지하는 편이 유리했을 가능성이 높다. EXP-58 결과는 calibration 자체가 무효라는 뜻이라기보다는, 현재 보호 샘플을 유지하면서 recall을 더 올리는 방향이 public에서는 과한 FP 증가로 이어질 수 있음을 보여준다. 현재 최고 후보는 계속 EXP-56이다.
 
+## EXP-65. ConvNeXt V2 Tiny 5-fold OOF
+
+### 목적
+
+ConvNeXt V1, EfficientNet-B0, ResNet18과 다른 오류 방향을 가진 일반화 모델을 확보하기 위해 ConvNeXt V2 Tiny를 OOF 모델 pool에 추가했다. 목적은 단독 제출이 아니라 이후 stacking feature로 사용하는 것이다.
+
+### 설정
+
+- 모델: `convnextv2_tiny.fcmae_ft_in22k_in1k`
+- 구현: `timm==1.0.27`
+- 입력 크기: 224
+- fine-tuning 범위: `stage3 + head`
+- trainable params: 약 15.49M
+- optimizer: AdamW
+- LR: `5e-5`
+- loss: Weighted CrossEntropyLoss
+- augmentation:
+  - Resize 224
+  - RandomHorizontalFlip 0.5
+  - RandomRotation 7
+  - ImageNet mean/std normalize
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| OOF accuracy | 0.97680 |
+| OOF precision | 0.98906 |
+| OOF recall | 0.97961 |
+| OOF F1 | 0.98431 |
+| OOF confusion matrix | `[[1299, 42], [79, 3796]]` |
+| test mean label 0/1 | 208/416 |
+| 총 학습 시간 | 약 95.3분 |
+
+Fold별 결과:
+
+| fold | best epoch | valid accuracy | recall | confusion matrix | test label 0/1 |
+|---:|---:|---:|---:|---|---:|
+| 0 | 6 | 0.98180 | 0.98452 | `[[262, 7], [12, 763]]` | 226/398 |
+| 1 | 5 | 0.97699 | 0.97290 | `[[265, 3], [21, 754]]` | 214/410 |
+| 2 | 2 | 0.96836 | 0.97677 | `[[253, 15], [18, 757]]` | 185/439 |
+| 3 | 5 | 0.97987 | 0.98581 | `[[258, 10], [11, 764]]` | 213/411 |
+| 4 | 5 | 0.97699 | 0.97806 | `[[261, 7], [17, 758]]` | 206/418 |
+
+보호/관찰 샘플 test mean:
+
+| sample | pred | prob_1 | 해석 |
+|---|---:|---:|---|
+| `test_0025` | 1 | 0.6723 | 기존 보호 방향 0을 깨므로 단독 제출에 불리 |
+| `test_0539` | 1 | 0.7343 | 기존 보호 방향 0을 깨므로 단독 제출에 불리 |
+| `test_0244` | 1 | 0.9960 | 기존 보호 방향 0을 강하게 깨므로 단독 제출에 불리 |
+| `test_0490` | 1 | 0.9784 | EXP-52에서 확인된 0 방향을 깨므로 단독 제출에 불리 |
+| `test_0201` | 1 | 0.9881 | 보호 방향 유지 |
+| `test_0222` | 1 | 0.7316 | 보호 방향 유지 |
+| `test_0504` | 1 | 0.7145 | EXP-56에서 확인된 0 방향을 깨므로 단독 제출에 불리 |
+| `test_0188` | 1 | 0.5489 | EXP-58 하락 후보와 같은 방향 |
+| `test_0568` | 0 | 0.2983 | EXP-58 하락 후보와 반대 방향 |
+
+### 저장 파일
+
+```text
+scripts/run_exp65_convnextv2_tiny_oof.py
+oof/exp65_convnextv2_tiny_precheck.md
+oof/preds/exp65_convnextv2_tiny_stage3_oof_probs.csv
+oof/preds/exp65_convnextv2_tiny_stage3_test_probs_by_fold.csv
+oof/preds/exp65_convnextv2_tiny_stage3_test_probs_mean.csv
+oof/preds/exp65_convnextv2_tiny_stage3_combined_result.json
+oof/preds/exp65_convnextv2_tiny_stage3_changed_vs_exp56.csv
+oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv
+```
+
+### 해석
+
+EXP-65 ConvNeXt V2 Tiny는 학습 자체는 안정적으로 완료되었지만, OOF accuracy가 기존 ConvNeXt V1 OOF보다 낮고 test mean이 label 1을 416개로 많이 예측한다. 특히 `test_0025`, `test_0244`, `test_0490`, `test_0504`, `test_0539`처럼 public 결과 기반 보호 방향이 있는 샘플을 다수 1로 바꾼다.
+
+따라서 EXP-65 단독 mean 제출은 하지 않는다. 다만 ConvNeXt V2가 기존 모델과 다른 방향으로 판단하는 샘플이 많기 때문에, EXP-66에서는 stacking feature로 제한적으로 넣어 보고 보호 샘플 조건을 유지하는 후보만 검토한다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3755,6 +3832,13 @@ EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-
   - 224 입력, ImageNet mean/std 사용 가능
   - 예상 비용은 stage3+head 5-fold 기준 약 40~70분
   - 다음 실행 후보는 fold0 smoke 후 5-fold OOF
+- EXP-65 ConvNeXt V2 Tiny stage3+head 5-fold OOF 완료
+  - OOF accuracy `0.97680`, recall `0.97961`
+  - confusion matrix `[[1299, 42], [79, 3796]]`
+  - test mean label 0/1: `208/416`
+  - EXP-56 대비 변경 샘플 30개
+  - 보호 샘플 다수를 1로 바꿔 단독 mean 제출은 보류
+  - 다음 단계는 EXP-66에서 protected stacking feature로 제한 사용
 
 ## 리더보드 제출 기록
 
