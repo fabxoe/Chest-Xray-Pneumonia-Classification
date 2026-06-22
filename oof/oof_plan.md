@@ -251,6 +251,17 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 최종 candidate 수: 0
   - 제출 파일 없음
   - 결론: 현재 ConvNeXt/ConvNeXt seed123/EfficientNet-B0 OOF feature 공간에서는 추가 low-change 후보가 소진된 것으로 판단. 다음은 calibration 짧은 확인 또는 새 OOF 정보원 추가가 우선.
+- EXP-58 calibrated OOF stacking 완료.
+  - Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용
+  - 후보: `oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv`
+  - meta-CV accuracy: 0.98639
+  - recall: 0.99174
+  - test label 0/1: 226/398
+  - 현재 최고 EXP-56 대비 변경 2개:
+    - `test_0188`: 0->1
+    - `test_0568`: 0->1
+  - 보호 샘플 7개 모두 유지
+  - 제출 판단: 두 샘플이 모두 맞으면 +2샘플 가능, 하나만 맞으면 동점, 둘 다 틀리면 -2샘플. 중간 리스크 후보.
 
 ## 추가 우선순위 메모
 

@@ -85,6 +85,7 @@
 | EXP-55 | ConvNeXt seed OOF stacking | EXP-54 seed123 + EfficientNet/기존 ConvNeXt OOF 기반 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98677 meta-CV | 0.9551282051 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | test_0222만 1->0 변경했지만 하락 |
 | EXP-56 | 보호 샘플 기반 low-change search | EXP-55 결과 반영, test_0222=1까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9583333333 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | test_0504만 1->0 변경해 +1샘플 개선 |
 | EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
+| EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 미제출 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | EXP-56 대비 test_0188/test_0568만 0->1 변경 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3557,6 +3558,55 @@ oof/preds/exp57_protected_low_change_summary.csv
 
 EXP-57에서는 meta-CV가 높은 후보들이 존재했지만, 상위 후보들이 보호 샘플 중 하나 이상을 깨서 제출 후보에서 제외되었다. 따라서 현재 ConvNeXt/ConvNeXt seed123/EfficientNet-B0 OOF feature 공간 안에서는 public 결과로 확인된 guardrail을 유지하면서 추가로 제출할 만한 low-change 후보가 없다. 다음 단계는 같은 공간의 threshold 미세 탐색보다 calibration을 짧게 확인하거나, 새 정보원 OOF를 추가하는 방향이 더 타당하다.
 
+## EXP-58. Calibrated OOF stacking
+
+### 목적
+
+EXP-57에서 같은 feature 공간의 단순 low-change search 후보가 나오지 않았으므로, meta-model score를 calibration해서 decision boundary 주변 샘플을 다르게 정렬할 수 있는지 확인했다. 단, EXP-56 이후 확인된 보호 샘플 7개는 모두 유지하고, 현재 최고 대비 변경 수가 작은 후보만 저장했다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 입력 feature:
+  - 기존 ConvNeXt OOF
+  - ConvNeXt seed123 OOF
+  - EfficientNet-B0 OOF
+- meta-model:
+  - RidgeClassifier + calibration
+  - LogisticRegression + calibration
+  - LinearSVC + calibration
+- calibration:
+  - sigmoid
+  - isotonic
+- 보호 샘플:
+  - `test_0025=0`
+  - `test_0539=0`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0201=1`
+  - `test_0222=1`
+  - `test_0504=0`
+
+### 결과
+
+| 후보 파일 | meta-CV accuracy | recall | FP/FN | test label 0/1 | 현재 최고 대비 변경 | 변경 샘플 |
+|---|---:|---:|---:|---:|---:|---|
+| `oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv` | 0.98639 | 0.99174 | 39/32 | 226/398 | 2 | `test_0188`: 0->1, `test_0568`: 0->1 |
+
+### 저장 파일
+
+```text
+scripts/run_exp58_calibrated_stacking.py
+oof/preds/exp58_calibrated_stacking_summary.csv
+oof/preds/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_test_scores.csv
+oof/preds/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_changed_vs_current_best.csv
+oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv
+```
+
+### 해석
+
+EXP-58 후보는 보호 샘플 7개를 모두 유지하면서 현재 최고 EXP-56 대비 두 샘플만 `0->1`로 바꾼다. 두 샘플이 모두 맞으면 public 기준 최대 `+2/624` 개선 가능성이 있지만, 둘 다 틀리면 `-2/624` 하락할 수 있다. meta-CV accuracy는 EXP-56보다 약간 낮지만 recall이 높아진 후보이므로, 제출 우선순위는 높지만 EXP-56을 대체할 확정 후보로 보지는 않는다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -3685,6 +3735,11 @@ EXP-57에서는 meta-CV가 높은 후보들이 존재했지만, 상위 후보들
   - 최고 meta-CV accuracy `0.98696`
   - 보호 샘플 7개를 모두 유지하는 비중복 후보 0개
   - 제출 파일 없음
+- EXP-58 calibrated OOF stacking 완료
+  - 1순위 후보: `oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv`
+  - meta-CV accuracy `0.98639`
+  - EXP-56 현재 최고 대비 `test_0188`, `test_0568` 두 개만 0->1 변경
+  - 보호 샘플 7개 모두 유지
 
 ## 리더보드 제출 기록
 
