@@ -94,6 +94,7 @@
 | EXP-70 | EfficientNetV2-S 재설계 5-fold OOF | `features[6:] + classifier`를 학습해 EXP-42보다 넓게 fine-tuning | 6 x 5 folds | AdamW | 2e-5 / 8e-5 | Weighted CrossEntropyLoss | 0.97642 OOF | 미제출 | oof/submissions/exp70_efficientnet_v2_s_wide_mean_submit.csv | EXP-42 대비 회복. 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
 | EXP-71 | EfficientNetV2-S 포함 OOF stacking | EXP-70 EfficientNetV2-S OOF를 기존 ConvNeXt/EfficientNet-B0 OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98888 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
 | EXP-72 | ConvNeXt-Tiny seed777 5-fold OOF | EXP-46과 동일 구조, 학습 seed만 777로 변경해 ConvNeXt seed diversity 확보 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98006 OOF | 미제출 | oof/submissions/exp72_convnext_tiny_seed777_mean_submit.csv | OOF는 강하지만 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
+| EXP-73 | ConvNeXt seed777 포함 OOF stacking | EXP-72 seed777 OOF를 ConvNeXt seed123/EfficientNet-B0 OOF pool에 추가 | - | - | - | Ridge/Logistic | 0.98754 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4122,6 +4123,51 @@ fold별 best accuracy:
 
 seed777 ConvNeXt는 OOF accuracy 0.98006으로 강한 편이며, seed diversity 확보 목적은 달성했다. 다만 단독 mean은 EXP-56 대비 20개가 바뀌고 보호 샘플 다수를 1로 바꾸므로 제출하지 않는다. 다음 단계에서는 EXP-72를 기존 ConvNeXt seed123, EfficientNet-B0와 함께 stacking에 넣되, 보호 샘플을 유지하는 후보만 검토한다.
 
+## EXP-73. ConvNeXt seed777 포함 OOF stacking
+
+### 목적
+
+EXP-72 seed777 ConvNeXt는 단독 mean 제출은 위험했지만 OOF accuracy가 0.98006으로 강했다. 따라서 기존 ConvNeXt seed42, ConvNeXt seed123, EfficientNet-B0 OOF pool에 seed777을 추가해, 보호 샘플을 유지하면서 새 low-change 후보가 나오는지 확인했다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 추가 정보원: EXP-72 ConvNeXt-Tiny seed777 OOF/test probability
+- meta-model: RidgeClassifier / LogisticRegression
+- feature 조합:
+  - ConvNeXt seed 조합 probability/rank/margin
+  - ConvNeXt seed + EfficientNet-B0 compact feature
+  - all probability stats
+- 필터:
+  - 보호 샘플 8개 유지
+  - `test_0188`, `test_0568` 동시 1 제외
+  - test label 1 개수 394~400
+  - EXP-56 대비 변경 수 1~8개
+  - meta-CV floor 유지
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 20592 |
+| 최고 meta-CV accuracy | 0.98754 |
+| 보호 샘플 유지 row 수 | 21 |
+| 보호 샘플 유지 비중복 candidate | 0 |
+| 저장된 제출 파일 | 0 |
+
+상위 후보들은 `test_0504`, `test_0490`, `test_0539`를 자주 1로 바꿔 보호 조건을 통과하지 못했다. 보호 샘플을 모두 유지한 row는 21개였지만 모두 EXP-56과 test 예측이 동일했다.
+
+### 저장 파일
+
+```text
+scripts/run_exp73_convnext_seed777_stacking.py
+oof/preds/exp73_convnext_seed_stacking_summary.csv
+```
+
+### 판단
+
+ConvNeXt seed777은 OOF 정보원으로는 강하지만, 현재 guardrail 안에서는 새 제출 후보를 만들지 못했다. seed 추가가 완전히 무의미한 것은 아니지만, 현재 보호 샘플 기반 low-change 영역은 상당히 소진된 것으로 보인다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4321,6 +4367,13 @@ seed777 ConvNeXt는 OOF accuracy 0.98006으로 강한 편이며, seed diversity 
   - EXP-56 대비 변경 수 20개
   - 보호 샘플 다수를 1로 바꾸므로 단독 제출 제외
   - 다음 단계는 EXP-72 포함 ConvNeXt seed stacking
+- EXP-73 ConvNeXt seed777 포함 OOF stacking 완료
+  - 탐색 row 수 `20592`
+  - 최고 meta-CV accuracy `0.98754`
+  - 보호 샘플 유지 row 수 21개
+  - 보호 샘플 유지 row는 모두 EXP-56과 동일 예측이라 비중복 candidate 0개
+  - 제출 파일 없음
+  - ConvNeXt seed 추가만으로는 현재 guardrail 안에서 새 제출 후보를 만들지 못함
 
 ## 리더보드 제출 기록
 

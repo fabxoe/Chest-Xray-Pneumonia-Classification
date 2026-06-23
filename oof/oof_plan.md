@@ -409,3 +409,11 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0141=1`
     - `test_0568=0`
   - 해석: 단독 제출 후보는 아니지만, OOF가 강하므로 EXP-73에서 ConvNeXt seed ensemble/stacking feature로 검토한다.
+- EXP-73 ConvNeXt seed777 포함 OOF stacking 완료.
+  - 추가 정보원: EXP-72 ConvNeXt seed777 OOF/test probability
+  - 탐색 row 수: 20592
+  - 최고 meta-CV accuracy: 0.98754
+  - 보호 샘플 8개 유지 row 수: 21
+  - 보호 샘플 8개 유지 비중복 candidate 수: 0
+  - 제출 파일 없음
+  - 해석: seed777 추가 후에도 보호 샘플을 유지한 row는 모두 EXP-56과 동일 예측이었다. 상위 후보는 `test_0504`, `test_0490`, `test_0539`를 자주 1로 바꿔 public guardrail과 충돌한다.
