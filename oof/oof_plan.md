@@ -438,3 +438,24 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0490=1`
     - `test_0141=0`
   - 해석: fold0 기준으로 AdamW보다 소폭 좋고 FN을 줄였으므로 Lion 5-fold OOF 확장 후보로 남긴다. 단, fold0 단독 제출은 제외한다.
+- EXP-78 ConvNeXt-Tiny Lion 5-fold OOF 완료.
+  - 목적: EXP-77 fold0 smoke를 5-fold로 확장해 optimizer diversity 확보
+  - 복구 메모: IDE/Docker 메모리 문제로 fold2 진행 중 중단되었고, 기존 fold0/fold1 산출물을 유지한 채 fold2~4만 재실행해 병합했다.
+  - 설정: ConvNeXt-Tiny `features[-1]+classifier`, Lion LR 2e-5, weight decay 1e-4
+  - OOF accuracy: 0.98140
+  - OOF confusion matrix: `[[1294, 47], [50, 3825]]`
+  - test label 0/1: 204/420
+  - EXP-56 대비 변경 수: 24개
+  - 유지한 보호 방향:
+    - `test_0025=0`
+    - `test_0201=1`
+    - `test_0222=1`
+    - `test_0141=1`
+    - `test_0568=0`
+  - 깨진 보호 방향:
+    - `test_0539=1`
+    - `test_0244=1`
+    - `test_0490=1`
+    - `test_0504=1`
+    - `test_0188=1`
+  - 해석: 단독 OOF는 강하지만, public guardrail과 충돌하는 `0 -> 1` 변경이 많다. 단독 제출은 제외하고 다음에는 기존 OOF pool에 낮은 가중치의 stacking feature로만 추가한다.

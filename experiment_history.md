@@ -96,6 +96,7 @@
 | EXP-72 | ConvNeXt-Tiny seed777 5-fold OOF | EXP-46과 동일 구조, 학습 seed만 777로 변경해 ConvNeXt seed diversity 확보 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98006 OOF | 미제출 | oof/submissions/exp72_convnext_tiny_seed777_mean_submit.csv | OOF는 강하지만 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
 | EXP-73 | ConvNeXt seed777 포함 OOF stacking | EXP-72 seed777 OOF를 ConvNeXt seed123/EfficientNet-B0 OOF pool에 추가 | - | - | - | Ridge/Logistic | 0.98754 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
 | EXP-77 | ConvNeXt-Tiny Lion fold0 smoke | EXP-45와 같은 fold0 조건에서 optimizer만 Lion으로 변경 | 6 fold0 | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98563 fold0 | 미제출 | oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv | AdamW fold0보다 소폭 개선. 5-fold 확장 후보 |
+| EXP-78 | ConvNeXt-Tiny Lion 5-fold OOF | EXP-77을 5-fold로 확장, optimizer만 Lion 유지 | 6 x 5 folds | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98140 OOF | 미제출 | oof/submissions/exp78_convnext_tiny_lion_mean_submit.csv | 단독 mean은 보호 샘플 다수를 1로 바꿔 제출 제외. stacking 보조 feature 후보 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4232,6 +4233,82 @@ oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv
 ### 판단
 
 Lion fold0는 AdamW fold0보다 accuracy와 recall이 소폭 개선되었다. 특히 FN이 13개에서 11개로 줄어, optimizer 변경이 단순 노이즈만은 아닐 가능성이 있다. 다만 `test_0539`, `test_0490`, `test_0141` 보호 방향을 깨므로 fold0 단독 제출은 제외한다. 다음 단계에서는 Lion 5-fold OOF 확장을 검토할 수 있다.
+
+## EXP-78. ConvNeXt-Tiny Lion 5-fold OOF
+
+### 목적
+
+EXP-77 fold0 smoke에서 Lion이 AdamW보다 FN을 소폭 줄였으므로, optimizer 변경이 5-fold 전체에서도 유효한지 확인했다. 목표는 단독 제출보다 ConvNeXt 계열의 optimizer diversity를 확보해 이후 stacking feature로 활용하는 것이다.
+
+### 복구 메모
+
+IDE/Docker 메모리 문제로 fold2 진행 중 세션이 중단되었다. 중단 전 fold0/fold1 산출물은 정상 저장되어 있었고, 스크립트를 fold2~4만 재실행한 뒤 fold0~4 전체를 병합하도록 수정해 복구했다.
+
+### 설정
+
+- 모델: ConvNeXt-Tiny ImageNet pretrained
+- fold: Stratified 5-fold
+- 학습 범위: 마지막 stage `features[-1] + classifier`
+- seed: 42
+- epoch: 6 per fold
+- optimizer: Lion
+- LR: 2e-5
+- weight decay: 1e-4
+- loss: class-weighted CrossEntropyLoss
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| OOF accuracy | 0.98140 |
+| OOF precision | 0.98786 |
+| OOF recall | 0.98710 |
+| OOF F1 | 0.98748 |
+| OOF confusion matrix | `[[1294, 47], [50, 3825]]` |
+| test label 0/1 | 204 / 420 |
+| EXP-56 대비 변경 수 | 24 |
+
+### Fold별 결과
+
+| fold | best epoch | accuracy | confusion matrix |
+|---:|---:|---:|---|
+| 0 | 5 | 0.98563 | `[[265, 4], [11, 764]]` |
+| 1 | 6 | 0.98082 | `[[261, 7], [13, 762]]` |
+| 2 | 5 | 0.97795 | `[[255, 13], [10, 765]]` |
+| 3 | 5 | 0.98370 | `[[261, 7], [10, 765]]` |
+| 4 | 6 | 0.97891 | `[[252, 16], [6, 769]]` |
+
+### 보호 샘플 확인
+
+| sample | EXP-78 pred | prob_1 | 판단 |
+|---|---:|---:|---|
+| test_0025 | 0 | 0.4047 | 유지 |
+| test_0539 | 1 | 0.8589 | 보호 방향 위반 |
+| test_0244 | 1 | 0.6251 | 보호 방향 위반 |
+| test_0490 | 1 | 0.9093 | 보호 방향 위반 |
+| test_0201 | 1 | 0.9014 | 유지 |
+| test_0222 | 1 | 0.9365 | 유지 |
+| test_0504 | 1 | 0.5993 | 보호 방향 위반 |
+| test_0141 | 1 | 0.7345 | 유지 |
+| test_0188 | 1 | 0.6572 | 보호 방향 위반 |
+| test_0568 | 0 | 0.1666 | 유지 |
+
+### 저장 파일
+
+```text
+scripts/run_exp78_convnext_lion_oof.py
+oof/preds/exp78_convnext_tiny_lion_oof_probs.csv
+oof/preds/exp78_convnext_tiny_lion_test_probs_by_fold.csv
+oof/preds/exp78_convnext_tiny_lion_test_probs_mean.csv
+oof/preds/exp78_convnext_tiny_lion_fold_summary.csv
+oof/preds/exp78_convnext_tiny_lion_combined_result.json
+oof/preds/exp78_changed_vs_exp56.csv
+oof/submissions/exp78_convnext_tiny_lion_mean_submit.csv
+```
+
+### 판단
+
+EXP-78은 OOF 기준으로 강한 단독 모델이지만, test mean이 EXP-56 대비 24개를 모두 `0 -> 1`로 바꾸고 `test_0244`, `test_0490`, `test_0504`, `test_0188` 등 보호 방향을 깨므로 단독 제출은 제외한다. 다만 FN을 줄이는 방향의 모델이므로 이후 Ridge/Logistic stacking에서 낮은 가중치의 보조 feature로 활용할 수 있다.
 
 ## 데일리 로그
 
