@@ -97,7 +97,7 @@
 | EXP-73 | ConvNeXt seed777 포함 OOF stacking | EXP-72 seed777 OOF를 ConvNeXt seed123/EfficientNet-B0 OOF pool에 추가 | - | - | - | Ridge/Logistic | 0.98754 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
 | EXP-77 | ConvNeXt-Tiny Lion fold0 smoke | EXP-45와 같은 fold0 조건에서 optimizer만 Lion으로 변경 | 6 fold0 | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98563 fold0 | 미제출 | oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv | AdamW fold0보다 소폭 개선. 5-fold 확장 후보 |
 | EXP-78 | ConvNeXt-Tiny Lion 5-fold OOF | EXP-77을 5-fold로 확장, optimizer만 Lion 유지 | 6 x 5 folds | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98140 OOF | 미제출 | oof/submissions/exp78_convnext_tiny_lion_mean_submit.csv | 단독 mean은 보호 샘플 다수를 1로 바꿔 제출 제외. stacking 보조 feature 후보 |
-| EXP-79 | Lion OOF 포함 stacking | EXP-78 Lion OOF를 기존 ConvNeXt/EfficientNet OOF pool에 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98811 meta-CV | 제출 없음 | - | 보호 샘플 유지 후보는 meta-CV 하락폭이 커 제출 제외 |
+| EXP-79 | Lion OOF 포함 stacking | EXP-78 Lion OOF를 기존 ConvNeXt/EfficientNet OOF pool에 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98811 meta-CV | 0.9567307692 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | test_0049만 0->1 변경했지만 EXP-56보다 하락 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4373,7 +4373,9 @@ oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv
 
 ### 판단
 
-Lion OOF를 stacking에 넣으면 일부 meta-CV는 올라가지만, 좋은 후보들은 보호 샘플을 깨고, 보호 조건을 만족하는 후보는 meta-CV 하락폭이 크다. 따라서 EXP-79는 기본적으로 제출 비추천이다. 다만 사용자가 1개 후보를 제출해보고 싶다고 요청해, 가장 가까운 보호 후보인 `cnx_lion_eff_prob_only`, Ridge alpha 500, threshold 0.20 제출 파일을 별도로 생성했다. 이 후보는 EXP-56 대비 `test_0049` 하나만 `0 -> 1`로 바꾸며 보호 샘플은 모두 유지한다. Leaderboard 결과는 아직 미확인이다.
+Lion OOF를 stacking에 넣으면 일부 meta-CV는 올라가지만, 좋은 후보들은 보호 샘플을 깨고, 보호 조건을 만족하는 후보는 meta-CV 하락폭이 크다. 따라서 EXP-79는 기본적으로 제출 비추천이다. 다만 사용자가 1개 후보를 제출해보고 싶다고 요청해, 가장 가까운 보호 후보인 `cnx_lion_eff_prob_only`, Ridge alpha 500, threshold 0.20 제출 파일을 별도로 생성했다. 이 후보는 EXP-56 대비 `test_0049` 하나만 `0 -> 1`로 바꾸며 보호 샘플은 모두 유지했다.
+
+Leaderboard 결과는 `0.9567307692`로 EXP-56의 `0.9583333333`보다 낮았다. 따라서 `test_0049=1` 방향은 현재 public 기준에서는 이득이 아니었고, `test_0049=0`을 우선 유지하는 편이 낫다.
 
 ## 데일리 로그
 
@@ -4633,3 +4635,4 @@ Lion OOF를 stacking에 넣으면 일부 meta-CV는 올라가지만, 좋은 후�
 | 37 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet compact | 0.98658 meta-CV | 0.9583333333 | 13 | 최고점 갱신, `test_0504` 1개만 1->0 |
 | 38 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | Calibrated SVC, OOF margin stats | 0.98639 meta-CV | 0.9551282051 | 19 | `test_0188`, `test_0568` 두 개를 0->1로 바꿨지만 하락 |
 | 39 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | ConvNeXt V2 포함 OOF Ridge stacking | 0.98696 meta-CV | 0.9567307692 | 13 | `test_0141` 1개만 1->0으로 바꿨지만 EXP-56보다 하락 |
+| 40 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | Lion OOF 포함 Ridge stacking | 0.98447 meta-CV | 0.9567307692 | - | `test_0049` 1개만 0->1로 바꿨지만 EXP-56보다 하락 |
