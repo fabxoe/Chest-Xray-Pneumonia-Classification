@@ -1,0 +1,354 @@
+import json
+import random
+import time
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+from PIL import Image
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, precision_score, recall_score
+from timm.optim.lion import Lion
+from torch.utils.data import DataLoader, Dataset
+from torchvision import models, transforms
+from torchvision.models import ConvNeXt_Tiny_Weights
+
+
+EXP_ID = "exp77"
+MODEL_NAME = "convnext_tiny_lion"
+FOLD = 0
+SEED = 42
+IMG_SIZE = 224
+BATCH_SIZE = 32
+EPOCHS = 6
+LR = 2e-5
+WEIGHT_DECAY = 1e-4
+WATCHED = [
+    "test_0025.png",
+    "test_0539.png",
+    "test_0244.png",
+    "test_0490.png",
+    "test_0201.png",
+    "test_0222.png",
+    "test_0504.png",
+    "test_0141.png",
+    "test_0188.png",
+    "test_0568.png",
+]
+
+
+def seed_everything(seed: int) -> None:
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+class XrayCSV(Dataset):
+    def __init__(self, df: pd.DataFrame, image_dir: str, transform=None, has_label: bool = True):
+        self.df = df.reset_index(drop=True)
+        self.image_dir = Path(image_dir)
+        self.transform = transform
+        self.has_label = has_label
+
+    def __len__(self):
+        return len(self.df)
+
+    def __getitem__(self, idx):
+        row = self.df.iloc[idx]
+        image = Image.open(self.image_dir / row["file_name"]).convert("RGB")
+        if self.transform is not None:
+            image = self.transform(image)
+        if self.has_label:
+            return image, torch.tensor(row["label"], dtype=torch.long), row["file_name"]
+        return image, row["file_name"]
+
+
+def build_model(device: torch.device):
+    weights = ConvNeXt_Tiny_Weights.IMAGENET1K_V1
+    model = models.convnext_tiny(weights=weights)
+
+    for param in model.parameters():
+        param.requires_grad = False
+
+    for param in model.features[-1].parameters():
+        param.requires_grad = True
+
+    in_features = model.classifier[2].in_features
+    model.classifier[2] = nn.Linear(in_features, 2)
+    for param in model.classifier.parameters():
+        param.requires_grad = True
+
+    return model.to(device)
+
+
+@torch.no_grad()
+def evaluate(model, loader, criterion, device):
+    model.eval()
+    total_loss = 0.0
+    y_true, y_pred, probs, names = [], [], [], []
+
+    for images, labels, file_names in loader:
+        images = images.to(device)
+        labels = labels.to(device)
+        logits = model(images)
+        loss = criterion(logits, labels)
+        prob = torch.softmax(logits, dim=1)
+        pred = prob.argmax(dim=1)
+
+        total_loss += loss.item() * images.size(0)
+        y_true.extend(labels.cpu().numpy().tolist())
+        y_pred.extend(pred.cpu().numpy().tolist())
+        probs.extend(prob.cpu().numpy().tolist())
+        names.extend(file_names)
+
+    metrics = {
+        "loss": total_loss / len(loader.dataset),
+        "accuracy": accuracy_score(y_true, y_pred),
+        "precision": precision_score(y_true, y_pred, zero_division=0),
+        "recall": recall_score(y_true, y_pred, zero_division=0),
+        "f1": f1_score(y_true, y_pred, zero_division=0),
+        "confusion_matrix": confusion_matrix(y_true, y_pred).tolist(),
+    }
+    return metrics, names, y_true, probs, y_pred
+
+
+@torch.no_grad()
+def predict_test(model, loader, device):
+    model.eval()
+    names, probs, preds = [], [], []
+
+    for images, file_names in loader:
+        images = images.to(device)
+        logits = model(images)
+        prob = torch.softmax(logits, dim=1)
+        pred = prob.argmax(dim=1)
+        names.extend(file_names)
+        probs.extend(prob.cpu().numpy().tolist())
+        preds.extend(pred.cpu().numpy().tolist())
+
+    return names, probs, preds
+
+
+def main():
+    seed_everything(SEED)
+    Path("oof/models").mkdir(parents=True, exist_ok=True)
+    Path("oof/preds").mkdir(parents=True, exist_ok=True)
+    Path("oof/submissions").mkdir(parents=True, exist_ok=True)
+
+    device = torch.device(
+        "cuda"
+        if torch.cuda.is_available()
+        else "mps"
+        if torch.backends.mps.is_available()
+        else "cpu"
+    )
+    print("device:", device)
+
+    train_all = pd.read_csv("train.csv")
+    folds = pd.read_csv("oof/folds_seed42.csv")
+    train_all = train_all.merge(folds[["file_name", "fold"]], on="file_name", how="inner")
+    if len(train_all) != len(folds):
+        raise ValueError(f"fold merge mismatch: train={len(train_all)} folds={len(folds)}")
+    test_df = pd.read_csv("test.csv")
+    train_df = train_all[train_all["fold"] != FOLD].copy()
+    valid_df = train_all[train_all["fold"] == FOLD].copy()
+    train_df = train_df.reset_index(drop=True)
+    valid_df = valid_df.reset_index(drop=True)
+    print(f"fold: {FOLD} train: {len(train_df)} valid: {len(valid_df)}")
+
+    class_counts = train_df["label"].value_counts().sort_index().values
+    class_weights = len(train_df) / (len(class_counts) * class_counts)
+    class_weights = torch.tensor(class_weights, dtype=torch.float32).to(device)
+    print("class weights:", class_weights.detach().cpu().numpy())
+
+    train_tf = transforms.Compose(
+        [
+            transforms.Resize((IMG_SIZE, IMG_SIZE)),
+            transforms.RandomHorizontalFlip(p=0.5),
+            transforms.RandomRotation(7),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+    eval_tf = transforms.Compose(
+        [
+            transforms.Resize((IMG_SIZE, IMG_SIZE)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ]
+    )
+
+    train_loader = DataLoader(
+        XrayCSV(train_df, "train", train_tf, has_label=True),
+        batch_size=BATCH_SIZE,
+        shuffle=True,
+        num_workers=0,
+    )
+    valid_loader = DataLoader(
+        XrayCSV(valid_df, "train", eval_tf, has_label=True),
+        batch_size=BATCH_SIZE,
+        shuffle=False,
+        num_workers=0,
+    )
+    test_loader = DataLoader(
+        XrayCSV(test_df, "test", eval_tf, has_label=False),
+        batch_size=64,
+        shuffle=False,
+        num_workers=0,
+    )
+
+    model = build_model(device)
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
+    optimizer = Lion(filter(lambda p: p.requires_grad, model.parameters()), lr=LR, weight_decay=WEIGHT_DECAY)
+
+    best_acc = -1.0
+    best_state = None
+    best_epoch = 0
+    history = []
+    start = time.time()
+
+    for epoch in range(1, EPOCHS + 1):
+        model.train()
+        train_loss = 0.0
+        for images, labels, _ in train_loader:
+            images = images.to(device)
+            labels = labels.to(device)
+
+            optimizer.zero_grad()
+            logits = model(images)
+            loss = criterion(logits, labels)
+            loss.backward()
+            optimizer.step()
+
+            train_loss += loss.item() * images.size(0)
+
+        metrics, *_ = evaluate(model, valid_loader, criterion, device)
+        metrics["epoch"] = epoch
+        metrics["train_loss"] = train_loss / len(train_loader.dataset)
+        history.append(metrics)
+
+        print(
+            f"Epoch {epoch:02d} | train_loss {metrics['train_loss']:.4f} | "
+            f"valid_loss {metrics['loss']:.4f} | acc {metrics['accuracy']:.4f} | "
+            f"precision {metrics['precision']:.4f} | recall {metrics['recall']:.4f} | f1 {metrics['f1']:.4f}"
+        )
+
+        if metrics["accuracy"] > best_acc:
+            best_acc = metrics["accuracy"]
+            best_epoch = epoch
+            best_state = {k: v.detach().cpu().clone() for k, v in model.state_dict().items()}
+
+    model.load_state_dict(best_state)
+    model_path = Path(f"oof/models/{EXP_ID}_{MODEL_NAME}_fold{FOLD}.pt")
+    torch.save(best_state, model_path)
+
+    final_metrics, valid_names, valid_y, valid_probs, valid_preds = evaluate(model, valid_loader, criterion, device)
+    valid_prob_df = pd.DataFrame(
+        {
+            "file_name": valid_names,
+            "label": valid_y,
+            "fold": FOLD,
+            "prob_0": [p[0] for p in valid_probs],
+            "prob_1": [p[1] for p in valid_probs],
+            "pred_label": valid_preds,
+        }
+    )
+    valid_prob_path = Path(f"oof/preds/{EXP_ID}_{MODEL_NAME}_fold{FOLD}_oof_probs.csv")
+    valid_prob_df.to_csv(valid_prob_path, index=False)
+
+    test_names, test_probs, test_preds = predict_test(model, test_loader, device)
+    test_prob_df = pd.DataFrame(
+        {
+            "file_name": test_names,
+            "fold": FOLD,
+            "prob_0": [p[0] for p in test_probs],
+            "prob_1": [p[1] for p in test_probs],
+            "pred_label": test_preds,
+        }
+    )
+    test_prob_path = Path(f"oof/preds/{EXP_ID}_{MODEL_NAME}_fold{FOLD}_test_probs.csv")
+    test_prob_df.to_csv(test_prob_path, index=False)
+
+    submission = pd.read_csv("sample_submission.csv")
+    pred_map = dict(zip(test_names, test_preds))
+    submission["label"] = submission["file_name"].map(pred_map).astype(int)
+    submission_path = Path(f"oof/submissions/{EXP_ID}_{MODEL_NAME}_fold{FOLD}_submit.csv")
+    submission.to_csv(submission_path, index=False)
+
+    watched_samples = {}
+    for file_name in WATCHED:
+        row = test_prob_df.loc[test_prob_df["file_name"] == file_name].iloc[0]
+        watched_samples[file_name] = {"pred": int(row["pred_label"]), "prob_1": float(row["prob_1"])}
+
+    adamw_fold0_path = Path("oof/preds/exp45_convnext_tiny_fold0_result.json")
+    adamw_fold0 = json.loads(adamw_fold0_path.read_text()) if adamw_fold0_path.exists() else None
+
+    result = {
+        "exp_id": EXP_ID,
+        "model": MODEL_NAME,
+        "fold": FOLD,
+        "seed": SEED,
+        "optimizer": "Lion",
+        "lr": LR,
+        "weight_decay": WEIGHT_DECAY,
+        "best_epoch": best_epoch,
+        "history": history,
+        "final_metrics": final_metrics,
+        "adamw_fold0_reference": adamw_fold0["final_metrics"] if adamw_fold0 else None,
+        "train_size": int(len(train_df)),
+        "valid_size": int(len(valid_df)),
+        "test_pred_counts": submission["label"].value_counts().sort_index().astype(int).to_dict(),
+        "watched_samples": watched_samples,
+        "paths": {
+            "model": str(model_path),
+            "valid_probs": str(valid_prob_path),
+            "test_probs": str(test_prob_path),
+            "submission": str(submission_path),
+        },
+        "elapsed_sec": round(time.time() - start, 1),
+    }
+    result_path = Path(f"oof/preds/{EXP_ID}_{MODEL_NAME}_fold{FOLD}_result.json")
+    result_path.write_text(json.dumps(result, indent=2), encoding="utf-8")
+
+    summary = pd.DataFrame(
+        [
+            {
+                "exp": EXP_ID,
+                "model": MODEL_NAME,
+                "fold": FOLD,
+                "best_epoch": best_epoch,
+                "train_size": len(train_df),
+                "valid_size": len(valid_df),
+                "valid_accuracy": final_metrics["accuracy"],
+                "valid_precision": final_metrics["precision"],
+                "valid_recall": final_metrics["recall"],
+                "valid_f1": final_metrics["f1"],
+                "valid_cm": str(final_metrics["confusion_matrix"]),
+                "oof_rows": len(valid_prob_df),
+                "test_rows": len(test_prob_df),
+                "test_label0": result["test_pred_counts"].get(0, result["test_pred_counts"].get("0", 0)),
+                "test_label1": result["test_pred_counts"].get(1, result["test_pred_counts"].get("1", 0)),
+                "model_path": str(model_path),
+                "oof_probs": str(valid_prob_path),
+                "test_probs": str(test_prob_path),
+                "submission": str(submission_path),
+            }
+        ]
+    )
+    summary_path = Path(f"oof/preds/{EXP_ID}_{MODEL_NAME}_fold{FOLD}_summary.csv")
+    summary.to_csv(summary_path, index=False)
+
+    print("best_epoch:", best_epoch)
+    print("final_metrics:", final_metrics)
+    print("test_pred_counts:", result["test_pred_counts"])
+    print("summary:", summary_path)
+    print("submission:", submission_path)
+    print("elapsed_sec:", result["elapsed_sec"])
+
+
+if __name__ == "__main__":
+    main()

@@ -417,3 +417,24 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 보호 샘플 8개 유지 비중복 candidate 수: 0
   - 제출 파일 없음
   - 해석: seed777 추가 후에도 보호 샘플을 유지한 row는 모두 EXP-56과 동일 예측이었다. 상위 후보는 `test_0504`, `test_0490`, `test_0539`를 자주 1로 바꿔 public guardrail과 충돌한다.
+- EXP-77 ConvNeXt-Tiny Lion fold0 smoke 완료.
+  - 목적: AdamW와 다른 optimizer로 ConvNeXt 오류 방향이 달라지는지 확인
+  - 설정: ConvNeXt-Tiny fold0, `features[-1]+classifier`, Lion LR 2e-5, weight decay 1e-4
+  - Lion fold0 accuracy: 0.98563
+  - Lion fold0 confusion matrix: `[[265, 4], [11, 764]]`
+  - AdamW fold0 reference: accuracy 0.98467, confusion matrix `[[266, 3], [13, 762]]`
+  - test label 0/1: 234/390
+  - EXP-56 대비 변경 수: 26개
+  - 유지한 보호 방향:
+    - `test_0025=0`
+    - `test_0244=0`
+    - `test_0201=1`
+    - `test_0222=1`
+    - `test_0504=0`
+    - `test_0188=0`
+    - `test_0568=0`
+  - 깨진 보호 방향:
+    - `test_0539=1`
+    - `test_0490=1`
+    - `test_0141=0`
+  - 해석: fold0 기준으로 AdamW보다 소폭 좋고 FN을 줄였으므로 Lion 5-fold OOF 확장 후보로 남긴다. 단, fold0 단독 제출은 제외한다.

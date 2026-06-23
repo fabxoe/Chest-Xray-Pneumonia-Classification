@@ -95,6 +95,7 @@
 | EXP-71 | EfficientNetV2-S 포함 OOF stacking | EXP-70 EfficientNetV2-S OOF를 기존 ConvNeXt/EfficientNet-B0 OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98888 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
 | EXP-72 | ConvNeXt-Tiny seed777 5-fold OOF | EXP-46과 동일 구조, 학습 seed만 777로 변경해 ConvNeXt seed diversity 확보 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98006 OOF | 미제출 | oof/submissions/exp72_convnext_tiny_seed777_mean_submit.csv | OOF는 강하지만 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
 | EXP-73 | ConvNeXt seed777 포함 OOF stacking | EXP-72 seed777 OOF를 ConvNeXt seed123/EfficientNet-B0 OOF pool에 추가 | - | - | - | Ridge/Logistic | 0.98754 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
+| EXP-77 | ConvNeXt-Tiny Lion fold0 smoke | EXP-45와 같은 fold0 조건에서 optimizer만 Lion으로 변경 | 6 fold0 | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98563 fold0 | 미제출 | oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv | AdamW fold0보다 소폭 개선. 5-fold 확장 후보 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4168,6 +4169,70 @@ oof/preds/exp73_convnext_seed_stacking_summary.csv
 
 ConvNeXt seed777은 OOF 정보원으로는 강하지만, 현재 guardrail 안에서는 새 제출 후보를 만들지 못했다. seed 추가가 완전히 무의미한 것은 아니지만, 현재 보호 샘플 기반 low-change 영역은 상당히 소진된 것으로 보인다.
 
+## EXP-77. ConvNeXt-Tiny Lion fold0 smoke
+
+### 목적
+
+ConvNeXt 계열은 현재 가장 강한 family지만, seed 추가만으로는 새 제출 후보가 나오지 않았다. 이번에는 optimizer를 AdamW에서 Lion으로 바꿔 학습 동역학과 오류 방향이 달라지는지 fold0 smoke test로 확인했다.
+
+### 설정
+
+- 모델: ConvNeXt-Tiny ImageNet pretrained
+- fold: 0 only
+- 학습 범위: 마지막 stage `features[-1] + classifier`
+- seed: 42
+- epoch: 6
+- optimizer: Lion
+- LR: 2e-5
+- weight decay: 1e-4
+- loss: class-weighted CrossEntropyLoss
+- 비교 기준: EXP-45 AdamW fold0
+
+### 결과
+
+| 항목 | AdamW fold0 | Lion fold0 |
+|---|---:|---:|
+| best epoch | - | 5 |
+| accuracy | 0.98467 | 0.98563 |
+| precision | 0.99608 | 0.99479 |
+| recall | 0.98323 | 0.98581 |
+| F1 | 0.98961 | 0.99028 |
+| confusion matrix | `[[266, 3], [13, 762]]` | `[[265, 4], [11, 764]]` |
+| test label 0/1 | - | 234 / 390 |
+| AdamW fold0 대비 변경 수 | - | 18 |
+| EXP-56 대비 변경 수 | - | 26 |
+
+### 보호 샘플 확인
+
+| sample | Lion pred | prob_1 | 판단 |
+|---|---:|---:|---|
+| test_0025 | 0 | 0.2595 | 유지 |
+| test_0539 | 1 | 0.6337 | 보호 방향 위반 |
+| test_0244 | 0 | 0.1513 | 유지 |
+| test_0490 | 1 | 0.6424 | 보호 방향 위반 |
+| test_0201 | 1 | 0.5218 | 유지 |
+| test_0222 | 1 | 0.7895 | 유지 |
+| test_0504 | 0 | 0.1029 | 유지 |
+| test_0141 | 0 | 0.1894 | 보호 방향 위반 |
+| test_0188 | 0 | 0.4101 | 유지 |
+| test_0568 | 0 | 0.0014 | 유지 |
+
+### 저장 파일
+
+```text
+scripts/run_exp77_convnext_lion_fold0.py
+oof/preds/exp77_convnext_tiny_lion_fold0_oof_probs.csv
+oof/preds/exp77_convnext_tiny_lion_fold0_test_probs.csv
+oof/preds/exp77_convnext_tiny_lion_fold0_result.json
+oof/preds/exp77_convnext_tiny_lion_fold0_summary.csv
+oof/preds/exp77_changed_vs_exp56.csv
+oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv
+```
+
+### 판단
+
+Lion fold0는 AdamW fold0보다 accuracy와 recall이 소폭 개선되었다. 특히 FN이 13개에서 11개로 줄어, optimizer 변경이 단순 노이즈만은 아닐 가능성이 있다. 다만 `test_0539`, `test_0490`, `test_0141` 보호 방향을 깨므로 fold0 단독 제출은 제외한다. 다음 단계에서는 Lion 5-fold OOF 확장을 검토할 수 있다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4374,6 +4439,14 @@ ConvNeXt seed777은 OOF 정보원으로는 강하지만, 현재 guardrail 안에
   - 보호 샘플 유지 row는 모두 EXP-56과 동일 예측이라 비중복 candidate 0개
   - 제출 파일 없음
   - ConvNeXt seed 추가만으로는 현재 guardrail 안에서 새 제출 후보를 만들지 못함
+- EXP-77 ConvNeXt-Tiny Lion fold0 smoke 완료
+  - Lion LR `2e-5`, weight decay `1e-4`
+  - fold0 accuracy `0.98563`, recall `0.98581`
+  - AdamW fold0 accuracy `0.98467`, recall `0.98323`보다 소폭 개선
+  - confusion matrix `[[265, 4], [11, 764]]`
+  - EXP-56 대비 변경 수 26개
+  - `test_0025`, `test_0244`, `test_0504`는 유지했지만 `test_0539`, `test_0490`, `test_0141`을 깨므로 단독 제출 제외
+  - Lion 5-fold OOF 확장 후보로 기록
 
 ## 리더보드 제출 기록
 

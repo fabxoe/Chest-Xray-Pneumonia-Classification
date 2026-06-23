@@ -1,0 +1,215 @@
+{
+  "exp_id": "exp77",
+  "model": "convnext_tiny_lion",
+  "fold": 0,
+  "seed": 42,
+  "optimizer": "Lion",
+  "lr": 2e-05,
+  "weight_decay": 0.0001,
+  "best_epoch": 5,
+  "history": [
+    {
+      "loss": 0.11222054813613837,
+      "accuracy": 0.9616858237547893,
+      "precision": 0.9919678714859438,
+      "recall": 0.9561290322580646,
+      "f1": 0.973718791064389,
+      "confusion_matrix": [
+        [
+          263,
+          6
+        ],
+        [
+          34,
+          741
+        ]
+      ],
+      "epoch": 1,
+      "train_loss": 0.25372318300567676
+    },
+    {
+      "loss": 0.06522077584230623,
+      "accuracy": 0.9779693486590039,
+      "precision": 0.9908616187989556,
+      "recall": 0.9793548387096774,
+      "f1": 0.9850746268656716,
+      "confusion_matrix": [
+        [
+          262,
+          7
+        ],
+        [
+          16,
+          759
+        ]
+      ],
+      "epoch": 2,
+      "train_loss": 0.09161223241816474
+    },
+    {
+      "loss": 0.0989646208561757,
+      "accuracy": 0.9703065134099617,
+      "precision": 0.996,
+      "recall": 0.9638709677419355,
+      "f1": 0.979672131147541,
+      "confusion_matrix": [
+        [
+          266,
+          3
+        ],
+        [
+          28,
+          747
+        ]
+      ],
+      "epoch": 3,
+      "train_loss": 0.06161744163790405
+    },
+    {
+      "loss": 0.06147477426086695,
+      "accuracy": 0.9846743295019157,
+      "precision": 0.9947848761408083,
+      "recall": 0.984516129032258,
+      "f1": 0.9896238651102465,
+      "confusion_matrix": [
+        [
+          265,
+          4
+        ],
+        [
+          12,
+          763
+        ]
+      ],
+      "epoch": 4,
+      "train_loss": 0.04689374365616136
+    },
+    {
+      "loss": 0.04971662651162266,
+      "accuracy": 0.985632183908046,
+      "precision": 0.9947916666666666,
+      "recall": 0.9858064516129033,
+      "f1": 0.9902786779001944,
+      "confusion_matrix": [
+        [
+          265,
+          4
+        ],
+        [
+          11,
+          764
+        ]
+      ],
+      "epoch": 5,
+      "train_loss": 0.049006844073474186
+    },
+    {
+      "loss": 0.047149159881541454,
+      "accuracy": 0.9827586206896551,
+      "precision": 0.9960681520314548,
+      "recall": 0.9806451612903225,
+      "f1": 0.988296488946684,
+      "confusion_matrix": [
+        [
+          266,
+          3
+        ],
+        [
+          15,
+          760
+        ]
+      ],
+      "epoch": 6,
+      "train_loss": 0.0361009294112246
+    }
+  ],
+  "final_metrics": {
+    "loss": 0.04971662651162266,
+    "accuracy": 0.985632183908046,
+    "precision": 0.9947916666666666,
+    "recall": 0.9858064516129033,
+    "f1": 0.9902786779001944,
+    "confusion_matrix": [
+      [
+        265,
+        4
+      ],
+      [
+        11,
+        764
+      ]
+    ]
+  },
+  "adamw_fold0_reference": {
+    "loss": 0.04755216824395718,
+    "accuracy": 0.9846743295019157,
+    "precision": 0.996078431372549,
+    "recall": 0.983225806451613,
+    "f1": 0.9896103896103896,
+    "confusion_matrix": [
+      [
+        266,
+        3
+      ],
+      [
+        13,
+        762
+      ]
+    ]
+  },
+  "train_size": 4172,
+  "valid_size": 1044,
+  "test_pred_counts": {
+    "0": 234,
+    "1": 390
+  },
+  "watched_samples": {
+    "test_0025.png": {
+      "pred": 0,
+      "prob_1": 0.25950053334236145
+    },
+    "test_0539.png": {
+      "pred": 1,
+      "prob_1": 0.6336525678634644
+    },
+    "test_0244.png": {
+      "pred": 0,
+      "prob_1": 0.15128962695598602
+    },
+    "test_0490.png": {
+      "pred": 1,
+      "prob_1": 0.6423604488372803
+    },
+    "test_0201.png": {
+      "pred": 1,
+      "prob_1": 0.5218115448951721
+    },
+    "test_0222.png": {
+      "pred": 1,
+      "prob_1": 0.7894863486289978
+    },
+    "test_0504.png": {
+      "pred": 0,
+      "prob_1": 0.10288575291633606
+    },
+    "test_0141.png": {
+      "pred": 0,
+      "prob_1": 0.1893799751996994
+    },
+    "test_0188.png": {
+      "pred": 0,
+      "prob_1": 0.41006678342819214
+    },
+    "test_0568.png": {
+      "pred": 0,
+      "prob_1": 0.0014402610249817371
+    }
+  },
+  "paths": {
+    "model": "oof/models/exp77_convnext_tiny_lion_fold0.pt",
+    "valid_probs": "oof/preds/exp77_convnext_tiny_lion_fold0_oof_probs.csv",
+    "test_probs": "oof/preds/exp77_convnext_tiny_lion_fold0_test_probs.csv",
+    "submission": "oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv"
+  },
+  "elapsed_sec": 846.3
+}

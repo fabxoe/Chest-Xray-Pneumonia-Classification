@@ -1,0 +1,2 @@
+exp,model,fold,best_epoch,train_size,valid_size,valid_accuracy,valid_precision,valid_recall,valid_f1,valid_cm,oof_rows,test_rows,test_label0,test_label1,model_path,oof_probs,test_probs,submission
+exp77,convnext_tiny_lion,0,5,4172,1044,0.985632183908046,0.9947916666666666,0.9858064516129033,0.9902786779001944,"[[265, 4], [11, 764]]",1044,624,234,390,oof/models/exp77_convnext_tiny_lion_fold0.pt,oof/preds/exp77_convnext_tiny_lion_fold0_oof_probs.csv,oof/preds/exp77_convnext_tiny_lion_fold0_test_probs.csv,oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv
