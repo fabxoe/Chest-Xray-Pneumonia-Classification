@@ -4366,11 +4366,14 @@ EXP-78 Lion OOF는 단독 제출로는 공격적이지만 FN을 줄이는 성향
 ```text
 scripts/run_exp79_lion_stacking.py
 oof/preds/exp79_lion_stacking_summary.csv
+oof/preds/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_test_scores.csv
+oof/preds/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_changed_vs_exp56.csv
+oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv
 ```
 
 ### 판단
 
-Lion OOF를 stacking에 넣으면 일부 meta-CV는 올라가지만, 좋은 후보들은 보호 샘플을 깨고, 보호 조건을 만족하는 후보는 meta-CV 하락폭이 크다. 따라서 EXP-79에서는 제출 파일을 만들지 않는다. Lion은 현재 기준으로 직접적인 점수 개선 후보라기보다, 추후 더 큰 OOF pool에서 제한 feature로만 재검토할 보조 정보원이다.
+Lion OOF를 stacking에 넣으면 일부 meta-CV는 올라가지만, 좋은 후보들은 보호 샘플을 깨고, 보호 조건을 만족하는 후보는 meta-CV 하락폭이 크다. 따라서 EXP-79는 기본적으로 제출 비추천이다. 다만 사용자가 1개 후보를 제출해보고 싶다고 요청해, 가장 가까운 보호 후보인 `cnx_lion_eff_prob_only`, Ridge alpha 500, threshold 0.20 제출 파일을 별도로 생성했다. 이 후보는 EXP-56 대비 `test_0049` 하나만 `0 -> 1`로 바꾸며 보호 샘플은 모두 유지한다. Leaderboard 결과는 아직 미확인이다.
 
 ## 데일리 로그
 

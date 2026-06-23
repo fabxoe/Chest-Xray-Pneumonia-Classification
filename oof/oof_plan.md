@@ -472,3 +472,9 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - meta-CV accuracy: 0.98447
     - EXP-56 대비 변경: `test_0049: 0 -> 1`
   - 해석: Lion feature는 meta-CV를 올리는 조합도 만들지만 보호 샘플과 충돌한다. 보호 조건을 만족하는 후보는 현재 기준보다 meta-CV가 약 0.00211 낮아 제출 제외한다.
+  - 사용자 요청으로 가장 가까운 보호 후보 CSV를 별도 생성:
+    - `oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv`
+    - EXP-56 대비 변경: `test_0049: 0 -> 1`
+    - test label 0/1: 227/397
+    - 보호 샘플 모두 유지
+    - 제출 전 판단: 가능성은 있으나 meta-CV 하락폭 때문에 우선순위는 낮음
