@@ -351,3 +351,15 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 보호 샘플 8개 유지 candidate 수: 0
   - 제출 파일 없음
   - 해석: RegNetY feature는 일부 meta-CV를 올렸지만, 상위 후보가 `test_0539`, `test_0490`, `test_0504`, `test_0141` 등 보호 방향을 자주 깨므로 현재 guardrail 안에서는 제출 후보로 쓰기 어렵다.
+- EXP-69 DINOv2 feature extractor + Ridge/Logistic 완료.
+  - 목적: CNN 계열과 다른 ViT/foundation feature family 확보
+  - 모델: `timm` `vit_small_patch14_dinov2`
+  - 입력 크기: 518x518
+  - frozen feature dimension: 384
+  - train/test feature rows: 5216/624
+  - feature 추출 시간: 약 623.6초
+  - meta-model: `StandardScaler + RidgeClassifier/LogisticRegression`
+  - 최고 meta-CV accuracy: 0.97373
+  - 보호 샘플 유지 candidate 수: 0
+  - 제출 파일 없음
+  - 해석: 새 family 확보 실험으로는 의미가 있지만, raw frozen DINOv2 feature는 현재 ConvNeXt/EfficientNet OOF pool보다 약하고 보호 샘플을 자주 깨서 제출 후보로 쓰지 않는다.

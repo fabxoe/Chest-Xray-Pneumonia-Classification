@@ -90,6 +90,7 @@
 | EXP-66 | ConvNeXt V2 포함 OOF stacking | EXP-65 ConvNeXt V2 OOF를 기존 ConvNeXt/EfficientNet OOF feature에 제한적으로 추가 | - | - | - | RidgeClassifier alpha=10 | 0.98696 meta-CV | 0.9567307692 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | test_0141만 1->0 변경했지만 EXP-56보다 하락 |
 | EXP-67 | RegNetY-3.2GF 5-fold OOF | torchvision RegNetY-3.2GF block4+fc fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 1e-5 / 5e-5 | Weighted CrossEntropyLoss | 0.96166 OOF | 미제출 | oof/submissions/exp67_regnet_y_3_2gf_mean_submit.csv | FN 164개, EXP-56 대비 69개 변경으로 단독 제출 제외 |
 | EXP-68 | RegNetY 포함 OOF stacking | EXP-67 RegNetY OOF를 기존 ConvNeXt/EfficientNet OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 제출 없음 | - | 보호 샘플 8개 유지 후보 0개 |
+| EXP-69 | DINOv2 feature extractor + Ridge/Logistic | timm `vit_small_patch14_dinov2` frozen feature 384-dim 추출 후 Ridge/Logistic meta-model 탐색 | - | - | - | Ridge/Logistic | 0.97373 meta-CV | 제출 없음 | - | ViT/foundation feature family 확보 실험. 보호 샘플 유지 후보 0개 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3886,6 +3887,55 @@ oof/preds/exp68_regnet_stacking_summary.csv
 
 RegNetY는 새 CNN family로서 오류 방향 다양성은 제공했지만, 현재 public 결과 기반 보호 규칙 안에서는 제출 가능한 low-change 후보를 만들지 못했다. 따라서 RegNetY 계열은 당장 제출 후보로 쓰기보다, 이후 더 넓은 OOF pool에서 feature importance를 보고 선택적으로 사용하는 편이 낫다.
 
+## EXP-69. DINOv2 feature extractor + Ridge/Logistic
+
+### 목적
+
+DINOv2는 ConvNeXt/EfficientNet/RegNet과 다른 ViT 기반 foundation feature family다. 새 모델을 끝까지 fine-tuning하기 전에 frozen feature extractor로 흉부 X-ray 분류에 보완 정보가 있는지 확인했다.
+
+### 설정
+
+- 모델: `timm` `vit_small_patch14_dinov2`
+- 입력 크기: 518x518
+- feature dimension: 384
+- 학습 방식: DINOv2 backbone은 학습하지 않고 train/test image feature만 추출
+- meta-model:
+  - `StandardScaler + RidgeClassifier`
+  - `StandardScaler + LogisticRegression`
+- 검증 방식: 기존 5-fold split 기반 meta-CV
+- 출력 파일:
+  - `scripts/run_exp69_dinov2_features_stacking.py`
+  - `oof/preds/exp69_dinov2_vits14_train_features.npz`
+  - `oof/preds/exp69_dinov2_vits14_test_features.npz`
+  - `oof/preds/exp69_dinov2_vits14_summary.csv`
+  - `oof/preds/exp69_dinov2_vits14_result.json`
+
+### 결과
+
+- train feature rows: 5,216
+- test feature rows: 624
+- feature 추출 시간: 약 623.6초
+- 최고 meta-CV accuracy: 0.97373
+- 보호 샘플과 low-change 조건을 모두 만족한 candidate 수: 0
+- 저장된 제출 파일 수: 0
+- 상위 후보 예시:
+  - Logistic C=0.3, threshold -0.300
+    - meta-CV accuracy: 0.97373
+    - test label 1 개수: 302
+    - EXP-56 대비 변경 수: 104
+  - Ridge alpha=100, threshold -0.050
+    - meta-CV accuracy: 0.97316
+    - test label 1 개수: 388
+    - EXP-56 대비 변경 수: 42
+
+### 판단
+
+DINOv2 frozen feature는 새 모델 family 확보 관점에서는 의미가 있지만, 이번 설정에서는 현재 CNN OOF pool보다 약했다. 상위 후보들이 `test_0244`, `test_0490`, `test_0504`, `test_0141` 등 보호 방향을 자주 깨고, 변경 샘플 수도 30개 이상으로 커져 제출하지 않는다.
+
+### 다음 해석
+
+DINOv2를 완전히 버릴 필요는 없지만, raw frozen feature + 선형 meta-model만으로는 부족하다. 다시 시도한다면 DINOv2 feature를 단독 제출 후보로 보기보다, PCA/feature pruning, 작은 MLP/TabM meta-model, 또는 의료 이미지에 더 맞는 foundation feature와 비교하는 방향이 더 타당하다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4056,6 +4106,13 @@ RegNetY는 새 CNN family로서 오류 방향 다양성은 제공했지만, 현�
   - 보호 샘플 8개 유지 candidate 0개
   - 제출 파일 없음
   - RegNetY는 현재 guardrail 안에서는 제출 후보를 만들지 못함
+- EXP-69 DINOv2 feature extractor + Ridge/Logistic 완료
+  - `vit_small_patch14_dinov2` frozen feature 384-dim 추출
+  - feature 추출 시간 약 623.6초
+  - 최고 meta-CV accuracy `0.97373`
+  - 보호 샘플 유지 candidate 0개
+  - 제출 파일 없음
+  - ViT/foundation feature family 확보 실험으로 기록하되, raw frozen feature + 선형 meta-model은 현재 제출 후보로 부적합
 
 ## 리더보드 제출 기록
 
