@@ -363,3 +363,22 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 보호 샘플 유지 candidate 수: 0
   - 제출 파일 없음
   - 해석: 새 family 확보 실험으로는 의미가 있지만, raw frozen DINOv2 feature는 현재 ConvNeXt/EfficientNet OOF pool보다 약하고 보호 샘플을 자주 깨서 제출 후보로 쓰지 않는다.
+- EXP-70 EfficientNetV2-S 재설계 5-fold OOF 완료.
+  - 목적: EXP-42의 마지막 block 제한 설정 실패를 재검증하고 EfficientNetV2-S family 정보원 확보
+  - 모델: `torchvision.models.efficientnet_v2_s`
+  - 학습 범위: `features[6:] + classifier`
+  - epoch/fold: 6 x 5 folds
+  - optimizer: AdamW
+  - LR: feature 2e-5, classifier 8e-5
+  - OOF accuracy: 0.97642
+  - OOF confusion matrix: `[[1307, 34], [89, 3786]]`
+  - test mean label 0/1: 208/416
+  - EXP-56 대비 변경 수: 34개
+  - 단독 mean은 다음 보호 방향을 깨므로 제출 제외:
+    - `test_0025=0`
+    - `test_0539=0`
+    - `test_0244=0`
+    - `test_0490=0`
+    - `test_0222=1`
+    - `test_0504=0`
+  - 해석: EXP-42 대비 성능 회복은 성공했지만, 현재 최고 후보를 직접 대체하기에는 위험하다. 다음 단계에서는 낮은 가중치/제약 조건으로 stacking에만 추가한다.

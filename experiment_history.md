@@ -91,6 +91,7 @@
 | EXP-67 | RegNetY-3.2GF 5-fold OOF | torchvision RegNetY-3.2GF block4+fc fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 1e-5 / 5e-5 | Weighted CrossEntropyLoss | 0.96166 OOF | 미제출 | oof/submissions/exp67_regnet_y_3_2gf_mean_submit.csv | FN 164개, EXP-56 대비 69개 변경으로 단독 제출 제외 |
 | EXP-68 | RegNetY 포함 OOF stacking | EXP-67 RegNetY OOF를 기존 ConvNeXt/EfficientNet OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 제출 없음 | - | 보호 샘플 8개 유지 후보 0개 |
 | EXP-69 | DINOv2 feature extractor + Ridge/Logistic | timm `vit_small_patch14_dinov2` frozen feature 384-dim 추출 후 Ridge/Logistic meta-model 탐색 | - | - | - | Ridge/Logistic | 0.97373 meta-CV | 제출 없음 | - | ViT/foundation feature family 확보 실험. 보호 샘플 유지 후보 0개 |
+| EXP-70 | EfficientNetV2-S 재설계 5-fold OOF | `features[6:] + classifier`를 학습해 EXP-42보다 넓게 fine-tuning | 6 x 5 folds | AdamW | 2e-5 / 8e-5 | Weighted CrossEntropyLoss | 0.97642 OOF | 미제출 | oof/submissions/exp70_efficientnet_v2_s_wide_mean_submit.csv | EXP-42 대비 회복. 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
 
 ## EXP-00. 원본 Baseline
 
@@ -3936,6 +3937,76 @@ DINOv2 frozen feature는 새 모델 family 확보 관점에서는 의미가 있�
 
 DINOv2를 완전히 버릴 필요는 없지만, raw frozen feature + 선형 meta-model만으로는 부족하다. 다시 시도한다면 DINOv2 feature를 단독 제출 후보로 보기보다, PCA/feature pruning, 작은 MLP/TabM meta-model, 또는 의료 이미지에 더 맞는 foundation feature와 비교하는 방향이 더 타당하다.
 
+## EXP-70. EfficientNetV2-S 재설계 5-fold OOF
+
+### 목적
+
+EXP-42 EfficientNetV2-S는 `features[7] + classifier`만 학습해 validation accuracy가 0.87261로 낮았다. 이번에는 같은 모델 family를 버리기 전에 fine-tuning 범위를 `features[6:] + classifier`로 넓혀, EfficientNetV2-S가 OOF 정보원으로 쓸 수 있는지 재평가했다.
+
+### 설정
+
+- 모델: `torchvision.models.efficientnet_v2_s(weights=IMAGENET1K_V1)`
+- 학습 범위: `features[6:] + classifier`
+- 입력 크기: 224x224
+- batch size: 24
+- epoch: 6 x 5 folds
+- optimizer: AdamW
+- LR:
+  - feature blocks: 2e-5
+  - classifier: 8e-5
+- loss: class-weighted CrossEntropyLoss
+- 출력 파일:
+  - `scripts/run_exp70_efficientnet_v2_s_oof.py`
+  - `oof/preds/exp70_efficientnet_v2_s_wide_oof_probs.csv`
+  - `oof/preds/exp70_efficientnet_v2_s_wide_test_probs_mean.csv`
+  - `oof/preds/exp70_efficientnet_v2_s_wide_combined_result.json`
+  - `oof/submissions/exp70_efficientnet_v2_s_wide_mean_submit.csv`
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| OOF accuracy | 0.97642 |
+| OOF precision | 0.99110 |
+| OOF recall | 0.97703 |
+| OOF F1 | 0.98402 |
+| OOF confusion matrix | `[[1307, 34], [89, 3786]]` |
+| test label 0/1 | 208 / 416 |
+| EXP-56 대비 변경 수 | 34 |
+
+fold별 best accuracy:
+
+| fold | best epoch | valid accuracy |
+|---:|---:|---:|
+| 0 | 5 | 0.9751 |
+| 1 | 6 | 0.9799 |
+| 2 | 6 | 0.9741 |
+| 3 | 4 | 0.9741 |
+| 4 | 6 | 0.9789 |
+
+### 보호 샘플 확인
+
+| sample | EXP-70 pred | prob_1 | 판단 |
+|---|---:|---:|---|
+| test_0025 | 1 | 0.6687 | 보호 방향 위반 |
+| test_0539 | 1 | 0.5383 | 보호 방향 위반 |
+| test_0244 | 1 | 0.9028 | 보호 방향 위반 |
+| test_0490 | 1 | 0.9110 | 보호 방향 위반 |
+| test_0201 | 1 | 0.8746 | 유지 |
+| test_0222 | 0 | 0.4090 | 보호 방향 위반 |
+| test_0504 | 1 | 0.5698 | 보호 방향 위반 |
+| test_0141 | 1 | 0.8956 | 유지 |
+| test_0188 | 1 | 0.6869 | 단독으로는 주의 |
+| test_0568 | 0 | 0.2469 | 유지 |
+
+### 판단
+
+EfficientNetV2-S 재설계는 EXP-42 대비 명확히 개선되었다. 마지막 block만 학습한 것이 실패 원인이었을 가능성이 크다. 다만 OOF accuracy는 기존 ConvNeXt/EfficientNet-B0 OOF보다 낮고, 단독 mean 제출은 보호 샘플을 다수 깨므로 제출하지 않는다.
+
+### 다음 해석
+
+EXP-70은 단독 제출 후보가 아니라 stacking diversity 후보로 보류한다. 다음 단계에서는 EXP-70 probability를 낮은 가중치 또는 feature importance 기반으로 제한적으로 넣어, EXP-56 보호 방향을 유지하는 후보가 나오는지 확인하는 것이 타당하다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4113,6 +4184,14 @@ DINOv2를 완전히 버릴 필요는 없지만, raw frozen feature + 선형 meta
   - 보호 샘플 유지 candidate 0개
   - 제출 파일 없음
   - ViT/foundation feature family 확보 실험으로 기록하되, raw frozen feature + 선형 meta-model은 현재 제출 후보로 부적합
+- EXP-70 EfficientNetV2-S 재설계 5-fold OOF 완료
+  - `features[6:] + classifier` 학습으로 EXP-42의 `features[7]` 제한 설정보다 크게 개선
+  - OOF accuracy `0.97642`, recall `0.97703`
+  - confusion matrix `[[1307, 34], [89, 3786]]`
+  - test mean label 0/1: `208/416`
+  - EXP-56 대비 변경 수 34개
+  - 보호 샘플 `test_0025`, `test_0539`, `test_0244`, `test_0490`, `test_0222`, `test_0504`를 깨므로 단독 제출 제외
+  - 다음에는 EXP-70을 낮은 가중치의 stacking 보조 feature로만 검토
 
 ## 리더보드 제출 기록
 
