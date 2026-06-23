@@ -86,7 +86,7 @@
 | EXP-56 | 보호 샘플 기반 low-change search | EXP-55 결과 반영, test_0222=1까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98658 meta-CV | 0.9583333333 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | test_0504만 1->0 변경해 +1샘플 개선 |
 | EXP-57 | EXP-56 기준 보호 샘플 low-change search | EXP-56 winner 기준 test_0504=0까지 보호하고 후보 재탐색 | - | - | - | Ridge/Logistic | 0.98696 meta-CV | 제출 없음 | - | 보호 샘플 7개를 모두 유지하는 비중복 후보 0개 |
 | EXP-58 | Calibrated OOF stacking | Ridge/Logistic/LinearSVC에 sigmoid/isotonic calibration 적용, 보호 샘플 유지 후보 탐색 | - | - | - | Calibrated SVC | 0.98639 meta-CV | 0.9551282051 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | test_0188/test_0568 0->1 변경 후 하락 |
-| EXP-65 | ConvNeXt V2 Tiny 5-fold OOF | timm ConvNeXt V2 Tiny, stage3+head fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97680 OOF | 미제출 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | 단독 mean은 보호 샘플 다수 1로 변경해 제출 보류, stacking diversity 후보 |
+| EXP-65 | ConvNeXt V2 Tiny 5-fold OOF | timm ConvNeXt V2 Tiny, stage3+head fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.97680 OOF | 0.9262820513 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | 단독 mean 제출 결과가 낮아 stacking diversity용으로만 유지 |
 | EXP-66 | ConvNeXt V2 포함 OOF stacking | EXP-65 ConvNeXt V2 OOF를 기존 ConvNeXt/EfficientNet OOF feature에 제한적으로 추가 | - | - | - | RidgeClassifier alpha=10 | 0.98696 meta-CV | 0.9567307692 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | test_0141만 1->0 변경했지만 EXP-56보다 하락 |
 | EXP-67 | RegNetY-3.2GF 5-fold OOF | torchvision RegNetY-3.2GF block4+fc fine-tuning, 5-fold OOF 생성 | 6 x 5 folds | AdamW | 1e-5 / 5e-5 | Weighted CrossEntropyLoss | 0.96166 OOF | 미제출 | oof/submissions/exp67_regnet_y_3_2gf_mean_submit.csv | FN 164개, EXP-56 대비 69개 변경으로 단독 제출 제외 |
 | EXP-68 | RegNetY 포함 OOF stacking | EXP-67 RegNetY OOF를 기존 ConvNeXt/EfficientNet OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 제출 없음 | - | 보호 샘플 8개 유지 후보 0개 |
@@ -3697,7 +3697,9 @@ oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv
 
 EXP-65 ConvNeXt V2 Tiny는 학습 자체는 안정적으로 완료되었지만, OOF accuracy가 기존 ConvNeXt V1 OOF보다 낮고 test mean이 label 1을 416개로 많이 예측한다. 특히 `test_0025`, `test_0244`, `test_0490`, `test_0504`, `test_0539`처럼 public 결과 기반 보호 방향이 있는 샘플을 다수 1로 바꾼다.
 
-따라서 EXP-65 단독 mean 제출은 하지 않는다. 다만 ConvNeXt V2가 기존 모델과 다른 방향으로 판단하는 샘플이 많기 때문에, EXP-66에서는 stacking feature로 제한적으로 넣어 보고 보호 샘플 조건을 유지하는 후보만 검토한다.
+사전 판단으로는 EXP-65 단독 mean 제출을 보류했으나, 2026-06-24에 사용자가 별도로 제출했다. Leaderboard score는 `0.9262820513`으로 EXP-56 `0.9583333333`보다 크게 낮았다. 이는 보호 샘플을 다수 1로 바꾸는 공격적인 단독 예측이 public test에서 일반화되지 않았음을 보여준다.
+
+따라서 ConvNeXt V2는 단독 제출용이 아니라 stacking feature로만 제한적으로 유지한다.
 
 ## EXP-66. ConvNeXt V2 포함 OOF stacking
 
@@ -4689,3 +4691,4 @@ ResNet18을 다시 추가하면 meta-CV는 올라갈 수 있지만, public에서
 | 38 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | Calibrated SVC, OOF margin stats | 0.98639 meta-CV | 0.9551282051 | 19 | `test_0188`, `test_0568` 두 개를 0->1로 바꿨지만 하락 |
 | 39 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | ConvNeXt V2 포함 OOF Ridge stacking | 0.98696 meta-CV | 0.9567307692 | 13 | `test_0141` 1개만 1->0으로 바꿨지만 EXP-56보다 하락 |
 | 40 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | Lion OOF 포함 Ridge stacking | 0.98447 meta-CV | 0.9567307692 | - | `test_0049` 1개만 0->1로 바꿨지만 EXP-56보다 하락 |
+| 41 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | ConvNeXt V2 Tiny stage3+head 5-fold mean | 0.97680 OOF | 0.9262820513 | - | 단독 mean이 보호 샘플을 다수 1로 바꾸며 크게 하락 |

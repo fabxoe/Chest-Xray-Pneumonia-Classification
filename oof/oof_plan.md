@@ -298,6 +298,8 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 유지한 보호 방향:
     - `test_0201=1`
     - `test_0222=1`
+  - 2026-06-24 단독 mean 제출 결과: 0.9262820513
+  - 제출 후 판단: EXP-56보다 크게 하락했으므로 단독 모델로는 사용하지 않고 stacking diversity feature로만 유지
   - 다음 작업: EXP-66에서 ConvNeXt V2 feature를 낮은 가중치/제약 조건으로 stacking에 추가하고, 보호 샘플을 모두 유지하는 후보만 검토.
 - EXP-66 ConvNeXt V2 포함 OOF stacking 완료.
   - 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
