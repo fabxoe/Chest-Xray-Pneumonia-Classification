@@ -479,3 +479,13 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 보호 샘플 모두 유지
     - Leaderboard score: 0.9567307692
     - 제출 후 판단: EXP-56보다 하락했으므로 `test_0049=1` 방향은 이득이 아니었고, `test_0049=0`을 우선 유지한다.
+- EXP-80 ResNet18 제한 포함 compact stacking 완료.
+  - 목적: EXP-56 OOF pool에 ResNet18 OOF를 제한적으로 다시 추가해 ConvNeXt/EfficientNet과 보완되는지 확인
+  - EXP-79 결과를 반영해 `test_0049=0`도 보호 조건에 추가
+  - 탐색 row 수: 21,060
+  - 전체 최고 meta-CV accuracy: 0.98907
+  - 보호 샘플 유지 row 수: 21
+  - 최종 candidate 수: 0
+  - 제출 파일 없음
+  - 전체 최고 후보는 `test_0049`, `test_0504`, `test_0539`, `test_0244`, `test_0490`, `test_0188`을 모두 1로 바꿔 보호 조건과 충돌
+  - 해석: ResNet18 추가는 meta-CV를 올릴 수 있지만, 현재 public guardrail 안에서는 새 제출 후보를 만들지 못했다.

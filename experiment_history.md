@@ -98,6 +98,7 @@
 | EXP-77 | ConvNeXt-Tiny Lion fold0 smoke | EXP-45와 같은 fold0 조건에서 optimizer만 Lion으로 변경 | 6 fold0 | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98563 fold0 | 미제출 | oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv | AdamW fold0보다 소폭 개선. 5-fold 확장 후보 |
 | EXP-78 | ConvNeXt-Tiny Lion 5-fold OOF | EXP-77을 5-fold로 확장, optimizer만 Lion 유지 | 6 x 5 folds | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98140 OOF | 미제출 | oof/submissions/exp78_convnext_tiny_lion_mean_submit.csv | 단독 mean은 보호 샘플 다수를 1로 바꿔 제출 제외. stacking 보조 feature 후보 |
 | EXP-79 | Lion OOF 포함 stacking | EXP-78 Lion OOF를 기존 ConvNeXt/EfficientNet OOF pool에 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98811 meta-CV | 0.9567307692 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | test_0049만 0->1 변경했지만 EXP-56보다 하락 |
+| EXP-80 | ResNet18 제한 포함 compact stacking | EXP-56 OOF pool에 ResNet18 OOF를 제한 feature로 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98907 meta-CV | 제출 없음 | - | meta-CV 최고는 높지만 보호 샘플을 다수 깨서 제출 후보 없음 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4376,6 +4377,58 @@ oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv
 Lion OOF를 stacking에 넣으면 일부 meta-CV는 올라가지만, 좋은 후보들은 보호 샘플을 깨고, 보호 조건을 만족하는 후보는 meta-CV 하락폭이 크다. 따라서 EXP-79는 기본적으로 제출 비추천이다. 다만 사용자가 1개 후보를 제출해보고 싶다고 요청해, 가장 가까운 보호 후보인 `cnx_lion_eff_prob_only`, Ridge alpha 500, threshold 0.20 제출 파일을 별도로 생성했다. 이 후보는 EXP-56 대비 `test_0049` 하나만 `0 -> 1`로 바꾸며 보호 샘플은 모두 유지했다.
 
 Leaderboard 결과는 `0.9567307692`로 EXP-56의 `0.9583333333`보다 낮았다. 따라서 `test_0049=1` 방향은 현재 public 기준에서는 이득이 아니었고, `test_0049=0`을 우선 유지하는 편이 낫다.
+
+## EXP-80. ResNet18 제한 포함 compact stacking
+
+### 목적
+
+EXP-56은 ConvNeXt/EfficientNet 계열 중심으로 만들어진 후보였다. 이번 실험은 ResNet18 OOF를 다시 제한적으로 포함했을 때, ConvNeXt 과다 의존을 줄이고 다른 오류 방향을 보완할 수 있는지 확인하는 것이다. EXP-79 결과를 반영해 `test_0049=0`도 보호 방향에 추가했다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 추가 정보원: EXP-48 ResNet18 5-fold OOF/test mean probability
+- 기존 정보원: EXP-46 ConvNeXt, EXP-54 ConvNeXt seed123, EXP-50 EfficientNet-B0
+- meta-model: RidgeClassifier / LogisticRegression
+- feature: probability, rank, margin, uncertainty, compact feature 조합
+- 보호 조건:
+  - `test_0025=0`
+  - `test_0539=0`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0201=1`
+  - `test_0222=1`
+  - `test_0504=0`
+  - `test_0141=1`
+  - `test_0049=0`
+  - `test_0188`와 `test_0568` 동시 1 방지
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 21,060 |
+| 전체 최고 meta-CV accuracy | 0.98907 |
+| 보호 샘플 유지 row 수 | 21 |
+| label band 통과 row 수 | 4,089 |
+| low-change 통과 row 수 | 5,543 |
+| 최종 candidate 수 | 0 |
+| 저장된 제출 파일 | 0 |
+
+전체 최고 meta-CV 후보는 `all_prob_stats` Ridge alpha 10, threshold 0.05 조합이었다. 하지만 이 후보는 EXP-56 대비 16개를 바꾸고, `test_0049`, `test_0504`, `test_0539`, `test_0244`, `test_0490`, `test_0188`을 모두 1로 바꿔 보호 조건과 크게 충돌했다.
+
+보호 샘플을 모두 유지하면서 EXP-56과 다른 비중복 후보는 없었다.
+
+### 저장 파일
+
+```text
+scripts/run_exp80_resnet_compact_stacking.py
+oof/preds/exp80_resnet_compact_stacking_summary.csv
+```
+
+### 판단
+
+ResNet18을 다시 추가하면 meta-CV는 올라갈 수 있지만, public에서 확인된 보호 방향과 충돌하는 후보가 많다. 현재 guardrail 안에서는 ResNet18 OOF가 새 제출 후보를 만들지 못했다. 다음 단계는 새 학습을 통한 EfficientNet-B0 seed 추가 OOF처럼, 보호 샘플 유지 성향이 있는 모델 family의 diversity를 늘리는 쪽이 더 타당하다.
 
 ## 데일리 로그
 
