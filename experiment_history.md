@@ -92,6 +92,7 @@
 | EXP-68 | RegNetY 포함 OOF stacking | EXP-67 RegNetY OOF를 기존 ConvNeXt/EfficientNet OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 제출 없음 | - | 보호 샘플 8개 유지 후보 0개 |
 | EXP-69 | DINOv2 feature extractor + Ridge/Logistic | timm `vit_small_patch14_dinov2` frozen feature 384-dim 추출 후 Ridge/Logistic meta-model 탐색 | - | - | - | Ridge/Logistic | 0.97373 meta-CV | 제출 없음 | - | ViT/foundation feature family 확보 실험. 보호 샘플 유지 후보 0개 |
 | EXP-70 | EfficientNetV2-S 재설계 5-fold OOF | `features[6:] + classifier`를 학습해 EXP-42보다 넓게 fine-tuning | 6 x 5 folds | AdamW | 2e-5 / 8e-5 | Weighted CrossEntropyLoss | 0.97642 OOF | 미제출 | oof/submissions/exp70_efficientnet_v2_s_wide_mean_submit.csv | EXP-42 대비 회복. 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
+| EXP-71 | EfficientNetV2-S 포함 OOF stacking | EXP-70 EfficientNetV2-S OOF를 기존 ConvNeXt/EfficientNet-B0 OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98888 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4007,6 +4008,55 @@ EfficientNetV2-S 재설계는 EXP-42 대비 명확히 개선되었다. 마지막
 
 EXP-70은 단독 제출 후보가 아니라 stacking diversity 후보로 보류한다. 다음 단계에서는 EXP-70 probability를 낮은 가중치 또는 feature importance 기반으로 제한적으로 넣어, EXP-56 보호 방향을 유지하는 후보가 나오는지 확인하는 것이 타당하다.
 
+## EXP-71. EfficientNetV2-S 포함 OOF stacking
+
+### 목적
+
+EXP-70 EfficientNetV2-S는 단독 제출에는 위험했지만, EXP-42 대비 크게 회복되어 OOF 정보원으로는 의미가 있었다. 따라서 기존 ConvNeXt/ConvNeXt seed123/EfficientNet-B0 OOF feature에 EfficientNetV2-S를 낮은 가중치로 추가해, 보호 샘플을 유지하는 low-change 후보가 생기는지 확인했다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 추가 정보원: EXP-70 EfficientNetV2-S OOF/test probability
+- meta-model: RidgeClassifier / LogisticRegression
+- feature 조합:
+  - core probability + `effv2_prob1`
+  - core probability + `effv2_rank`
+  - core probability + `effv2_margin`
+  - compact core feature + `effv2` light feature
+  - all probability/margin stats
+- 필터:
+  - 보호 샘플 8개 유지
+  - `test_0188`, `test_0568` 동시 1 제외
+  - test label 1 개수 394~400
+  - EXP-56 대비 변경 수 1~6개
+  - meta-CV floor 유지
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 6318 |
+| 최고 meta-CV accuracy | 0.98888 |
+| 보호 샘플 유지 row 수 | 5 |
+| 보호 샘플 유지 비중복 candidate | 0 |
+| 저장된 제출 파일 | 0 |
+
+상위 후보는 meta-CV와 label 분포가 괜찮았지만 보호 샘플을 깨는 경우가 많았다. 특히 top 50 후보 기준으로 `test_0490`, `test_0504`는 모두 1로 예측했고, `test_0539`, `test_0244`도 대부분 1로 예측했다.
+
+보호 샘플을 모두 유지한 후보 5개는 모두 EXP-56과 test 예측이 완전히 동일했다. 따라서 새 제출 후보로 저장하지 않았다.
+
+### 저장 파일
+
+```text
+scripts/run_exp71_effv2_stacking.py
+oof/preds/exp71_effv2_stacking_summary.csv
+```
+
+### 판단
+
+EfficientNetV2-S는 EXP-70에서 단독 OOF 정보원으로 회복됐지만, 현재 최고 후보를 개선하는 방향의 안전한 test 변경은 만들지 못했다. meta-CV 최고값만 보면 좋아 보이지만, public에서 이미 불리했던 보호 샘플 방향을 자주 깨므로 제출하지 않는다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4192,6 +4242,13 @@ EXP-70은 단독 제출 후보가 아니라 stacking diversity 후보로 보류�
   - EXP-56 대비 변경 수 34개
   - 보호 샘플 `test_0025`, `test_0539`, `test_0244`, `test_0490`, `test_0222`, `test_0504`를 깨므로 단독 제출 제외
   - 다음에는 EXP-70을 낮은 가중치의 stacking 보조 feature로만 검토
+- EXP-71 EfficientNetV2-S 포함 OOF stacking 완료
+  - 탐색 row 수 `6318`
+  - 최고 meta-CV accuracy `0.98888`
+  - 보호 샘플 유지 row 수 5개
+  - 보호 샘플 유지 row는 모두 EXP-56과 동일 예측이라 비중복 candidate 0개
+  - 제출 파일 없음
+  - EfficientNetV2-S는 현재 guardrail 안에서 새 제출 후보를 만들지 못함
 
 ## 리더보드 제출 기록
 

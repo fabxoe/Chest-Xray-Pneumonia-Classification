@@ -382,3 +382,11 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0222=1`
     - `test_0504=0`
   - 해석: EXP-42 대비 성능 회복은 성공했지만, 현재 최고 후보를 직접 대체하기에는 위험하다. 다음 단계에서는 낮은 가중치/제약 조건으로 stacking에만 추가한다.
+- EXP-71 EfficientNetV2-S 포함 OOF stacking 완료.
+  - 추가 정보원: EXP-70 EfficientNetV2-S OOF/test probability
+  - 탐색 row 수: 6318
+  - 최고 meta-CV accuracy: 0.98888
+  - 보호 샘플 8개 유지 row 수: 5
+  - 보호 샘플 8개 유지 비중복 candidate 수: 0
+  - 제출 파일 없음
+  - 해석: 상위 후보는 `test_0490`, `test_0504`, `test_0539`, `test_0244` 등 보호 방향을 자주 깨며, 보호 조건을 통과한 후보는 EXP-56과 동일 예측이었다. EfficientNetV2-S는 현재 guardrail 안에서 새 제출 후보를 만들지 못했다.
