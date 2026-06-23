@@ -93,6 +93,7 @@
 | EXP-69 | DINOv2 feature extractor + Ridge/Logistic | timm `vit_small_patch14_dinov2` frozen feature 384-dim 추출 후 Ridge/Logistic meta-model 탐색 | - | - | - | Ridge/Logistic | 0.97373 meta-CV | 제출 없음 | - | ViT/foundation feature family 확보 실험. 보호 샘플 유지 후보 0개 |
 | EXP-70 | EfficientNetV2-S 재설계 5-fold OOF | `features[6:] + classifier`를 학습해 EXP-42보다 넓게 fine-tuning | 6 x 5 folds | AdamW | 2e-5 / 8e-5 | Weighted CrossEntropyLoss | 0.97642 OOF | 미제출 | oof/submissions/exp70_efficientnet_v2_s_wide_mean_submit.csv | EXP-42 대비 회복. 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
 | EXP-71 | EfficientNetV2-S 포함 OOF stacking | EXP-70 EfficientNetV2-S OOF를 기존 ConvNeXt/EfficientNet-B0 OOF feature에 추가 | - | - | - | Ridge/Logistic | 0.98888 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
+| EXP-72 | ConvNeXt-Tiny seed777 5-fold OOF | EXP-46과 동일 구조, 학습 seed만 777로 변경해 ConvNeXt seed diversity 확보 | 6 x 5 folds | AdamW | 5e-5 | Weighted CrossEntropyLoss | 0.98006 OOF | 미제출 | oof/submissions/exp72_convnext_tiny_seed777_mean_submit.csv | OOF는 강하지만 단독 mean은 보호 샘플 다수를 깨서 제출 제외 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4057,6 +4058,70 @@ oof/preds/exp71_effv2_stacking_summary.csv
 
 EfficientNetV2-S는 EXP-70에서 단독 OOF 정보원으로 회복됐지만, 현재 최고 후보를 개선하는 방향의 안전한 test 변경은 만들지 못했다. meta-CV 최고값만 보면 좋아 보이지만, public에서 이미 불리했던 보호 샘플 방향을 자주 깨므로 제출하지 않는다.
 
+## EXP-72. ConvNeXt-Tiny seed777 5-fold OOF
+
+### 목적
+
+현재 최고 후보는 ConvNeXt/EfficientNet-B0 OOF 기반 stacking에서 나왔다. 따라서 새로운 모델 family보다 우선순위가 높은 작업으로, ConvNeXt-Tiny의 추가 seed를 학습해 강한 family 내부의 seed diversity를 확보했다.
+
+### 설정
+
+- 모델: ConvNeXt-Tiny ImageNet pretrained
+- 구조: EXP-46/54와 동일
+- 학습 seed: 777
+- fold split: 기존 `oof/folds_seed42.csv`
+- epoch: 6 x 5 folds
+- optimizer: AdamW
+- LR: 5e-5
+- loss: class-weighted CrossEntropyLoss
+- 출력 파일:
+  - `scripts/run_exp72_convnext_seed777_oof.py`
+  - `oof/preds/exp72_convnext_tiny_seed777_oof_probs.csv`
+  - `oof/preds/exp72_convnext_tiny_seed777_test_probs_mean.csv`
+  - `oof/preds/exp72_convnext_tiny_seed777_combined_result.json`
+  - `oof/submissions/exp72_convnext_tiny_seed777_mean_submit.csv`
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| OOF accuracy | 0.98006 |
+| OOF precision | 0.98809 |
+| OOF recall | 0.98503 |
+| OOF F1 | 0.98656 |
+| OOF confusion matrix | `[[1295, 46], [58, 3817]]` |
+| test label 0/1 | 210 / 414 |
+| EXP-56 대비 변경 수 | 20 |
+
+fold별 best accuracy:
+
+| fold | best epoch | valid accuracy |
+|---:|---:|---:|
+| 0 | 3 | 0.9875 |
+| 1 | 3 | 0.9818 |
+| 2 | 5 | 0.9684 |
+| 3 | 4 | 0.9818 |
+| 4 | 5 | 0.9808 |
+
+### 보호 샘플 확인
+
+| sample | EXP-72 pred | prob_1 | 판단 |
+|---|---:|---:|---|
+| test_0025 | 1 | 0.6264 | 보호 방향 위반 |
+| test_0539 | 1 | 0.9347 | 보호 방향 위반 |
+| test_0244 | 1 | 0.6845 | 보호 방향 위반 |
+| test_0490 | 1 | 0.6290 | 보호 방향 위반 |
+| test_0201 | 1 | 0.8188 | 유지 |
+| test_0222 | 1 | 0.8681 | 유지 |
+| test_0504 | 1 | 0.6950 | 보호 방향 위반 |
+| test_0141 | 1 | 0.5440 | 유지 |
+| test_0188 | 1 | 0.8683 | 단독으로는 주의 |
+| test_0568 | 0 | 0.0195 | 유지 |
+
+### 판단
+
+seed777 ConvNeXt는 OOF accuracy 0.98006으로 강한 편이며, seed diversity 확보 목적은 달성했다. 다만 단독 mean은 EXP-56 대비 20개가 바뀌고 보호 샘플 다수를 1로 바꾸므로 제출하지 않는다. 다음 단계에서는 EXP-72를 기존 ConvNeXt seed123, EfficientNet-B0와 함께 stacking에 넣되, 보호 샘플을 유지하는 후보만 검토한다.
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4249,6 +4314,13 @@ EfficientNetV2-S는 EXP-70에서 단독 OOF 정보원으로 회복됐지만, 현
   - 보호 샘플 유지 row는 모두 EXP-56과 동일 예측이라 비중복 candidate 0개
   - 제출 파일 없음
   - EfficientNetV2-S는 현재 guardrail 안에서 새 제출 후보를 만들지 못함
+- EXP-72 ConvNeXt-Tiny seed777 5-fold OOF 완료
+  - OOF accuracy `0.98006`, recall `0.98503`
+  - confusion matrix `[[1295, 46], [58, 3817]]`
+  - test mean label 0/1: `210/414`
+  - EXP-56 대비 변경 수 20개
+  - 보호 샘플 다수를 1로 바꾸므로 단독 제출 제외
+  - 다음 단계는 EXP-72 포함 ConvNeXt seed stacking
 
 ## 리더보드 제출 기록
 

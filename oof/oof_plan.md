@@ -390,3 +390,22 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 보호 샘플 8개 유지 비중복 candidate 수: 0
   - 제출 파일 없음
   - 해석: 상위 후보는 `test_0490`, `test_0504`, `test_0539`, `test_0244` 등 보호 방향을 자주 깨며, 보호 조건을 통과한 후보는 EXP-56과 동일 예측이었다. EfficientNetV2-S는 현재 guardrail 안에서 새 제출 후보를 만들지 못했다.
+- EXP-72 ConvNeXt-Tiny seed777 5-fold OOF 완료.
+  - 목적: 강한 ConvNeXt family의 seed diversity 추가 확보
+  - 모델/설정: EXP-46/54와 동일, 학습 seed 777
+  - OOF accuracy: 0.98006
+  - OOF confusion matrix: `[[1295, 46], [58, 3817]]`
+  - test mean label 0/1: 210/414
+  - EXP-56 대비 변경 수: 20개
+  - 단독 mean은 다음 보호 방향을 깨므로 제출 제외:
+    - `test_0025=0`
+    - `test_0539=0`
+    - `test_0244=0`
+    - `test_0490=0`
+    - `test_0504=0`
+  - 유지한 방향:
+    - `test_0201=1`
+    - `test_0222=1`
+    - `test_0141=1`
+    - `test_0568=0`
+  - 해석: 단독 제출 후보는 아니지만, OOF가 강하므로 EXP-73에서 ConvNeXt seed ensemble/stacking feature로 검토한다.
