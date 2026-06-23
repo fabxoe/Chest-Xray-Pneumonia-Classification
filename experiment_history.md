@@ -97,6 +97,7 @@
 | EXP-73 | ConvNeXt seed777 포함 OOF stacking | EXP-72 seed777 OOF를 ConvNeXt seed123/EfficientNet-B0 OOF pool에 추가 | - | - | - | Ridge/Logistic | 0.98754 meta-CV | 제출 없음 | - | 보호 샘플 유지 비중복 후보 0개. 안전 후보는 EXP-56과 동일 |
 | EXP-77 | ConvNeXt-Tiny Lion fold0 smoke | EXP-45와 같은 fold0 조건에서 optimizer만 Lion으로 변경 | 6 fold0 | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98563 fold0 | 미제출 | oof/submissions/exp77_convnext_tiny_lion_fold0_submit.csv | AdamW fold0보다 소폭 개선. 5-fold 확장 후보 |
 | EXP-78 | ConvNeXt-Tiny Lion 5-fold OOF | EXP-77을 5-fold로 확장, optimizer만 Lion 유지 | 6 x 5 folds | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98140 OOF | 미제출 | oof/submissions/exp78_convnext_tiny_lion_mean_submit.csv | 단독 mean은 보호 샘플 다수를 1로 바꿔 제출 제외. stacking 보조 feature 후보 |
+| EXP-79 | Lion OOF 포함 stacking | EXP-78 Lion OOF를 기존 ConvNeXt/EfficientNet OOF pool에 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98811 meta-CV | 제출 없음 | - | 보호 샘플 유지 후보는 meta-CV 하락폭이 커 제출 제외 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4309,6 +4310,67 @@ oof/submissions/exp78_convnext_tiny_lion_mean_submit.csv
 ### 판단
 
 EXP-78은 OOF 기준으로 강한 단독 모델이지만, test mean이 EXP-56 대비 24개를 모두 `0 -> 1`로 바꾸고 `test_0244`, `test_0490`, `test_0504`, `test_0188` 등 보호 방향을 깨므로 단독 제출은 제외한다. 다만 FN을 줄이는 방향의 모델이므로 이후 Ridge/Logistic stacking에서 낮은 가중치의 보조 feature로 활용할 수 있다.
+
+## EXP-79. Lion OOF 포함 stacking
+
+### 목적
+
+EXP-78 Lion OOF는 단독 제출로는 공격적이지만 FN을 줄이는 성향이 있었다. 이번 실험은 Lion probability를 기존 ConvNeXt/EfficientNet OOF pool에 낮은 비중의 feature로 추가했을 때, EXP-56보다 나은 low-change 후보가 생기는지 확인하는 것이다.
+
+### 설정
+
+- 기준 최고 후보: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 추가 정보원: EXP-78 ConvNeXt-Tiny Lion 5-fold OOF/test mean probability
+- 기존 정보원: EXP-46 ConvNeXt, EXP-54 ConvNeXt seed123, EXP-72 ConvNeXt seed777, EXP-50 EfficientNet-B0
+- meta-model: RidgeClassifier / LogisticRegression
+- feature: probability, rank, margin, uncertainty, compact feature 조합
+- 보호 조건:
+  - `test_0025=0`
+  - `test_0539=0`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0201=1`
+  - `test_0222=1`
+  - `test_0504=0`
+  - `test_0141=1`
+  - `test_0188`와 `test_0568` 동시 1 방지
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 40,248 |
+| 전체 최고 meta-CV accuracy | 0.98811 |
+| 보호 샘플 유지 row 수 | 32 |
+| label band 통과 row 수 | 11,904 |
+| low-change 통과 row 수 | 16,325 |
+| 최종 candidate 수 | 0 |
+| 저장된 제출 파일 | 0 |
+
+전체 최고 meta-CV 후보는 `all_prob_stats` logistic 조합으로 0.98811까지 나왔지만, 보호 샘플 조건을 통과하지 못했다. 반대로 보호 샘플을 모두 유지하면서 EXP-56 대비 1개만 바꾸는 Lion 포함 후보는 존재했지만, meta-CV accuracy가 0.98447로 현재 기준 0.98658보다 약 0.00211 낮았다.
+
+가장 가까운 보호 후보:
+
+| 항목 | 값 |
+|---|---|
+| spec | `cnx_lion_eff_prob_only` |
+| model | RidgeClassifier |
+| alpha | 500 |
+| threshold | 0.20 |
+| meta-CV accuracy | 0.98447 |
+| test label 0/1 | 227 / 397 |
+| EXP-56 대비 변경 | `test_0049: 0 -> 1` |
+
+### 저장 파일
+
+```text
+scripts/run_exp79_lion_stacking.py
+oof/preds/exp79_lion_stacking_summary.csv
+```
+
+### 판단
+
+Lion OOF를 stacking에 넣으면 일부 meta-CV는 올라가지만, 좋은 후보들은 보호 샘플을 깨고, 보호 조건을 만족하는 후보는 meta-CV 하락폭이 크다. 따라서 EXP-79에서는 제출 파일을 만들지 않는다. Lion은 현재 기준으로 직접적인 점수 개선 후보라기보다, 추후 더 큰 OOF pool에서 제한 feature로만 재검토할 보조 정보원이다.
 
 ## 데일리 로그
 

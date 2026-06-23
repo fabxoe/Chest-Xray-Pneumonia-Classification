@@ -459,3 +459,16 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0504=1`
     - `test_0188=1`
   - 해석: 단독 OOF는 강하지만, public guardrail과 충돌하는 `0 -> 1` 변경이 많다. 단독 제출은 제외하고 다음에는 기존 OOF pool에 낮은 가중치의 stacking feature로만 추가한다.
+- EXP-79 Lion OOF 포함 stacking 완료.
+  - 목적: EXP-78 Lion OOF를 기존 ConvNeXt/EfficientNet OOF pool에 낮은 비중 feature로 추가
+  - 탐색 row 수: 40,248
+  - 전체 최고 meta-CV accuracy: 0.98811
+  - 보호 샘플 유지 row 수: 32
+  - 최종 candidate 수: 0
+  - 제출 파일 없음
+  - 가장 가까운 보호 후보:
+    - spec: `cnx_lion_eff_prob_only`
+    - model: RidgeClassifier alpha 500, threshold 0.20
+    - meta-CV accuracy: 0.98447
+    - EXP-56 대비 변경: `test_0049: 0 -> 1`
+  - 해석: Lion feature는 meta-CV를 올리는 조합도 만들지만 보호 샘플과 충돌한다. 보호 조건을 만족하는 후보는 현재 기준보다 meta-CV가 약 0.00211 낮아 제출 제외한다.
