@@ -112,6 +112,7 @@
 | EXP-91 | 기존 TTA 방향 재분석 | EXP-37 단일 validation TTA 확률 분포 요약 | - | - | - | 분석 | - | 제출 없음 | - | OOF가 아니므로 제출 후보 생성 안 함 |
 | EXP-92 | DINOv2 PCA feature 개선 | frozen 384-dim feature에 fold-safe PCA 32/64/128/256 + Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.97604 meta-CV | 제출 없음 | - | EXP-69보다 개선됐지만 보호 위반/변경 71개 |
 | EXP-93 | ConvNeXt-ResNet disagreement 설명 | OOF 불일치 샘플의 영상 통계/오류 방향/대표 몽타주 분석 | - | - | - | 분석 | - | 제출 없음 | - | 단순 영상 통계로는 방향 설명 불가, ResNet이 CNX=0/RES=1 그룹에서 더 정확 |
+| EXP-94 | OOF disagreement Grad-CAM | fold checkpoint로 ConvNeXt/ResNet class-1 CAM 반응 위치 비교 | - | - | - | XAI | - | 제출 없음 | - | CAM 상관 0.251, top20 IoU 0.216으로 반응 위치 차이 확인 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4650,6 +4651,55 @@ reports/exp93_disagreement/cnx0_res1_representatives.png
 reports/exp93_disagreement/cnx1_res0_representatives.png
 ```
 
+## EXP-94. OOF disagreement Grad-CAM 비교
+
+### 목적
+
+EXP-93에서 단순 영상 통계로는 ConvNeXt/ResNet 방향 차이를 설명하지 못했다. EXP-94에서는 각 샘플의 OOF fold checkpoint를 사용해 두 모델의 class 1 Grad-CAM 반응 위치를 비교했다.
+
+### 설정
+
+- EXP-93 disagreement 대표 샘플 8장
+- 각 샘플이 validation으로 사용된 fold checkpoint 로딩
+- ConvNeXt target layer: `features[-1]`
+- ResNet target layer: `layer4[-1]`
+- 두 모델 모두 CAM target class 1로 고정
+- CAM pixel correlation, 상위 20% activation IoU, 중앙/상단/좌측 비중 계산
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 비교 샘플 | 8 |
+| ConvNeXt/ResNet CAM correlation 평균 | 0.251 |
+| CAM 상위 20% 영역 IoU 평균 | 0.216 |
+
+| 방향 | 모델 | 중앙 CAM 비중 | 상단 CAM 비중 |
+|---|---|---:|---:|
+| CNX=0, RES=1 | ConvNeXt | 0.272 | 0.368 |
+| CNX=0, RES=1 | ResNet | 0.379 | 0.411 |
+| CNX=1, RES=0 | ConvNeXt | 0.367 | 0.474 |
+| CNX=1, RES=0 | ResNet | 0.070 | 0.754 |
+
+### 해석
+
+CAM correlation과 top-20% IoU가 모두 낮아, 두 모델은 같은 영상에서도 양성 근거로 반응하는 위치가 상당히 다른 경향을 보였다.
+
+`CNX=0, RES=1` 샘플에서 ResNet은 ConvNeXt보다 중앙 영역 반응 비중이 높았다. 반대 방향에서 ResNet class-1 CAM은 상단/바깥쪽으로 크게 치우쳐졌다. 이는 ResNet의 양성 판단이 중앙 폐야 패턴에 반응할 때 강해지고, 그런 근거가 약할 때 class-1 반응이 주변으로 토끼는 경향을 시사한다.
+
+다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
+
+### 저장 파일
+
+```text
+scripts/run_exp94_oof_gradcam_disagreement.py
+reports/exp94_gradcam/oof_gradcam_disagreement_panel.png
+reports/exp94_gradcam/oof_gradcam_disagreement_summary.csv
+reports/exp94_gradcam/oof_gradcam_group_summary.csv
+reports/exp94_gradcam/result.json
+reports/exp94_gradcam/report.md
+```
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4902,6 +4952,11 @@ reports/exp93_disagreement/cnx1_res0_representatives.png
   - 단순 영상 통계 방향 분류 balanced accuracy `0.514`로 우연 수준
   - CNX=0/RES=1 그룹에서 ResNet 정확도 71.1%, ConvNeXt 28.9%
   - 밝기/대비보다 모델의 공간적 표현 차이가 더 유력, 후속 Grad-CAM 비교 필요
+- EXP-94 OOF disagreement Grad-CAM 비교 완료
+  - fold checkpoint를 사용한 대표 8장 class-1 CAM 비교
+  - ConvNeXt/ResNet CAM correlation `0.251`, top-20% IoU `0.216`
+  - CNX=0/RES=1에서 ResNet 중앙 CAM 비중 0.379, ConvNeXt 0.272
+  - 두 모델의 공간적 반응 위치가 다른 경향 확인, 병변 근거로 단정하지 않음
 - 오늘 실험 기록을 `experiment_history.md`, notebook, `oof/oof_plan.md`에 동기화
 
 ## 리더보드 제출 기록

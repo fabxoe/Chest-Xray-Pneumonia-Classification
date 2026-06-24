@@ -527,3 +527,10 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - CNX=1/RES=0 36개, 실제 양성 비율 50.0%, 두 모델 정확도 각 50.0%
   - 밝기/대비/entropy/gradient 기반 방향 분류 balanced accuracy 0.514
   - 해석: 단순 영상 품질보다 모델의 공간적 표현 차이가 더 유력하며, 후속으로 동일 cohort Grad-CAM 비교가 필요
+- EXP-94 OOF disagreement Grad-CAM 비교 완료.
+  - 대표 8장, 각 OOF fold checkpoint 사용
+  - ConvNeXt/ResNet CAM correlation 평균 0.251
+  - CAM 상위 20% 영역 IoU 평균 0.216
+  - CNX=0/RES=1: ResNet 중앙 CAM 0.379, ConvNeXt 0.272
+  - CNX=1/RES=0: ResNet 상단 CAM 0.754, 중앙 CAM 0.070
+  - 해석: 두 모델의 양성 반응 위치가 다른 경향이 방향 차이의 한 설명이 될 수 있지만, CAM을 실제 병변 근거로 단정하지 않음
