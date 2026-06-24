@@ -4779,6 +4779,36 @@ oof/preds/exp91_existing_tta_direction_summary.csv
   - `test_0025`, `test_0244`, `test_0504`는 유지했지만 `test_0539`, `test_0490`, `test_0141`을 깨므로 단독 제출 제외
   - Lion 5-fold OOF 확장 후보로 기록
 
+### 2026-06-24
+
+- IDE/Docker 재시작 후 git/history 상태 점검
+- EXP-77 ConvNeXt-Tiny Lion fold0 smoke 커밋 상태 확인
+- 중단됐던 EXP-78 Lion 5-fold OOF 복구
+  - 기존 fold0/1 산출물 유지, fold2~4만 재실행
+  - OOF accuracy `0.98140`, confusion matrix `[[1294, 47], [50, 3825]]`
+  - 보호 샘플 다수 위반으로 단독 제출 제외
+- EXP-79 Lion OOF 포함 stacking 완료
+  - 최고 meta-CV `0.98811`, 최종 candidate 0개
+  - 보수 후보 `test_0049: 0 -> 1` 하나만 변경해 제출
+  - Leaderboard `0.9567307692`로 EXP-56보다 하락, `test_0049=0` 유지 우선
+- EXP-65 ConvNeXt V2 Tiny 단독 mean을 사용자가 별도 제출
+  - Leaderboard `0.9262820513`으로 크게 하락
+  - 단독 제출용이 아니라 stacking diversity feature로만 유지
+- EXP-80 ResNet18 제한 compact stacking 완료
+  - 최고 meta-CV `0.98907`이지만 보호 샘플 충돌로 candidate 0개
+- EXP-81 EfficientNet-B0 seed123 5-fold OOF 완료
+  - OOF accuracy `0.98332`, confusion matrix `[[1313, 28], [59, 3816]]`
+  - EXP-50 대비 OOF/test label disagreement `45/14`
+  - 단독 제출은 보류하고 seed diversity feature로 유지
+- EXP-82~91 fast suite 완료
+  - EfficientNet seed stacking/soft voting: 보호 통과 후보 없음
+  - OOF diversity: ConvNeXt-ResNet disagreement 126개로 가장 큰 다양성
+  - Ridge importance: `eff > eff123 > cnx123 > cnx`
+  - Feature pruning: `cnx123` 제거 시 OOF `0.98658`
+  - FP/FN 분석: ResNet FN 40으로 가장 적음
+  - threshold, low-change, rank ensemble에서 새 제출 후보 없음
+- 오늘 실험 기록을 `experiment_history.md`, notebook, `oof/oof_plan.md`에 동기화
+
 ## 리더보드 제출 기록
 
 | 제출 순서 | 당시 저장 파일명 | 모델 | Validation Accuracy | Leaderboard Score | 순위 | 메모 |
