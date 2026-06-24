@@ -111,6 +111,7 @@
 | EXP-90 | Rank ensemble | probability percentile rank 평균 비교 | - | - | - | Rank voting | 0.98658 OOF | 제출 없음 | - | 보호 조건 위반/변경 수 과다 |
 | EXP-91 | 기존 TTA 방향 재분석 | EXP-37 단일 validation TTA 확률 분포 요약 | - | - | - | 분석 | - | 제출 없음 | - | OOF가 아니므로 제출 후보 생성 안 함 |
 | EXP-92 | DINOv2 PCA feature 개선 | frozen 384-dim feature에 fold-safe PCA 32/64/128/256 + Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.97604 meta-CV | 제출 없음 | - | EXP-69보다 개선됐지만 보호 위반/변경 71개 |
+| EXP-93 | ConvNeXt-ResNet disagreement 설명 | OOF 불일치 샘플의 영상 통계/오류 방향/대표 몽타주 분석 | - | - | - | 분석 | - | 제출 없음 | - | 단순 영상 통계로는 방향 설명 불가, ResNet이 CNX=0/RES=1 그룹에서 더 정확 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4606,6 +4607,49 @@ oof/preds/exp92_dinov2_pca_summary.csv
 oof/preds/exp92_dinov2_pca_result.json
 ```
 
+## EXP-93. ConvNeXt vs ResNet 판단 방향 차이 분석
+
+### 목적
+
+OOF에서 ConvNeXt와 ResNet이 다른 label을 예측한 샘플을 모아, 밝기·대비·entropy·gradient·중앙/주변 명암 등의 영상 통계가 판단 방향 차이를 설명하는지 확인했다.
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 전체 OOF 샘플 | 5,216 |
+| ConvNeXt/ResNet 불일치 | 126 |
+| ConvNeXt=0, ResNet=1 | 90 |
+| ConvNeXt=1, ResNet=0 | 36 |
+| 영상 통계 기반 방향 분류 accuracy | 0.532 |
+| 영상 통계 기반 balanced accuracy | 0.514 |
+
+| 불일치 그룹 | 실제 양성 비율 | ConvNeXt 정확도 | ResNet 정확도 |
+|---|---:|---:|---:|
+| ConvNeXt=0, ResNet=1 | 0.711 | 0.289 | 0.711 |
+| ConvNeXt=1, ResNet=0 | 0.500 | 0.500 | 0.500 |
+
+### 해석
+
+영상 통계로 disagreement 방향을 분류한 balanced accuracy가 0.514로 거의 우연 수준이었다. 따라서 밝기, 대비, 전체 edge 강도 같은 단순 품질 차이가 모델 방향 차이의 주요 원인이라고 보기 어렵다.
+
+`ConvNeXt=0, ResNet=1` 그룹의 실제 양성 비율은 71.1%였고 ResNet이 더 자주 맞았다. 이는 전체 OOF에서 ResNet FN 40, ConvNeXt FN 86으로 ResNet이 양성 recall 보완축으로 작동한 결과와 일치한다.
+
+다만 이 결과만으로 ResNet이 실제 병변 영역을 보았다고 단정할 수는 없다. 모델이 사용하는 공간적 패턴 차이를 확인하려면 동일 disagreement cohort에 대한 fold별 Grad-CAM 비교가 필요하다.
+
+### 저장 파일
+
+```text
+scripts/run_exp93_disagreement_explanation.py
+oof/preds/exp93_disagreement_image_features.csv
+oof/preds/exp93_disagreement_group_summary.csv
+oof/preds/exp93_disagreement_feature_effects.csv
+oof/preds/exp93_disagreement_result.json
+reports/exp93_disagreement/report.md
+reports/exp93_disagreement/cnx0_res1_representatives.png
+reports/exp93_disagreement/cnx1_res0_representatives.png
+```
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4853,6 +4897,11 @@ oof/preds/exp92_dinov2_pca_result.json
   - PCA 256 + LogisticRegression으로 meta-CV `0.97604`
   - EXP-69 대비 약 `+0.00230` 개선
   - EXP-56 대비 71개 변경/보호 위반으로 제출 후보 없음
+- EXP-93 ConvNeXt-ResNet disagreement 설명 실험 완료
+  - OOF 불일치 126개: CNX=0/RES=1 90개, CNX=1/RES=0 36개
+  - 단순 영상 통계 방향 분류 balanced accuracy `0.514`로 우연 수준
+  - CNX=0/RES=1 그룹에서 ResNet 정확도 71.1%, ConvNeXt 28.9%
+  - 밝기/대비보다 모델의 공간적 표현 차이가 더 유력, 후속 Grad-CAM 비교 필요
 - 오늘 실험 기록을 `experiment_history.md`, notebook, `oof/oof_plan.md`에 동기화
 
 ## 리더보드 제출 기록

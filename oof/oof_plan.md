@@ -521,3 +521,9 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - confusion matrix: `[[1286, 55], [70, 3805]]`
   - EXP-56 대비 test 변경 71개, 보호 통과 candidate 0개
   - 해석: DINOv2 표현 압축은 효과가 있지만 현재 CNN OOF pool을 대체할 수준은 아님
+- EXP-93 ConvNeXt-ResNet disagreement 설명 실험 완료.
+  - OOF disagreement 126개
+  - CNX=0/RES=1 90개, 실제 양성 비율 71.1%, ResNet 정확도 71.1%
+  - CNX=1/RES=0 36개, 실제 양성 비율 50.0%, 두 모델 정확도 각 50.0%
+  - 밝기/대비/entropy/gradient 기반 방향 분류 balanced accuracy 0.514
+  - 해석: 단순 영상 품질보다 모델의 공간적 표현 차이가 더 유력하며, 후속으로 동일 cohort Grad-CAM 비교가 필요
