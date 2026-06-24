@@ -99,6 +99,7 @@
 | EXP-78 | ConvNeXt-Tiny Lion 5-fold OOF | EXP-77을 5-fold로 확장, optimizer만 Lion 유지 | 6 x 5 folds | Lion | 2e-5 | Weighted CrossEntropyLoss | 0.98140 OOF | 미제출 | oof/submissions/exp78_convnext_tiny_lion_mean_submit.csv | 단독 mean은 보호 샘플 다수를 1로 바꿔 제출 제외. stacking 보조 feature 후보 |
 | EXP-79 | Lion OOF 포함 stacking | EXP-78 Lion OOF를 기존 ConvNeXt/EfficientNet OOF pool에 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98811 meta-CV | 0.9567307692 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | test_0049만 0->1 변경했지만 EXP-56보다 하락 |
 | EXP-80 | ResNet18 제한 포함 compact stacking | EXP-56 OOF pool에 ResNet18 OOF를 제한 feature로 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98907 meta-CV | 제출 없음 | - | meta-CV 최고는 높지만 보호 샘플을 다수 깨서 제출 후보 없음 |
+| EXP-81 | EfficientNet-B0 seed123 5-fold OOF | EXP-50과 동일 구조/split, 학습 seed만 123으로 변경 | 6 x 5 folds | AdamW | 5e-5 / 1e-4 | Weighted CrossEntropyLoss | 0.98332 OOF | 미제출 | oof/submissions/exp81_efficientnet_b0_seed123_mean_submit.csv | 단독은 보호 샘플을 깨지만 EfficientNet seed diversity feature로 유지 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4431,6 +4432,79 @@ oof/preds/exp80_resnet_compact_stacking_summary.csv
 ### 판단
 
 ResNet18을 다시 추가하면 meta-CV는 올라갈 수 있지만, public에서 확인된 보호 방향과 충돌하는 후보가 많다. 현재 guardrail 안에서는 ResNet18 OOF가 새 제출 후보를 만들지 못했다. 다음 단계는 새 학습을 통한 EfficientNet-B0 seed 추가 OOF처럼, 보호 샘플 유지 성향이 있는 모델 family의 diversity를 늘리는 쪽이 더 타당하다.
+
+## EXP-81. EfficientNet-B0 seed123 5-fold OOF
+
+### 목적
+
+EXP-50 EfficientNet-B0는 OOF accuracy가 높고 주요 보호 샘플을 0으로 유지해 EXP-56 stacking의 중요한 보완축으로 작동했다. EXP-81은 구조와 fold split은 유지하고 학습 seed만 123으로 변경해 EfficientNet family 내 diversity를 확보한다.
+
+### 설정
+
+- 모델: ImageNet pretrained EfficientNet-B0
+- 학습 범위: `features[5:] + classifier`
+- fold: Stratified 5-fold, EXP-50과 동일 split
+- seed: 123 + fold index
+- epoch: 6 per fold
+- optimizer: AdamW
+- LR: feature 5e-5, classifier 1e-4
+- weight decay: 1e-4
+- loss: class-weighted CrossEntropyLoss
+
+### 결과
+
+| 항목 | EXP-50 seed42 | EXP-81 seed123 |
+|---|---:|---:|
+| OOF accuracy | 0.98505 | 0.98332 |
+| OOF precision | 0.99248 | 0.99272 |
+| OOF recall | 0.98735 | 0.98477 |
+| OOF F1 | 0.98991 | 0.98873 |
+| confusion matrix | `[[1312, 29], [49, 3826]]` | `[[1313, 28], [59, 3816]]` |
+| test label 0/1 | 245 / 379 | 251 / 373 |
+
+### Diversity 비교
+
+- EXP-50 대비 OOF label disagreement: 45개
+- EXP-50 대비 test label disagreement: 14개
+- OOF probability correlation: 0.99227
+- test probability correlation: 0.99217
+- EXP-56 대비 test 변경 수: 29개
+
+### 보호 샘플
+
+유지:
+
+- `test_0025=0`
+- `test_0539=0`
+- `test_0244=0`
+- `test_0490=0`
+- `test_0504=0`
+- `test_0049=0`
+- `test_0188=0`
+
+위반:
+
+- `test_0201=0`
+- `test_0222=0`
+- `test_0141=0`
+- `test_0568=1`
+
+### 저장 파일
+
+```text
+scripts/run_exp81_efficientnet_b0_seed123_oof.py
+oof/preds/exp81_efficientnet_b0_seed123_oof_probs.csv
+oof/preds/exp81_efficientnet_b0_seed123_test_probs_by_fold.csv
+oof/preds/exp81_efficientnet_b0_seed123_test_probs_mean.csv
+oof/preds/exp81_efficientnet_b0_seed123_fold_summary.csv
+oof/preds/exp81_efficientnet_b0_seed123_combined_result.json
+oof/preds/exp81_changed_vs_exp56.csv
+oof/submissions/exp81_efficientnet_b0_seed123_mean_submit.csv
+```
+
+### 판단
+
+EXP-81은 EXP-50보다 OOF accuracy가 약 0.00173 낮고 FN이 10개 더 많다. 단독 test mean은 양성 예측을 더 보수적으로 하지만, `test_0201`, `test_0222`, `test_0141`, `test_0568`의 보호 방향을 깨므로 단독 제출은 제외한다. 다만 EXP-50과 test 예측 14개가 다르므로 EXP-82에서 낮은 비중의 stacking feature로 검토할 가치가 있다.
 
 ## 데일리 로그
 

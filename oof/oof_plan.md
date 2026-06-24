@@ -491,3 +491,13 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 제출 파일 없음
   - 전체 최고 후보는 `test_0049`, `test_0504`, `test_0539`, `test_0244`, `test_0490`, `test_0188`을 모두 1로 바꿔 보호 조건과 충돌
   - 해석: ResNet18 추가는 meta-CV를 올릴 수 있지만, 현재 public guardrail 안에서는 새 제출 후보를 만들지 못했다.
+- EXP-81 EfficientNet-B0 seed123 5-fold OOF 완료.
+  - 목적: EXP-50과 동일 EfficientNet-B0 구조/split에서 seed diversity 확보
+  - OOF accuracy: 0.98332
+  - OOF confusion matrix: `[[1313, 28], [59, 3816]]`
+  - test label 0/1: 251/373
+  - EXP-50 대비 OOF/test label disagreement: 45/14개
+  - EXP-50 대비 OOF/test probability correlation: 0.99227/0.99217
+  - EXP-56 대비 test 변경 수: 29개
+  - 단독 mean은 `test_0201`, `test_0222`, `test_0141`, `test_0568` 보호 방향을 깨므로 제출 제외
+  - 해석: EXP-50보다 OOF는 소폭 낮지만 test 예측 14개가 달라 EXP-82에서 제한 stacking feature로 검토할 가치가 있다.
