@@ -501,3 +501,16 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - EXP-56 대비 test 변경 수: 29개
   - 단독 mean은 `test_0201`, `test_0222`, `test_0141`, `test_0568` 보호 방향을 깨므로 제출 제외
   - 해석: EXP-50보다 OOF는 소폭 낮지만 test 예측 14개가 달라 EXP-82에서 제한 stacking feature로 검토할 가치가 있다.
+- EXP-82~91 fast suite 완료.
+  - EXP-82 EfficientNet seed stacking: 최고 meta-CV 0.98735, 보호 통과 후보 0개
+  - EXP-83 EfficientNet seed soft voting: 최고 OOF 0.98581, 보호 위반
+  - EXP-84 diversity: ConvNeXt-ResNet disagreement 126개로 가장 큼
+  - EXP-85 importance: `eff_prob > eff123_prob > cnx123_prob > cnx_prob`
+  - EXP-86 pruning: `cnx123_prob` 제거 시 OOF 0.98658로 최고
+  - EXP-87 threshold/calibration: 최고 OOF 0.98696, 보호 통과 없음
+  - EXP-88 low-change: 162개 중 보호 통과 0개
+  - EXP-89 FP/FN: ResNet FN 40으로 가장 적음
+  - EXP-90 rank ensemble: 최고 OOF 0.98658, 변경 수가 많고 보호 위반
+  - EXP-91 existing TTA: 단일 validation 기반이므로 분석용으로만 유지
+  - 제출 후보 생성 없음
+  - 다음 방향: 미세 탐색보다 새 모델 family 또는 표현 공간 확보

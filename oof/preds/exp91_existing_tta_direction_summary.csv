@@ -1,0 +1,5 @@
+model,rows,label0,label1
+convnext12,624,229,395
+convnext18_full,624,222,402
+efficientnet_b0,624,267,357
+resnet18,624,216,408

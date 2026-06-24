@@ -100,6 +100,16 @@
 | EXP-79 | Lion OOF 포함 stacking | EXP-78 Lion OOF를 기존 ConvNeXt/EfficientNet OOF pool에 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98811 meta-CV | 0.9567307692 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | test_0049만 0->1 변경했지만 EXP-56보다 하락 |
 | EXP-80 | ResNet18 제한 포함 compact stacking | EXP-56 OOF pool에 ResNet18 OOF를 제한 feature로 추가해 Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.98907 meta-CV | 제출 없음 | - | meta-CV 최고는 높지만 보호 샘플을 다수 깨서 제출 후보 없음 |
 | EXP-81 | EfficientNet-B0 seed123 5-fold OOF | EXP-50과 동일 구조/split, 학습 seed만 123으로 변경 | 6 x 5 folds | AdamW | 5e-5 / 1e-4 | Weighted CrossEntropyLoss | 0.98332 OOF | 미제출 | oof/submissions/exp81_efficientnet_b0_seed123_mean_submit.csv | 단독은 보호 샘플을 깨지만 EfficientNet seed diversity feature로 유지 |
+| EXP-82 | EfficientNet seed 제한 stacking | EXP-50/81 OOF를 ConvNeXt pool에 추가해 제한 탐색 | - | - | - | Ridge/Logistic | 0.98735 meta-CV | 제출 없음 | - | 보호 조건 통과 후보 0개 |
+| EXP-83 | EfficientNet seed soft voting | EXP-50/81 probability weighted average | - | - | - | Soft voting | 0.98581 OOF | 제출 없음 | - | 최고 0.5/0.5이지만 보호 조건 위반 |
+| EXP-84 | OOF 오류 상관관계 분석 | 5개 모델 probability correlation/Q-statistic/disagreement 비교 | - | - | - | 분석 | - | 제출 없음 | - | ConvNeXt-ResNet 조합이 가장 다양함 |
+| EXP-85 | Ridge feature importance | EfficientNet/ConvNeXt seed feature 계수 비교 | - | - | - | Ridge | - | 제출 없음 | - | eff_prob 계수가 가장 큼 |
+| EXP-86 | Compact feature pruning | model probability를 하나씩 제거해 OOF 비교 | - | - | - | Ridge | 0.98658 OOF | 제출 없음 | - | cnx123_prob 제거 시 최고 |
+| EXP-87 | Threshold/calibration 빠른 탐색 | Ridge/Logistic decision threshold 비교 | - | - | - | Ridge/Logistic | 0.98696 OOF | 제출 없음 | - | 상위 후보가 보호 조건 위반 |
+| EXP-88 | Low-change 후보 검색 | EXP-82 후보 중 EXP-56 대비 1~5개 변경 필터 | - | - | - | 분석 | - | 제출 없음 | - | 162개 중 보호 통과 0개 |
+| EXP-89 | FP/FN 전문화 분석 | 모델별 FP/FN 오류 양상 비교 | - | - | - | 분석 | - | 제출 없음 | - | ResNet이 FN 40으로 가장 적음 |
+| EXP-90 | Rank ensemble | probability percentile rank 평균 비교 | - | - | - | Rank voting | 0.98658 OOF | 제출 없음 | - | 보호 조건 위반/변경 수 과다 |
+| EXP-91 | 기존 TTA 방향 재분석 | EXP-37 단일 validation TTA 확률 분포 요약 | - | - | - | 분석 | - | 제출 없음 | - | OOF가 아니므로 제출 후보 생성 안 함 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4505,6 +4515,54 @@ oof/submissions/exp81_efficientnet_b0_seed123_mean_submit.csv
 ### 판단
 
 EXP-81은 EXP-50보다 OOF accuracy가 약 0.00173 낮고 FN이 10개 더 많다. 단독 test mean은 양성 예측을 더 보수적으로 하지만, `test_0201`, `test_0222`, `test_0141`, `test_0568`의 보호 방향을 깨므로 단독 제출은 제외한다. 다만 EXP-50과 test 예측 14개가 다르므로 EXP-82에서 낮은 비중의 stacking feature로 검토할 가치가 있다.
+
+## EXP-82~91. Fast experiment suite
+
+기존 OOF/TTA 확률을 재사용해 새 딥러닝 학습 없이 10개 실험을 빠르게 수행했다.
+
+### 핵심 결과
+
+| EXP | 실험 | 최고 결과 | 판단 |
+|---|---|---:|---|
+| 82 | EfficientNet seed 제한 stacking | 0.98735 meta-CV | 보호 통과 후보 0개 |
+| 83 | EfficientNet seed soft voting | 0.98581 OOF | 0.5/0.5 최고, 보호 위반 |
+| 84 | OOF diversity | cnx-res disagreement 126 | 서로 다르지만 public guardrail과 충돌 |
+| 85 | Ridge importance | eff 0.277, eff123 0.236 | EfficientNet 계열 기여가 큼 |
+| 86 | Feature pruning | 0.98658 OOF | cnx123 제거가 최고 |
+| 87 | Threshold/calibration | 0.98696 OOF | 보호 통과 후보 없음 |
+| 88 | Low-change | 162 rows | 보호 통과 0개 |
+| 89 | FP/FN 전문화 | ResNet FN 40 | ResNet이 recall 보완축 |
+| 90 | Rank ensemble | 0.98658 OOF | 53~69개 변경, 보호 위반 |
+| 91 | 기존 TTA 분포 | cnx12 0/1=229/395 | 단일 validation 기반이므로 분석용 |
+
+### 오류 양상
+
+- ResNet18: FP 37, FN 40으로 FN이 가장 적음
+- EfficientNet-B0 seed42: FP 29, FN 49
+- EfficientNet-B0 seed123: FP 28, FN 59
+- ConvNeXt seed123: FP 36, FN 63
+- ConvNeXt seed42: FP 29, FN 86
+
+즉 ConvNeXt는 precision은 높지만 FN이 많은 보수적 성향이고, ResNet은 FN을 줄이는 보완 정보를 제공한다. 다만 ResNet 추가 시 public 보호 샘플을 1로 바꾸는 경향이 있어 제출용으로는 제한이 필요하다.
+
+### 저장 파일
+
+```text
+scripts/run_exp82_91_fast_suite.py
+oof/preds/exp82_83_fast_search_summary.csv
+oof/preds/exp84_oof_diversity_summary.csv
+oof/preds/exp85_ridge_feature_importance.csv
+oof/preds/exp86_feature_pruning_summary.csv
+oof/preds/exp87_threshold_calibration_summary.csv
+oof/preds/exp88_low_change_summary.csv
+oof/preds/exp89_fp_fn_specialization.csv
+oof/preds/exp90_rank_ensemble_summary.csv
+oof/preds/exp91_existing_tta_direction_summary.csv
+```
+
+### 판단
+
+새로운 제출 후보는 생성되지 않았다. 그러나 EfficientNet 계열이 Ridge에서 가장 큰 기여를 하고, ResNet이 FN을 줄이는 전문성을 가지며, ConvNeXt seed123 feature는 제거했을 때 OOF가 오히려 좋아지는 것을 확인했다. 후속 실험은 미세 threshold 탐색보다 새 family 정보원을 추가하는 쪽이 더 타당하다.
 
 ## 데일리 로그
 
