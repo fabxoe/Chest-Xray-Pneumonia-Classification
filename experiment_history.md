@@ -110,6 +110,7 @@
 | EXP-89 | FP/FN 전문화 분석 | 모델별 FP/FN 오류 양상 비교 | - | - | - | 분석 | - | 제출 없음 | - | ResNet이 FN 40으로 가장 적음 |
 | EXP-90 | Rank ensemble | probability percentile rank 평균 비교 | - | - | - | Rank voting | 0.98658 OOF | 제출 없음 | - | 보호 조건 위반/변경 수 과다 |
 | EXP-91 | 기존 TTA 방향 재분석 | EXP-37 단일 validation TTA 확률 분포 요약 | - | - | - | 분석 | - | 제출 없음 | - | OOF가 아니므로 제출 후보 생성 안 함 |
+| EXP-92 | DINOv2 PCA feature 개선 | frozen 384-dim feature에 fold-safe PCA 32/64/128/256 + Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.97604 meta-CV | 제출 없음 | - | EXP-69보다 개선됐지만 보호 위반/변경 71개 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4564,6 +4565,47 @@ oof/preds/exp91_existing_tta_direction_summary.csv
 
 새로운 제출 후보는 생성되지 않았다. 그러나 EfficientNet 계열이 Ridge에서 가장 큰 기여를 하고, ResNet이 FN을 줄이는 전문성을 가지며, ConvNeXt seed123 feature는 제거했을 때 OOF가 오히려 좋아지는 것을 확인했다. 후속 실험은 미세 threshold 탐색보다 새 family 정보원을 추가하는 쪽이 더 타당하다.
 
+## EXP-92. DINOv2 PCA feature 개선
+
+### 목적
+
+EXP-69의 frozen DINOv2 384차원 feature는 CNN과 다른 표현 공간을 제공했지만 meta-CV가 0.97373으로 낮았다. 기존 feature를 재사용하고 fold 내에서만 PCA를 fit해 노이즈를 줄였을 때 일반화가 개선되는지 확인했다.
+
+### 설정
+
+- cached DINOv2 `vit_small_patch14_dinov2` 384-dim feature 재사용
+- PCA: 32, 64, 128, 256, no PCA
+- model: RidgeClassifier / LogisticRegression
+- class weight: none / balanced
+- PCA/Scaler는 각 meta fold train에서만 fit
+- threshold: -0.20 ~ 0.20
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| EXP-69 최고 meta-CV | 0.97373 |
+| EXP-92 최고 meta-CV | 0.97604 |
+| 개선폭 | +0.00230 |
+| best PCA | 256 |
+| best model | LogisticRegression C=0.05, unbalanced |
+| best threshold | -0.20 |
+| confusion matrix | `[[1286, 55], [70, 3805]]` |
+| EXP-56 대비 test 변경 | 71개 |
+| 보호 통과 candidate | 0개 |
+
+### 판단
+
+PCA로 frozen DINOv2 feature의 일반화가 소폭 개선되어 표현 공간 자체의 가치는 확인했다. 다만 CNN OOF pool보다 성능이 낮고 test 변경 수가 많아 단독/직접 stacking 제출 후보로는 사용하지 않는다.
+
+### 저장 파일
+
+```text
+scripts/run_exp92_dinov2_pca_search.py
+oof/preds/exp92_dinov2_pca_summary.csv
+oof/preds/exp92_dinov2_pca_result.json
+```
+
 ## 데일리 로그
 
 ### 2026-06-18
@@ -4807,6 +4849,10 @@ oof/preds/exp91_existing_tta_direction_summary.csv
   - Feature pruning: `cnx123` 제거 시 OOF `0.98658`
   - FP/FN 분석: ResNet FN 40으로 가장 적음
   - threshold, low-change, rank ensemble에서 새 제출 후보 없음
+- EXP-92 DINOv2 PCA feature 개선 완료
+  - PCA 256 + LogisticRegression으로 meta-CV `0.97604`
+  - EXP-69 대비 약 `+0.00230` 개선
+  - EXP-56 대비 71개 변경/보호 위반으로 제출 후보 없음
 - 오늘 실험 기록을 `experiment_history.md`, notebook, `oof/oof_plan.md`에 동기화
 
 ## 리더보드 제출 기록

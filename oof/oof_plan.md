@@ -514,3 +514,10 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - EXP-91 existing TTA: 단일 validation 기반이므로 분석용으로만 유지
   - 제출 후보 생성 없음
   - 다음 방향: 미세 탐색보다 새 모델 family 또는 표현 공간 확보
+- EXP-92 DINOv2 PCA feature 개선 완료.
+  - cached DINOv2 384-dim feature에 fold-safe PCA 32/64/128/256 적용
+  - 최고: PCA 256 + LogisticRegression C=0.05, threshold -0.20
+  - meta-CV accuracy: 0.97604, EXP-69 대비 +0.00230
+  - confusion matrix: `[[1286, 55], [70, 3805]]`
+  - EXP-56 대비 test 변경 71개, 보호 통과 candidate 0개
+  - 해석: DINOv2 표현 압축은 효과가 있지만 현재 CNN OOF pool을 대체할 수준은 아님
