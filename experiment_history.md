@@ -118,6 +118,7 @@
 | EXP-97 | Guardrail tree filter | 기존 제출 CSV 181개를 public-informed guardrail tree로 일괄 평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 대부분 보호 샘플 변경으로 fail |
 | EXP-98 | New model family precheck | MaxViT/CoAtNet/SwinV2/DeiT 후보의 timm 지원, 파라미터, smoke 우선순위 점검 | - | - | - | 사전 검토 | - | 제출 없음 | - | 1순위 MaxViT Tiny fold0 smoke, 2순위 CoAtNet Nano |
 | EXP-99 | MaxViT Tiny fold0 smoke | `maxvit_tiny_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96552 fold0 | 제출 없음 | oof/submissions/exp99_maxvit_tiny_fold0_smoke_submit.csv | EXP-56 대비 38개 변경, guardrail 7개 위반으로 5-fold 확장 보류 |
+| EXP-100 | CoAtNet Nano fold0 smoke | `coatnet_nano_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96456 fold0 | 제출 없음 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | EXP-56 대비 90개 변경, label1 308로 과도하게 보수적. 5-fold 확장 보류 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4959,6 +4960,69 @@ oof/submissions/exp99_maxvit_tiny_fold0_smoke_submit.csv
 ### 판단
 
 fold0 smoke 기준으로 validation accuracy가 낮고, EXP-56 대비 38개를 바꾸며 hard guardrail 7개를 위반했다. 단독 제출 및 즉시 5-fold 확장은 보류한다. 다만 MaxViT가 기존 CNN 계열과 다른 방향으로 강하게 예측하는 샘플이 있으므로, 필요하면 이후 매우 낮은 가중치의 stacking feature나 오류 분석용으로만 검토한다.
+
+## EXP-100. CoAtNet Nano fold0 smoke
+
+### 목적
+
+EXP-98의 2순위 후보인 `coatnet_nano_rw_224.sw_in1k`를 fold0 2 epoch smoke로 검증했다. MaxViT보다 가벼운 hybrid 모델이 guardrail을 덜 깨는지, 그리고 5-fold 확장 가치가 있는지 확인했다.
+
+### 설정
+
+- 모델: `coatnet_nano_rw_224.sw_in1k`
+- 학습 범위: `stages[-1] + head`
+- total params: 14,629,270
+- trainable params: 8,874,346
+- fold: 0
+- epochs: 2
+- batch size: 16
+- optimizer: AdamW
+- learning rate:
+  - stage: `2e-5`
+  - head: `8e-5`
+- loss: class-weighted CrossEntropyLoss
+- elapsed: 146.0초
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| best epoch | 2 |
+| fold0 valid accuracy | 0.96456 |
+| precision | 0.99200 |
+| recall | 0.96000 |
+| F1 | 0.97574 |
+| confusion matrix | `[[263, 6], [31, 744]]` |
+| test label 0/1 | 316/308 |
+| EXP-56 대비 변경 수 | 90 |
+| guardrail fail count | 4 |
+
+Guardrail 실패 샘플:
+
+| file | expected | actual | prob_1 |
+|---|---:|---:|---:|
+| `test_0141.png` | 1 | 0 | 0.0259 |
+| `test_0188.png` | 0 | 1 | 0.6816 |
+| `test_0201.png` | 1 | 0 | 0.1420 |
+| `test_0222.png` | 1 | 0 | 0.0415 |
+
+### 산출물
+
+```text
+scripts/run_exp100_coatnet_nano_fold0_smoke.py
+oof/models/exp100_coatnet_nano_fold0_smoke_fold0.pt
+oof/preds/exp100_coatnet_nano_fold0_smoke_fold0_oof_probs.csv
+oof/preds/exp100_coatnet_nano_fold0_smoke_fold0_test_probs.csv
+oof/preds/exp100_coatnet_nano_fold0_smoke_fold0_result.json
+oof/preds/exp100_coatnet_nano_fold0_smoke_summary.csv
+oof/preds/exp100_coatnet_nano_fold0_smoke_changed_vs_exp56.csv
+oof/preds/exp100_coatnet_nano_fold0_smoke_guardrail.csv
+oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv
+```
+
+### 판단
+
+CoAtNet Nano는 MaxViT보다 guardrail fail 수는 적었지만, test label1이 308개로 EXP-56의 396개와 크게 달라 지나치게 보수적인 예측을 보였다. EXP-56 대비 변경도 90개로 많다. 단독 제출 및 즉시 5-fold 확장은 보류한다. 다만 MaxViT와 다른 guardrail 실패 패턴을 보였으므로, hybrid 계열 오류 방향 분석에는 사용할 수 있다.
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 

@@ -1,0 +1,2 @@
+exp,model,timm_model,fold,best_epoch,valid_accuracy,valid_precision,valid_recall,valid_f1,valid_cm,test_label0,test_label1,changed_vs_exp56,guardrail_fail_count,elapsed_sec,submission
+exp100,coatnet_nano_fold0_smoke,coatnet_nano_rw_224.sw_in1k,0,2,0.9645593869731801,0.992,0.96,0.9757377049180328,"[[263, 6], [31, 744]]",316,308,90,4,146.0,oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv

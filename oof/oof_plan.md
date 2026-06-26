@@ -620,3 +620,19 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0490`: 0 -> 1
     - `test_0504`: 0 -> 1
   - 판단: 단독 제출 및 즉시 5-fold 확장 보류. 필요하면 낮은 가중치 stacking feature/오류 분석용으로만 검토
+- EXP-100 CoAtNet Nano fold0 smoke 완료.
+  - 모델: `coatnet_nano_rw_224.sw_in1k`
+  - 학습 범위: `stages[-1] + head`
+  - epoch: 2
+  - fold0 valid accuracy: 0.96456
+  - precision/recall/F1: 0.99200 / 0.96000 / 0.97574
+  - confusion matrix: `[[263, 6], [31, 744]]`
+  - test label 0/1: 316/308
+  - EXP-56 대비 변경 수: 90
+  - guardrail fail count: 4
+  - 실패 샘플:
+    - `test_0141`: 1 -> 0
+    - `test_0188`: 0 -> 1
+    - `test_0201`: 1 -> 0
+    - `test_0222`: 1 -> 0
+  - 판단: MaxViT보다 guardrail fail은 적지만 label1 308로 과도하게 보수적. 단독 제출 및 즉시 5-fold 확장 보류
