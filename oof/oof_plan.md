@@ -601,3 +601,22 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `reports/exp98_model_family_precheck/exp98_model_family_precheck.csv`
     - `reports/exp98_model_family_precheck/exp98_model_family_details.json`
     - `reports/exp98_model_family_precheck/report.md`
+- EXP-99 MaxViT Tiny fold0 smoke 완료.
+  - 모델: `maxvit_tiny_rw_224.sw_in1k`
+  - 학습 범위: `stages[-1] + head`
+  - epoch: 2
+  - fold0 valid accuracy: 0.96552
+  - precision/recall/F1: 0.99332 / 0.96000 / 0.97638
+  - confusion matrix: `[[264, 5], [31, 744]]`
+  - test label 0/1: 228/396
+  - EXP-56 대비 변경 수: 38
+  - guardrail fail count: 7
+  - 실패 샘플:
+    - `test_0025`: 0 -> 1
+    - `test_0049`: 0 -> 1
+    - `test_0141`: 1 -> 0
+    - `test_0188`: 0 -> 1
+    - `test_0244`: 0 -> 1
+    - `test_0490`: 0 -> 1
+    - `test_0504`: 0 -> 1
+  - 판단: 단독 제출 및 즉시 5-fold 확장 보류. 필요하면 낮은 가중치 stacking feature/오류 분석용으로만 검토

@@ -1,0 +1,2 @@
+exp,model,timm_model,fold,best_epoch,valid_accuracy,valid_precision,valid_recall,valid_f1,valid_cm,test_label0,test_label1,changed_vs_exp56,guardrail_fail_count,elapsed_sec,submission
+exp99,maxvit_tiny_fold0_smoke,maxvit_tiny_rw_224.sw_in1k,0,2,0.9655172413793104,0.9933244325767691,0.96,0.9763779527559056,"[[264, 5], [31, 744]]",228,396,38,7,286.3,oof/submissions/exp99_maxvit_tiny_fold0_smoke_submit.csv

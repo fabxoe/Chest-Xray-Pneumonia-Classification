@@ -117,6 +117,7 @@
 | EXP-96 | Suspicious rule submission candidates | EXP-95 high-priority 2개를 보호 샘플 유지 조건에서 단독/소수 변경 제출 후보로 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp96_flip0188_only_submit.csv | `test_0188` 단독 0->1도 하락. 이후 `test_0188=0` 유지 우선 |
 | EXP-97 | Guardrail tree filter | 기존 제출 CSV 181개를 public-informed guardrail tree로 일괄 평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 대부분 보호 샘플 변경으로 fail |
 | EXP-98 | New model family precheck | MaxViT/CoAtNet/SwinV2/DeiT 후보의 timm 지원, 파라미터, smoke 우선순위 점검 | - | - | - | 사전 검토 | - | 제출 없음 | - | 1순위 MaxViT Tiny fold0 smoke, 2순위 CoAtNet Nano |
+| EXP-99 | MaxViT Tiny fold0 smoke | `maxvit_tiny_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96552 fold0 | 제출 없음 | oof/submissions/exp99_maxvit_tiny_fold0_smoke_submit.csv | EXP-56 대비 38개 변경, guardrail 7개 위반으로 5-fold 확장 보류 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4892,6 +4893,72 @@ reports/exp98_model_family_precheck/exp98_model_family_precheck.csv
 reports/exp98_model_family_precheck/exp98_model_family_details.json
 reports/exp98_model_family_precheck/report.md
 ```
+
+## EXP-99. MaxViT Tiny fold0 smoke
+
+### 목적
+
+EXP-98의 1순위 후보인 `maxvit_tiny_rw_224.sw_in1k`를 바로 5-fold로 확장하지 않고 fold0 2 epoch smoke로 검증했다. 목표는 성능 최고점이 아니라 새 model family가 기존 ConvNeXt/EfficientNet과 다른 유용한 정보를 주는지, 그리고 EXP-97 guardrail과 충돌하는지 확인하는 것이다.
+
+### 설정
+
+- 모델: `maxvit_tiny_rw_224.sw_in1k`
+- 학습 범위: `stages[-1] + head`
+- total params: 28,545,338
+- trainable params: 16,336,130
+- fold: 0
+- epochs: 2
+- batch size: 16
+- optimizer: AdamW
+- learning rate:
+  - stage: `2e-5`
+  - head: `8e-5`
+- loss: class-weighted CrossEntropyLoss
+- elapsed: 286.3초
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| best epoch | 2 |
+| fold0 valid accuracy | 0.96552 |
+| precision | 0.99332 |
+| recall | 0.96000 |
+| F1 | 0.97638 |
+| confusion matrix | `[[264, 5], [31, 744]]` |
+| test label 0/1 | 228/396 |
+| EXP-56 대비 변경 수 | 38 |
+| guardrail fail count | 7 |
+
+Guardrail 실패 샘플:
+
+| file | expected | actual | prob_1 |
+|---|---:|---:|---:|
+| `test_0025.png` | 0 | 1 | 0.6476 |
+| `test_0049.png` | 0 | 1 | 0.5777 |
+| `test_0141.png` | 1 | 0 | 0.1982 |
+| `test_0188.png` | 0 | 1 | 0.8468 |
+| `test_0244.png` | 0 | 1 | 0.9413 |
+| `test_0490.png` | 0 | 1 | 0.9256 |
+| `test_0504.png` | 0 | 1 | 0.8969 |
+
+### 산출물
+
+```text
+scripts/run_exp99_maxvit_tiny_fold0_smoke.py
+oof/models/exp99_maxvit_tiny_fold0_smoke_fold0.pt
+oof/preds/exp99_maxvit_tiny_fold0_smoke_fold0_oof_probs.csv
+oof/preds/exp99_maxvit_tiny_fold0_smoke_fold0_test_probs.csv
+oof/preds/exp99_maxvit_tiny_fold0_smoke_fold0_result.json
+oof/preds/exp99_maxvit_tiny_fold0_smoke_summary.csv
+oof/preds/exp99_maxvit_tiny_fold0_smoke_changed_vs_exp56.csv
+oof/preds/exp99_maxvit_tiny_fold0_smoke_guardrail.csv
+oof/submissions/exp99_maxvit_tiny_fold0_smoke_submit.csv
+```
+
+### 판단
+
+fold0 smoke 기준으로 validation accuracy가 낮고, EXP-56 대비 38개를 바꾸며 hard guardrail 7개를 위반했다. 단독 제출 및 즉시 5-fold 확장은 보류한다. 다만 MaxViT가 기존 CNN 계열과 다른 방향으로 강하게 예측하는 샘플이 있으므로, 필요하면 이후 매우 낮은 가중치의 stacking feature나 오류 분석용으로만 검토한다.
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 
