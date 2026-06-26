@@ -114,7 +114,7 @@
 | EXP-93 | ConvNeXt-ResNet disagreement 설명 | OOF 불일치 샘플의 영상 통계/오류 방향/대표 몽타주 분석 | - | - | - | 분석 | - | 제출 없음 | - | 단순 영상 통계로는 방향 설명 불가, ResNet이 CNX=0/RES=1 그룹에서 더 정확 |
 | EXP-94 | OOF disagreement Grad-CAM | fold checkpoint로 ConvNeXt/ResNet class-1 CAM 반응 위치 비교 | - | - | - | XAI | - | 제출 없음 | - | CAM 상관 0.251, top20 IoU 0.216으로 반응 위치 차이 확인 |
 | EXP-95 | Suspicious test case review pack | EXP-56 기준 모델 불일치/불확실성 큰 test 샘플을 리뷰 후보로 묶음 | - | - | - | 분석 | - | 제출 없음 | - | review 60개, high-priority 2개. 보호 샘플은 avoid_change로 분리 |
-| EXP-96 | Suspicious rule submission candidates | EXP-95 high-priority 2개를 보호 샘플 유지 조건에서 단독/소수 변경 제출 후보로 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp96_flip0188_only_submit.csv | 1순위 `test_0188` 단독 0->1, 2순위 `test_0377` 단독 0->1 |
+| EXP-96 | Suspicious rule submission candidates | EXP-95 high-priority 2개를 보호 샘플 유지 조건에서 단독/소수 변경 제출 후보로 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp96_flip0188_only_submit.csv | `test_0188` 단독 0->1도 하락. 이후 `test_0188=0` 유지 우선 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4764,6 +4764,17 @@ EXP-95의 `review_high_priority` 샘플만 사용해, 수동 라벨 추측이 �
 
 1순위는 `exp96_flip0188_only_submit.csv`다. EXP-58에서 `test_0188`과 `test_0568`을 동시에 1로 바꾼 후보는 하락했지만, 이번 후보는 `test_0568`을 건드리지 않고 `test_0188`만 바꾸므로 완전히 같은 후보는 아니다. 다만 EXP-56 최고점 대비 1개 샘플 변경이므로 public 점수 변화 폭은 최대 1/624 수준이다.
 
+### 제출 결과
+
+`oof/submissions/exp96_flip0188_only_submit.csv`를 제출했다.
+
+- Leaderboard score: `0.9567307692`
+- EXP-56 score: `0.9583333333`
+- 변경: `test_0188: 0 -> 1`
+- 결과: EXP-56보다 하락
+
+따라서 `test_0188=1` 단독 변경도 public에서는 이득이 아니었다. 이후 후보 필터링에서는 `test_0188=0`을 유지 우선 방향으로 본다. `exp96_flip0377_only_submit.csv`와 `exp96_flip0188_0377_submit.csv`는 제출 우선순위를 낮춘다.
+
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 
 ### 저장 파일
@@ -5086,3 +5097,4 @@ reports/exp94_gradcam/report.md
 | 39 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | ConvNeXt V2 포함 OOF Ridge stacking | 0.98696 meta-CV | 0.9567307692 | 13 | `test_0141` 1개만 1->0으로 바꿨지만 EXP-56보다 하락 |
 | 40 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | Lion OOF 포함 Ridge stacking | 0.98447 meta-CV | 0.9567307692 | - | `test_0049` 1개만 0->1로 바꿨지만 EXP-56보다 하락 |
 | 41 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | ConvNeXt V2 Tiny stage3+head 5-fold mean | 0.97680 OOF | 0.9262820513 | - | 단독 mean이 보호 샘플을 다수 1로 바꾸며 크게 하락 |
+| 42 | oof/submissions/exp96_flip0188_only_submit.csv | EXP-95 suspicious rule candidate | - | 0.9567307692 | - | `test_0188` 1개만 0->1로 바꿨지만 EXP-56보다 하락. `test_0188=0` 유지 우선 |

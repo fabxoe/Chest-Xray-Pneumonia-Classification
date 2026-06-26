@@ -556,3 +556,8 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 변경: `test_0377: 0 -> 1`
   - 3순위: `oof/submissions/exp96_flip0188_0377_submit.csv`
     - 변경 2개라 공격적 후보
+  - 제출 결과:
+    - `exp96_flip0188_only_submit.csv` leaderboard `0.9567307692`
+    - EXP-56 `0.9583333333`보다 하락
+    - 이후 `test_0188=0` 유지 우선
+    - `exp96_flip0377_only`, `exp96_flip0188_0377` 제출 우선순위 하락
