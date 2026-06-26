@@ -115,6 +115,7 @@
 | EXP-94 | OOF disagreement Grad-CAM | fold checkpoint로 ConvNeXt/ResNet class-1 CAM 반응 위치 비교 | - | - | - | XAI | - | 제출 없음 | - | CAM 상관 0.251, top20 IoU 0.216으로 반응 위치 차이 확인 |
 | EXP-95 | Suspicious test case review pack | EXP-56 기준 모델 불일치/불확실성 큰 test 샘플을 리뷰 후보로 묶음 | - | - | - | 분석 | - | 제출 없음 | - | review 60개, high-priority 2개. 보호 샘플은 avoid_change로 분리 |
 | EXP-96 | Suspicious rule submission candidates | EXP-95 high-priority 2개를 보호 샘플 유지 조건에서 단독/소수 변경 제출 후보로 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp96_flip0188_only_submit.csv | `test_0188` 단독 0->1도 하락. 이후 `test_0188=0` 유지 우선 |
+| EXP-97 | Guardrail tree filter | 기존 제출 CSV 181개를 public-informed guardrail tree로 일괄 평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 대부분 보호 샘플 변경으로 fail |
 
 ## EXP-00. 원본 Baseline
 
@@ -4774,6 +4775,71 @@ EXP-95의 `review_high_priority` 샘플만 사용해, 수동 라벨 추측이 �
 - 결과: EXP-56보다 하락
 
 따라서 `test_0188=1` 단독 변경도 public에서는 이득이 아니었다. 이후 후보 필터링에서는 `test_0188=0`을 유지 우선 방향으로 본다. `exp96_flip0377_only_submit.csv`와 `exp96_flip0188_0377_submit.csv`는 제출 우선순위를 낮춘다.
+
+## EXP-97. Guardrail tree filter
+
+### 목적
+
+EXP-95에서 만든 suspicious ranking과 지금까지의 public 결과를 이용해, 기존 제출 후보를 일괄 평가하는 guardrail tree를 만들었다. 목적은 새 제출을 생성하는 것이 아니라, 향후 후보가 public에서 확인된 위험 방향을 건드리는지 빠르게 걸러내는 것이다.
+
+### Guardrail tree
+
+1. 제출 파일 형식 확인
+   - 624행
+   - 컬럼 `file_name,label`
+   - `sample_submission.csv`와 순서 일치
+   - label은 0/1
+2. hard guardrail 확인
+   - `test_0025=0`
+   - `test_0049=0`
+   - `test_0141=1`
+   - `test_0188=0`
+   - `test_0201=1`
+   - `test_0222=1`
+   - `test_0244=0`
+   - `test_0490=0`
+   - `test_0504=0`
+   - `test_0539=0`
+3. conditional guardrail
+   - `test_0188=1` and `test_0568=1` 동시 변경 금지
+4. label 분포
+   - hard range: label1 392~402
+   - soft range: label1 395~397
+5. suspicious sample 변경 확인
+   - EXP-95 `avoid_change_protected` 변경 금지
+   - EXP-95 `review_high_priority` 변경은 새 근거 없으면 fail
+   - EXP-95 `review` 3개 이상 변경 시 warning
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 평가 제출 파일 수 | 181 |
+| pass | 2 |
+| fail | 179 |
+
+통과한 파일은 `exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`와 `exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`였고, 둘 다 EXP-56과 변경 수가 0인 동일 예측이었다.
+
+가장 많은 fail 원인은 다음과 같았다.
+
+- `avoid_change_protected_changed`: 175개
+- `high_priority_changed`: 135개
+- `test_0188` 위반: 133개
+- `test_0504` 위반: 126개
+- `test_0490` 위반: 114개
+
+### 산출물
+
+```text
+scripts/run_exp97_guardrail_tree_filter.py
+oof/preds/exp97_guardrail_tree_report.csv
+oof/preds/exp97_guardrail_tree_passed.csv
+oof/preds/exp97_guardrail_tree.md
+```
+
+### 해석
+
+현재까지의 제출 후보 대부분은 성능이 나빠진 public 방향과 같은 보호 샘플 변경을 포함하고 있었다. 따라서 이 guardrail tree는 새 모델이나 새 stacking 후보가 생겼을 때 제출 전 필터로 쓰는 것이 타당하다. 다만 `pass_guardrail=True`가 곧 제출 추천을 뜻하지는 않으며, 단지 public-informed 위험 규칙을 통과했다는 의미다.
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 

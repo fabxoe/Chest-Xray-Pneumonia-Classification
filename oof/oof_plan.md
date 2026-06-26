@@ -561,3 +561,23 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - EXP-56 `0.9583333333`보다 하락
     - 이후 `test_0188=0` 유지 우선
     - `exp96_flip0377_only`, `exp96_flip0188_0377` 제출 우선순위 하락
+- EXP-97 guardrail tree filter 완료.
+  - 목적: 기존 제출 CSV를 public-informed guardrail tree로 일괄 평가
+  - 평가 파일 수: 181
+  - pass: 2
+  - fail: 179
+  - pass 파일:
+    - `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+    - `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+  - 둘 다 EXP-56과 동일 예측이라 새 제출 후보는 없음
+  - 주요 fail 원인:
+    - `avoid_change_protected_changed`: 175
+    - `high_priority_changed`: 135
+    - `test_0188` 위반: 133
+    - `test_0504` 위반: 126
+    - `test_0490` 위반: 114
+  - 산출물:
+    - `scripts/run_exp97_guardrail_tree_filter.py`
+    - `oof/preds/exp97_guardrail_tree_report.csv`
+    - `oof/preds/exp97_guardrail_tree_passed.csv`
+    - `oof/preds/exp97_guardrail_tree.md`
