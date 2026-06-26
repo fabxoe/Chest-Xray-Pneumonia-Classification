@@ -116,6 +116,7 @@
 | EXP-95 | Suspicious test case review pack | EXP-56 기준 모델 불일치/불확실성 큰 test 샘플을 리뷰 후보로 묶음 | - | - | - | 분석 | - | 제출 없음 | - | review 60개, high-priority 2개. 보호 샘플은 avoid_change로 분리 |
 | EXP-96 | Suspicious rule submission candidates | EXP-95 high-priority 2개를 보호 샘플 유지 조건에서 단독/소수 변경 제출 후보로 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp96_flip0188_only_submit.csv | `test_0188` 단독 0->1도 하락. 이후 `test_0188=0` 유지 우선 |
 | EXP-97 | Guardrail tree filter | 기존 제출 CSV 181개를 public-informed guardrail tree로 일괄 평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 대부분 보호 샘플 변경으로 fail |
+| EXP-98 | New model family precheck | MaxViT/CoAtNet/SwinV2/DeiT 후보의 timm 지원, 파라미터, smoke 우선순위 점검 | - | - | - | 사전 검토 | - | 제출 없음 | - | 1순위 MaxViT Tiny fold0 smoke, 2순위 CoAtNet Nano |
 
 ## EXP-00. 원본 Baseline
 
@@ -4840,6 +4841,57 @@ oof/preds/exp97_guardrail_tree.md
 ### 해석
 
 현재까지의 제출 후보 대부분은 성능이 나빠진 public 방향과 같은 보호 샘플 변경을 포함하고 있었다. 따라서 이 guardrail tree는 새 모델이나 새 stacking 후보가 생겼을 때 제출 전 필터로 쓰는 것이 타당하다. 다만 `pass_guardrail=True`가 곧 제출 추천을 뜻하지는 않으며, 단지 public-informed 위험 규칙을 통과했다는 의미다.
+
+## EXP-98. New model family precheck
+
+### 목적
+
+ConvNeXt/EfficientNet 중심 OOF pool이 포화되고, EXP-97 guardrail을 통과하는 새 후보가 거의 없으므로 다른 오류 방향을 줄 수 있는 모델 family를 사전 검토했다. 바로 장시간 학습하지 않고, `timm` 지원 여부와 파라미터 규모, smoke 우선순위를 확인했다.
+
+### 환경
+
+- torch: `2.12.0`
+- torchvision: `0.27.0`
+- timm: `1.0.27`
+- device: `mps`
+
+### 후보 요약
+
+| 순위 | family | 모델 | total params | trainable guess | 첫 실행 | 예상 비용 |
+|---:|---|---|---:|---:|---|---|
+| 1 | MaxViT | `maxvit_tiny_rw_224.sw_in1k` | 28,545,338 | 16,336,130 | fold0 smoke 2 epochs | 5-fold 4~8h |
+| 2 | CoAtNet | `coatnet_nano_rw_224.sw_in1k` | 14,629,270 | 8,874,346 | fold0 smoke 2 epochs | 5-fold 2~4h |
+| 3 | SwinV2 | `swinv2_tiny_window8_256.ms_in1k` | 27,579,692 | 15,384,626 | fold0 smoke 2 epochs | 5-fold 4~8h |
+| 4 | DeiT | `deit3_small_patch16_224.fb_in1k` | 21,675,266 | 1,776,002 | fold0 smoke 2 epochs | 5-fold 4~8h |
+| 5 | CoAtNet larger | `coatnet_0_rw_224.sw_in1k` | 26,668,100 | 12,854,342 | fold0 smoke 2 epochs | 5-fold 4~8h |
+
+### 판단
+
+1순위는 `maxvit_tiny_rw_224.sw_in1k` fold0 smoke다. CNN+attention hybrid라 기존 ConvNeXt/EfficientNet과 다른 inductive bias를 줄 가능성이 있고, tiny급이라 장기 실험 전에 짧게 검증할 수 있다.
+
+2순위는 `coatnet_nano_rw_224.sw_in1k`다. MaxViT가 MPS 메모리나 속도 문제를 보이면 더 가벼운 hybrid 후보로 진행한다.
+
+SwinV2와 DeiT는 diversity 후보지만, 기존 Swin/DINOv2 결과를 감안하면 바로 5-fold로 가지 않고 smoke 결과를 본 뒤 결정한다.
+
+### 실행 게이트
+
+- 바로 5-fold 학습하지 않는다.
+- 먼저 fold0 smoke 2 epoch를 수행한다.
+- 확인 항목:
+  - validation accuracy / confusion matrix
+  - EXP-56 대비 test 변경 수
+  - EXP-97 guardrail 위반 여부
+  - 기존 ConvNeXt/EfficientNet/ResNet과 OOF 오류 방향이 다른지
+- smoke가 EXP-65처럼 보호 샘플을 대량으로 깨면 5-fold 확장 중단
+
+### 산출물
+
+```text
+scripts/run_exp98_model_family_precheck.py
+reports/exp98_model_family_precheck/exp98_model_family_precheck.csv
+reports/exp98_model_family_precheck/exp98_model_family_details.json
+reports/exp98_model_family_precheck/report.md
+```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 

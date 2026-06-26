@@ -581,3 +581,23 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `oof/preds/exp97_guardrail_tree_report.csv`
     - `oof/preds/exp97_guardrail_tree_passed.csv`
     - `oof/preds/exp97_guardrail_tree.md`
+- EXP-98 new model family precheck 완료.
+  - 목적: ConvNeXt/EfficientNet과 다른 오류 방향을 줄 수 있는 새 모델 family 후보 선정
+  - timm `1.0.27`에서 후보 모두 생성 가능
+  - 1순위: `maxvit_tiny_rw_224.sw_in1k`
+    - total params 28,545,338
+    - trainable guess 16,336,130
+    - fold0 smoke 2 epochs 추천
+  - 2순위: `coatnet_nano_rw_224.sw_in1k`
+    - total params 14,629,270
+    - trainable guess 8,874,346
+    - MaxViT가 메모리/속도 문제를 보일 때 대안
+  - 3순위: `swinv2_tiny_window8_256.ms_in1k`
+  - 4순위: `deit3_small_patch16_224.fb_in1k`
+  - 5순위: `coatnet_0_rw_224.sw_in1k`
+  - 바로 5-fold로 가지 않고 fold0 smoke 후 EXP-97 guardrail과 오류 방향을 확인
+  - 산출물:
+    - `scripts/run_exp98_model_family_precheck.py`
+    - `reports/exp98_model_family_precheck/exp98_model_family_precheck.csv`
+    - `reports/exp98_model_family_precheck/exp98_model_family_details.json`
+    - `reports/exp98_model_family_precheck/report.md`
