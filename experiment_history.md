@@ -113,6 +113,7 @@
 | EXP-92 | DINOv2 PCA feature 개선 | frozen 384-dim feature에 fold-safe PCA 32/64/128/256 + Ridge/Logistic 탐색 | - | - | - | Ridge/Logistic | 0.97604 meta-CV | 제출 없음 | - | EXP-69보다 개선됐지만 보호 위반/변경 71개 |
 | EXP-93 | ConvNeXt-ResNet disagreement 설명 | OOF 불일치 샘플의 영상 통계/오류 방향/대표 몽타주 분석 | - | - | - | 분석 | - | 제출 없음 | - | 단순 영상 통계로는 방향 설명 불가, ResNet이 CNX=0/RES=1 그룹에서 더 정확 |
 | EXP-94 | OOF disagreement Grad-CAM | fold checkpoint로 ConvNeXt/ResNet class-1 CAM 반응 위치 비교 | - | - | - | XAI | - | 제출 없음 | - | CAM 상관 0.251, top20 IoU 0.216으로 반응 위치 차이 확인 |
+| EXP-95 | Suspicious test case review pack | EXP-56 기준 모델 불일치/불확실성 큰 test 샘플을 리뷰 후보로 묶음 | - | - | - | 분석 | - | 제출 없음 | - | review 60개, high-priority 2개. 보호 샘플은 avoid_change로 분리 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4687,6 +4688,48 @@ CAM correlation과 top-20% IoU가 모두 낮아, 두 모델은 같은 영상에�
 
 `CNX=0, RES=1` 샘플에서 ResNet은 ConvNeXt보다 중앙 영역 반응 비중이 높았다. 반대 방향에서 ResNet class-1 CAM은 상단/바깥쪽으로 크게 치우쳐졌다. 이는 ResNet의 양성 판단이 중앙 폐야 패턴에 반응할 때 강해지고, 그런 근거가 약할 때 class-1 반응이 주변으로 토끼는 경향을 시사한다.
 
+## EXP-95. Suspicious test case review pack
+
+### 목적
+
+leaderboard score 변화로 test 정답을 역추론하는 방식은 피하고, 모델 간 불일치와 불확실성이 큰 test 이미지를 리뷰 대상으로 묶었다. 이 실험은 제출 후보 생성이 아니라 오류 분석/XAI 후속 검토를 위한 분석 팩이다.
+
+### 설정
+
+- 기준 제출: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 사용 모델: ConvNeXt, ResNet18, EfficientNet-B0, ConvNeXt seed123/777/Lion, EfficientNet seed123, ConvNeXt V2, RegNet, EfficientNetV2-S
+- 지표:
+  - 모델별 class 1 probability 표준편차
+  - 모델 간 vote disagreement
+  - EXP-56 decision score margin
+  - EXP-56 라벨과 반대인 모델 수
+  - 보호 샘플 여부
+
+### 결과
+
+| action | 개수 |
+|---|---:|
+| keep | 553 |
+| review | 60 |
+| avoid_change_protected | 9 |
+| review_high_priority | 2 |
+
+상위 `review_high_priority` 후보는 `test_0188.png`, `test_0377.png`였다. 상위 suspicious 샘플 중 `test_0049.png`, `test_0539.png`, `test_0222.png`, `test_0244.png`, `test_0141.png` 등은 기존 public 결과 기반 보호 샘플이므로 `avoid_change_protected`로 분리했다.
+
+### 산출물
+
+```text
+scripts/run_exp95_suspicious_test_pack.py
+reports/exp95_suspicious_cases/exp95_suspicious_cases.csv
+reports/exp95_suspicious_cases/exp95_suspicious_top50.csv
+reports/exp95_suspicious_cases/exp95_suspicious_panel_top50.png
+reports/exp95_suspicious_cases/report.md
+```
+
+### 해석
+
+`suspicious_score`가 높다는 것은 라벨을 바로 바꾸라는 뜻이 아니다. 모델들이 서로 다르게 반응하거나 EXP-56 decision score가 경계에 가까운 샘플을 우선 리뷰 대상으로 표시한 것이다. 의료 이미지에서는 패널이나 XAI 결과를 보더라도 실제 병변 위치라고 단정하지 않고, 모델 반응 위치와 예측 불확실성으로만 해석한다.
+
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 
 ### 저장 파일
@@ -4957,6 +5000,11 @@ reports/exp94_gradcam/report.md
   - ConvNeXt/ResNet CAM correlation `0.251`, top-20% IoU `0.216`
   - CNX=0/RES=1에서 ResNet 중앙 CAM 비중 0.379, ConvNeXt 0.272
   - 두 모델의 공간적 반응 위치가 다른 경향 확인, 병변 근거로 단정하지 않음
+- EXP-95 suspicious test case review pack 완료
+  - 모델 10개 probability와 EXP-56 decision score를 사용해 suspicious ranking 생성
+  - action count: keep 553, review 60, avoid_change_protected 9, review_high_priority 2
+  - high-priority review 후보: `test_0188.png`, `test_0377.png`
+  - 보호 샘플은 자동으로 `avoid_change_protected`로 분리해 leaderboard probing 방식의 라벨 뒤집기를 피함
 - 오늘 실험 기록을 `experiment_history.md`, notebook, `oof/oof_plan.md`에 동기화
 
 ## 리더보드 제출 기록

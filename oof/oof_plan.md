@@ -534,3 +534,15 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - CNX=0/RES=1: ResNet 중앙 CAM 0.379, ConvNeXt 0.272
   - CNX=1/RES=0: ResNet 상단 CAM 0.754, 중앙 CAM 0.070
   - 해석: 두 모델의 양성 반응 위치가 다른 경향이 방향 차이의 한 설명이 될 수 있지만, CAM을 실제 병변 근거로 단정하지 않음
+- EXP-95 suspicious test case review pack 완료.
+  - 목적: leaderboard probing식 라벨 뒤집기가 아니라 모델 간 불일치/불확실성이 큰 test 이미지를 리뷰 대상으로 묶기
+  - 기준 제출: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+  - 사용 모델 수: 10
+  - action count: keep 553, review 60, avoid_change_protected 9, review_high_priority 2
+  - high-priority review 후보: `test_0188.png`, `test_0377.png`
+  - 산출물:
+    - `reports/exp95_suspicious_cases/exp95_suspicious_cases.csv`
+    - `reports/exp95_suspicious_cases/exp95_suspicious_top50.csv`
+    - `reports/exp95_suspicious_cases/exp95_suspicious_panel_top50.png`
+    - `reports/exp95_suspicious_cases/report.md`
+  - 해석: suspicious score는 변경 지시가 아니라 XAI/오류 분석 우선순위이며, 보호 샘플은 `avoid_change_protected`로 분리
