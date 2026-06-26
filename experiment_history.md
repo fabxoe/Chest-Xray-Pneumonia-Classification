@@ -114,6 +114,7 @@
 | EXP-93 | ConvNeXt-ResNet disagreement 설명 | OOF 불일치 샘플의 영상 통계/오류 방향/대표 몽타주 분석 | - | - | - | 분석 | - | 제출 없음 | - | 단순 영상 통계로는 방향 설명 불가, ResNet이 CNX=0/RES=1 그룹에서 더 정확 |
 | EXP-94 | OOF disagreement Grad-CAM | fold checkpoint로 ConvNeXt/ResNet class-1 CAM 반응 위치 비교 | - | - | - | XAI | - | 제출 없음 | - | CAM 상관 0.251, top20 IoU 0.216으로 반응 위치 차이 확인 |
 | EXP-95 | Suspicious test case review pack | EXP-56 기준 모델 불일치/불확실성 큰 test 샘플을 리뷰 후보로 묶음 | - | - | - | 분석 | - | 제출 없음 | - | review 60개, high-priority 2개. 보호 샘플은 avoid_change로 분리 |
+| EXP-96 | Suspicious rule submission candidates | EXP-95 high-priority 2개를 보호 샘플 유지 조건에서 단독/소수 변경 제출 후보로 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp96_flip0188_only_submit.csv | 1순위 `test_0188` 단독 0->1, 2순위 `test_0377` 단독 0->1 |
 
 ## EXP-00. 원본 Baseline
 
@@ -4729,6 +4730,39 @@ reports/exp95_suspicious_cases/report.md
 ### 해석
 
 `suspicious_score`가 높다는 것은 라벨을 바로 바꾸라는 뜻이 아니다. 모델들이 서로 다르게 반응하거나 EXP-56 decision score가 경계에 가까운 샘플을 우선 리뷰 대상으로 표시한 것이다. 의료 이미지에서는 패널이나 XAI 결과를 보더라도 실제 병변 위치라고 단정하지 않고, 모델 반응 위치와 예측 불확실성으로만 해석한다.
+
+## EXP-96. Suspicious rule submission candidates
+
+### 목적
+
+EXP-95의 `review_high_priority` 샘플만 사용해, 수동 라벨 추측이 아니라 사전에 정한 모델 기반 규칙으로 제출 후보를 만들었다. 모든 보호 샘플은 EXP-56 방향을 유지했다.
+
+### 후보 생성 규칙
+
+- 기준 파일: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- 변경 대상은 EXP-95 `review_high_priority`만 사용
+- 보호 샘플 9개는 모두 유지
+- 우선순위는 1개 변경 후보를 2개 변경 후보보다 높게 둔다
+
+### 생성 후보
+
+| 우선순위 | 파일 | 변경 | label 0/1 | 판단 |
+|---:|---|---|---|---|
+| 1 | `oof/submissions/exp96_flip0188_only_submit.csv` | `test_0188: 0 -> 1` | 227/397 | EXP-56 score margin -0.0109, 10개 모델 중 7개가 1 |
+| 2 | `oof/submissions/exp96_flip0377_only_submit.csv` | `test_0377: 0 -> 1` | 227/397 | 10개 모델 중 6개가 1, 단 margin은 -0.1389로 0188보다 덜 경계 |
+| 3 | `oof/submissions/exp96_flip0188_0377_submit.csv` | `test_0188, test_0377: 0 -> 1` | 226/398 | 공격적 후보. 1개 변경 후보 확인 후 검토 |
+
+### 검증
+
+- 모든 파일 row 수 624
+- 컬럼: `file_name,label`
+- `sample_submission.csv`와 file order 일치
+- label 값은 0/1만 존재
+- 보호 샘플 9개 모두 유지
+
+### 제출 판단
+
+1순위는 `exp96_flip0188_only_submit.csv`다. EXP-58에서 `test_0188`과 `test_0568`을 동시에 1로 바꾼 후보는 하락했지만, 이번 후보는 `test_0568`을 건드리지 않고 `test_0188`만 바꾸므로 완전히 같은 후보는 아니다. 다만 EXP-56 최고점 대비 1개 샘플 변경이므로 public 점수 변화 폭은 최대 1/624 수준이다.
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 

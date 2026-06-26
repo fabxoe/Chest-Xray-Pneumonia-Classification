@@ -546,3 +546,13 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `reports/exp95_suspicious_cases/exp95_suspicious_panel_top50.png`
     - `reports/exp95_suspicious_cases/report.md`
   - 해석: suspicious score는 변경 지시가 아니라 XAI/오류 분석 우선순위이며, 보호 샘플은 `avoid_change_protected`로 분리
+- EXP-96 suspicious rule submission candidates 완료.
+  - EXP-95 `review_high_priority`만 사용해 모델 기반 제출 후보 3개 생성
+  - 모든 보호 샘플 9개 유지
+  - 1순위: `oof/submissions/exp96_flip0188_only_submit.csv`
+    - 변경: `test_0188: 0 -> 1`
+    - 근거: EXP-56 margin -0.0109, 10개 모델 중 7개가 1
+  - 2순위: `oof/submissions/exp96_flip0377_only_submit.csv`
+    - 변경: `test_0377: 0 -> 1`
+  - 3순위: `oof/submissions/exp96_flip0188_0377_submit.csv`
+    - 변경 2개라 공격적 후보

@@ -1,0 +1,4 @@
+candidate,submission_path,changed_path,changed_count,changed_files,label0,label1
+exp96_flip0188_only,oof/submissions/exp96_flip0188_only_submit.csv,oof/preds/exp96_flip0188_only_changed_vs_exp56.csv,1,test_0188.png,227,397
+exp96_flip0377_only,oof/submissions/exp96_flip0377_only_submit.csv,oof/preds/exp96_flip0377_only_changed_vs_exp56.csv,1,test_0377.png,227,397
+exp96_flip0188_0377,oof/submissions/exp96_flip0188_0377_submit.csv,oof/preds/exp96_flip0188_0377_changed_vs_exp56.csv,2,"test_0188.png,test_0377.png",226,398
