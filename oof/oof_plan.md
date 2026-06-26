@@ -636,3 +636,7 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `test_0201`: 1 -> 0
     - `test_0222`: 1 -> 0
   - 판단: MaxViT보다 guardrail fail은 적지만 label1 308로 과도하게 보수적. 단독 제출 및 즉시 5-fold 확장 보류
+  - 제출 결과: `oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv`
+  - Public score: `0.8493589744`
+  - 해석: fold0 validation은 0.96456이었지만 public에서 크게 하락. label1 308, EXP-56 대비 90개 변경, 보호 샘플 실패가 실제 위험 신호였음
+  - 후속 결정: CoAtNet Nano 단독 제출 및 5-fold 확장은 제외. 새 모델 family smoke는 validation보다 label 분포/guardrail/변경 수를 우선 확인

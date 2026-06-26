@@ -118,7 +118,7 @@
 | EXP-97 | Guardrail tree filter | 기존 제출 CSV 181개를 public-informed guardrail tree로 일괄 평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 대부분 보호 샘플 변경으로 fail |
 | EXP-98 | New model family precheck | MaxViT/CoAtNet/SwinV2/DeiT 후보의 timm 지원, 파라미터, smoke 우선순위 점검 | - | - | - | 사전 검토 | - | 제출 없음 | - | 1순위 MaxViT Tiny fold0 smoke, 2순위 CoAtNet Nano |
 | EXP-99 | MaxViT Tiny fold0 smoke | `maxvit_tiny_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96552 fold0 | 제출 없음 | oof/submissions/exp99_maxvit_tiny_fold0_smoke_submit.csv | EXP-56 대비 38개 변경, guardrail 7개 위반으로 5-fold 확장 보류 |
-| EXP-100 | CoAtNet Nano fold0 smoke | `coatnet_nano_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96456 fold0 | 제출 없음 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | EXP-56 대비 90개 변경, label1 308로 과도하게 보수적. 5-fold 확장 보류 |
+| EXP-100 | CoAtNet Nano fold0 smoke | `coatnet_nano_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96456 fold0 | 0.8493589744 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | EXP-56 대비 90개 변경, label1 308로 과도하게 보수적. Public 급락으로 단독/5-fold 확장 제외 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5022,7 +5022,16 @@ oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv
 
 ### 판단
 
-CoAtNet Nano는 MaxViT보다 guardrail fail 수는 적었지만, test label1이 308개로 EXP-56의 396개와 크게 달라 지나치게 보수적인 예측을 보였다. EXP-56 대비 변경도 90개로 많다. 단독 제출 및 즉시 5-fold 확장은 보류한다. 다만 MaxViT와 다른 guardrail 실패 패턴을 보였으므로, hybrid 계열 오류 방향 분석에는 사용할 수 있다.
+CoAtNet Nano는 MaxViT보다 guardrail fail 수는 적었지만, test label1이 308개로 EXP-56의 396개와 크게 달라 지나치게 보수적인 예측을 보였다. EXP-56 대비 변경도 90개로 많다. 사전 판단은 단독 제출 및 즉시 5-fold 확장 보류였고, 실제 public 제출 결과도 이 판단을 지지했다.
+
+### 리더보드 결과
+
+- 제출 파일: `oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv`
+- Leaderboard score: `0.8493589744`
+- EXP-56 score: `0.9583333333`
+- 차이: `-0.1089743589`
+
+fold0 validation accuracy는 0.96456으로 완전히 낮지는 않았지만, public score는 크게 하락했다. 원인은 단일 fold smoke 모델이 test에서 class 1을 과도하게 줄인 점(label1 308)과 EXP-56 대비 변경 수가 90개로 컸던 점으로 본다. 따라서 CoAtNet Nano 단독 제출과 5-fold 확장은 제외한다. 이 결과는 validation 지표만이 아니라 test label 분포, 보호 샘플, 기존 최고 후보 대비 변경 수를 함께 봐야 한다는 근거로 남긴다.
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 
@@ -5347,3 +5356,4 @@ reports/exp94_gradcam/report.md
 | 40 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | Lion OOF 포함 Ridge stacking | 0.98447 meta-CV | 0.9567307692 | - | `test_0049` 1개만 0->1로 바꿨지만 EXP-56보다 하락 |
 | 41 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | ConvNeXt V2 Tiny stage3+head 5-fold mean | 0.97680 OOF | 0.9262820513 | - | 단독 mean이 보호 샘플을 다수 1로 바꾸며 크게 하락 |
 | 42 | oof/submissions/exp96_flip0188_only_submit.csv | EXP-95 suspicious rule candidate | - | 0.9567307692 | - | `test_0188` 1개만 0->1로 바꿨지만 EXP-56보다 하락. `test_0188=0` 유지 우선 |
+| 43 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | CoAtNet Nano fold0 smoke | 0.96456 fold0 | 0.8493589744 | - | label1 308, EXP-56 대비 90개 변경. Public 급락으로 단독/5-fold 확장 제외 |
