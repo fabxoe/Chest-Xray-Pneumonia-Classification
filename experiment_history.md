@@ -124,6 +124,7 @@
 | EXP-103 | SwinV2-Tiny 5-fold OOF | Gemini partial 산출물에서 fold0/fold1 재사용, fold2~4 로컬 실행 완료 | 2 x 5 folds | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96990 OOF | 제출 없음 | oof/submissions/exp103_swinv2_tiny_oof_mean_submit.csv | 단독 mean은 label1 427, EXP-56 대비 53개 변경, guardrail 7개 위반. EXP-104 stacking feature로만 사용 |
 | EXP-104 | SwinV2 regularized stacking | ConvNeXt+EfficientNet+SwinV2 OOF feature를 Ridge/Logistic으로 제한 탐색 | - | - | - | Ridge/Logistic | 최고 0.98677 meta-CV | 제출 없음 | - | strict/relaxed 후보 0개. 모든 탐색 후보가 보호 샘플을 최소 1개 이상 위반 |
 | EXP-106 | No-Swin low-change search | SwinV2 제외, ConvNeXt/EfficientNet/ResNet seed pool로 보호 샘플 유지 후보 재탐색 | - | - | - | Ridge/Logistic | 최고 0.98926 meta-CV | 제출 없음 | - | candidate 0개. 강한 후보는 주로 `test_0504=1`로 돌아가고, 보호 통과 후보는 EXP-56과 중복 |
+| EXP-107 | Boundary bottleneck analysis | EXP-106 plausible row 기준 보호 샘플 병목과 비보호 watchlist 분석 | - | - | - | 분석 | - | 제출 없음 | - | `test_0504`가 최대 병목. 비보호 반복 변경 샘플은 `test_0568` 1개뿐 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5300,6 +5301,45 @@ EXP-106은 제출 후보를 만들지 못했다. 다만 결론은 명확하다. 
 ```text
 scripts/run_exp106_no_swin_low_change_search.py
 oof/preds/exp106_no_swin_low_change_summary.csv
+```
+
+## EXP-107. Boundary bottleneck analysis
+
+### 처리 상태
+
+EXP-106에서 제출 후보가 0개였으므로, 후보를 다시 만드는 대신 어떤 샘플이 반복적으로 후보 생성을 막는지 분석했다. 분석 대상은 label band, low-change, meta-CV floor, non-duplicate 조건을 통과한 plausible row 5784개다.
+
+### 결과
+
+| 보호 샘플 | 기대 label | 위반 row 수 | 위반 비율 |
+|---|---:|---:|---:|
+| `test_0504` | 0 | 5383 | 0.93067 |
+| `test_0490` | 0 | 4123 | 0.71283 |
+| `test_0539` | 0 | 2912 | 0.50346 |
+| `test_0049` | 0 | 2901 | 0.50156 |
+| `test_0188` | 0 | 2315 | 0.40024 |
+
+비보호 샘플 중 반복적으로 바뀌는 watchlist는 `test_0568` 하나였다.
+
+| sample | EXP-56 label | 변경 row 수 | 변경 비율 | EXP-95 action |
+|---|---:|---:|---:|---|
+| `test_0568` | 0 | 390 | 0.06743 | keep |
+
+### 판단
+
+EXP-107은 제출 후보를 만들지 않는 분석 실험이다. 핵심 병목은 `test_0504`다. EXP-56은 이 샘플을 `1 -> 0`으로 바꿔 public 최고점을 만들었지만, EXP-106의 강한 후보 대부분은 다시 1로 되돌린다. 즉 현재 OOF pool에서는 meta-CV를 높이는 방향과 public에서 확인된 보호 방향이 충돌한다.
+
+비보호 watchlist도 `test_0568` 하나뿐이며, 이미 EXP-58에서 `test_0188`과 함께 1로 바꿨을 때 하락했던 샘플이다. 따라서 다음 제출 후보를 만들려면 단순 threshold 탐색보다 `test_0504`, `test_0490`, `test_0539`, `test_0049`, `test_0568`의 모델별 확률과 XAI를 확인하거나, 새 정보원을 추가하는 편이 낫다.
+
+### 산출물
+
+```text
+scripts/run_exp107_boundary_bottleneck_analysis.py
+reports/exp107_boundary_bottleneck/exp107_boundary_bottleneck_report.md
+reports/exp107_boundary_bottleneck/exp107_protected_bottleneck.csv
+reports/exp107_boundary_bottleneck/exp107_top_overall_rows.csv
+reports/exp107_boundary_bottleneck/exp107_top_plausible_rows.csv
+reports/exp107_boundary_bottleneck/exp107_unprotected_watchlist.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.

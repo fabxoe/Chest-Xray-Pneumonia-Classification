@@ -694,7 +694,14 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 보호 샘플 전체 통과 row 수: 34
     - 최고 meta-CV: 0.98926
     - 판단: SwinV2를 제외해도 강한 후보는 주로 `test_0504=1`로 되돌아가고, 보호 샘플을 모두 유지한 row는 EXP-56과 동일 예측이라 제출 후보 없음
+  - EXP-107 Boundary bottleneck analysis:
+    - 실행 완료
+    - plausible no-Swin row 수: 5784
+    - 제출 candidate 수: 0
+    - 최대 병목: `test_0504` 위반 5383/5784 rows
+    - 다음 병목: `test_0490`, `test_0539`, `test_0049`, `test_0188`
+    - 비보호 반복 변경 샘플은 `test_0568` 1개뿐
   - 다음 액션:
-    - 1순위: EXP-56 주변 경계 샘플 분석으로 다음 후보를 좁힘
+    - 1순위: `test_0504`, `test_0490`, `test_0539`, `test_0049`, `test_0568` 모델별 확률/XAI 패널 생성
     - 2순위: 새 OOF 정보원 추가 여부 검토
     - 3순위: SwinV2는 단독/일반 stacking이 아니라 매우 낮은 영향의 보조 feature로만 재검토
