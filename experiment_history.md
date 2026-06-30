@@ -136,6 +136,8 @@
 | EXP-116 | After-0057 branch candidates | EXP-114 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9631410256 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | 새 최고점. `test_0385` 추가 1->0으로 EXP-114 대비 +1샘플 |
 | EXP-117 | After-0385 branch candidates | EXP-116 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9647435897 | oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv | 새 최고점. `test_0303` 추가 1->0으로 EXP-116 대비 +1샘플. `test_0172`, `test_0013`은 1 유지 우선 |
 | EXP-118 | After-0303 remaining branch triage | EXP-117 winner 기준으로 남은 current-positive 1->0 후보 재랭킹 및 제출 CSV 4개 생성 | - | - | - | evidence triage | - | 제출 대기 | oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv | 남은 제출 기회 4회 기준 후보 생성. 상위 후보 모두 direct prior/XAI 근거가 약해 1개씩만 제출 권장 |
+| EXP-119 | RF/SVM/Gaussian evidence reranking | 현재 최고 기준 current-positive 후보에 RF/ExtraTrees/SVM/Gaussian image feature를 적용해 재랭킹 | - | - | - | RF/ExtraTrees/LinearSVC/Logistic/Ridge | RF meta-CV 0.98735 | 제출 없음 | reports/exp119_rf_svm_gaussian_rerank/exp119_rf_svm_gaussian_candidate_ranking.csv | `test_0547`이 1순위로 상승했지만 절대 class-0 근거는 강하지 않아 고위험 후보 |
+| EXP-120 | After-0303 top-1 RF/SVM/Gaussian drop | EXP-119 1순위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv | 현재 최고 대비 `test_0547` 1개만 1->0. 남은 제출 4회 중 1회 사용 후보 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5853,6 +5855,89 @@ oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv
 oof/submissions/exp118_after0303_drop_test_0267_only_submit.csv
 oof/submissions/exp118_after0303_drop_test_0022_only_submit.csv
 oof/submissions/exp118_after0303_drop_test_0525_only_submit.csv
+```
+
+## EXP-119. RF/SVM/Gaussian evidence reranking
+
+### 처리 상태
+
+남은 제출 기회가 4회뿐이므로 새 대형 모델 학습 대신, 현재 최고 `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`에서 label 1인 샘플만 대상으로 FP 가능성을 재정렬했다. RandomForest, ExtraTrees, LinearSVC, Logistic, Ridge를 OOF feature 위에서 학습하고, Gaussian blur/edge/Laplacian 기반 이미지 통계를 함께 사용했다.
+
+### 설정
+
+- 기준 제출: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+- 대상: 현재 최고에서 label 1인 test 샘플
+- 유지 방향:
+  - 성공 방향: `test_0455=0`, `test_0057=0`, `test_0385=0`, `test_0303=0`
+  - 실패 방향: `test_0289=1`, `test_0172=1`, `test_0013=1`
+- 사용 feature:
+  - 기존 OOF/test model probability, vote, mean/std/range
+  - EXP-113 tree score
+  - XAI 요약값이 있는 경우 병합
+  - image mean/std/contrast/entropy
+  - Gaussian blur delta, edge, Laplacian variance
+
+### Meta-CV
+
+| model | meta-CV accuracy | TN | FP | FN | TP |
+|---|---:|---:|---:|---:|---:|
+| RandomForest | 0.98735 | 1321 | 20 | 46 | 3829 |
+| ExtraTrees | 0.98658 | 1324 | 17 | 53 | 3822 |
+| LinearSVC | 0.98601 | 1320 | 21 | 52 | 3823 |
+| Logistic | 0.98696 | 1321 | 20 | 48 | 3827 |
+| Ridge | 0.98715 | 1325 | 16 | 51 | 3824 |
+
+### Top 후보
+
+| rank | sample | 현재 최고 대비 변경 | exp119 score | ML zero support | RF p0 | ExtraTrees p0 | SVM p0-like | 판단 |
+|---:|---|---|---:|---:|---:|---:|---:|---|
+| 1 | `test_0547` | `1->0` | 0.91728 | 0.59692 | 0.18512 | 0.23602 | 0.34565 | 제출 가능하지만 고위험 |
+| 2 | `test_0315` | `1->0` | 0.91231 | 0.62093 | 0.21186 | 0.29501 | 0.40353 | 고위험 |
+| 3 | `test_0390` | `1->0` | 0.90459 | 0.61535 | 0.20083 | 0.24331 | 0.42217 | 고위험 |
+| 4 | `test_0040` | `1->0` | 0.90440 | 0.58744 | 0.17075 | 0.25057 | 0.31810 | 고위험 |
+| 5 | `test_0212` | `1->0` | 0.90176 | 0.59465 | 0.19172 | 0.25793 | 0.30061 | EXP-118 1순위였으나 EXP-119에서는 5순위 |
+
+### 해석
+
+EXP-119는 EXP-118의 `test_0212`보다 `test_0547`을 더 높은 후보로 재정렬했다. 다만 RF/ExtraTrees/SVM의 절대 class-0 지지는 강하지 않다. 즉 `test_0547`은 “여러 상대 ranking에서 위로 올라온 후보”이지, 모델들이 일관되게 정상이라고 강하게 판단한 후보는 아니다. 남은 4회 중 1회를 쓸 수는 있지만, EXP-110~117의 성공 후보보다 위험도가 높다.
+
+### 산출물
+
+```text
+scripts/run_exp119_rf_svm_gaussian_rerank.py
+reports/exp119_rf_svm_gaussian_rerank/exp119_rf_svm_gaussian_candidate_ranking.csv
+reports/exp119_rf_svm_gaussian_rerank/exp119_top30.csv
+reports/exp119_rf_svm_gaussian_rerank/exp119_meta_model_cv_summary.csv
+```
+
+## EXP-120. After-0303 top-1 RF/SVM/Gaussian drop
+
+### 처리 상태
+
+EXP-119의 1순위 후보인 `test_0547`만 현재 최고에서 `1->0`으로 바꾼 제출 파일을 생성했다.
+
+### 후보
+
+- 제출 파일: `oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv`
+- 변경: `test_0547: 1->0`
+- 현재 최고 대비 변경 수: 1개
+- label 분포: 0/1 = 233/391
+- CSV 검증:
+  - row 수 624
+  - 컬럼 `file_name,label`
+  - sample submission과 file order 동일
+  - label 값 0/1
+
+### 제출 판단
+
+`test_0547`은 현재 생성된 후보 중 가장 높은 재랭킹 점수를 받았지만, absolute class-0 근거가 강한 후보는 아니다. 따라서 제출한다면 남은 4회 중 1회를 사용하는 고위험 후보로 보고, 결과가 하락하면 EXP-119 계열 ranking의 신뢰도를 낮추고 다시 current-best branch 전략으로 돌아간다.
+
+### 산출물
+
+```text
+oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv
+oof/preds/exp120_after0303_drop_test_0547_only_changed_vs_exp117.csv
+oof/preds/exp120_after0303_top1_submit_summary.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.

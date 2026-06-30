@@ -812,3 +812,41 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
       - `oof/submissions/exp118_after0303_drop_test_0525_only_submit.csv`
     - 제출 방침:
       - 남은 4회를 한 번에 소진하지 않고, 1순위 제출 결과를 보고 다음 후보군 신뢰도를 재평가한다.
+  - EXP-119 RF/SVM/Gaussian evidence reranking:
+    - 실행 완료
+    - 기준 제출: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+    - 목적: 현재 최고에서 label 1인 샘플 중 FP 가능성이 높은 후보 재정렬
+    - 사용 모델:
+      - RandomForestClassifier
+      - ExtraTreesClassifier
+      - LinearSVC
+      - LogisticRegression
+      - RidgeClassifier
+    - 추가 feature:
+      - Gaussian blur delta
+      - edge/Laplacian/contrast/entropy 이미지 통계
+      - EXP-113 tree score
+      - XAI 요약값이 있는 경우 병합
+    - meta-CV:
+      - RF `0.98735`
+      - ExtraTrees `0.98658`
+      - LinearSVC `0.98601`
+      - Logistic `0.98696`
+      - Ridge `0.98715`
+    - 재랭킹 결과:
+      - 1순위 `test_0547`
+      - 2순위 `test_0315`
+      - 3순위 `test_0390`
+      - 4순위 `test_0040`
+      - 5순위 `test_0212`
+    - 해석:
+      - `test_0547`이 EXP-118 1순위 `test_0212`보다 위로 올라왔지만, RF/ExtraTrees/SVM의 절대 class-0 지지는 강하지 않다.
+      - 따라서 제출 가능 후보이나 EXP-110~117 성공 branch보다 위험도가 높다.
+  - EXP-120 after-0303 top-1 RF/SVM/Gaussian drop:
+    - 제출 파일 생성 완료
+    - `oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv`
+    - 현재 최고 대비 변경: `test_0547: 1->0`
+    - 변경 수 1개, label 0/1은 233/391
+    - 제출 방침:
+      - 남은 4회 중 1회를 쓸 수 있는 고위험 후보
+      - 하락하면 EXP-119 계열 ranking 신뢰도를 낮추고 기존 current-best branch 전략으로 복귀
