@@ -717,7 +717,26 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - EXP-56 대비 비중복 통과 후보: 0
     - 통과 파일은 `exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`, `exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`로 둘 다 EXP-56과 동일 예측
     - 판단: 기존 CSV 재활용 기반 제출 후보 탐색은 소진
+  - EXP-110 ConvNeXt hard-case FP drop audit:
+    - 실행 완료
+    - EXP-56 양성 중 ConvNeXt 계열 불일치/낮은 margin 기반 1개 drop 후보 생성
+    - 후보 3개:
+      - `oof/submissions/exp110_drop_test_0172_rank1_submit.csv`
+      - `oof/submissions/exp110_drop_test_0455_rank2_submit.csv`
+      - `oof/submissions/exp110_drop_test_0057_rank3_submit.csv`
+    - test label 0/1은 모두 229/395
+  - EXP-111 ConvNeXt threshold replay:
+    - 실행 완료
+    - ConvNeXt score 하위 EXP-56 양성 샘플을 1~2개 drop하는 후보 7개 생성
+    - `exp111_core_min_drop1_submit.csv`는 `test_0455` 단독 drop으로 EXP-110 rank2와 동일 예측
+  - EXP-112 Drop candidate Grad-CAM panel:
+    - 실행 완료
+    - 대상 샘플 7개
+    - 패널: `reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_panel.png`
+    - 판단: XAI 단독으로 label을 확정하지 않지만, `test_0455` 단독 drop 후보를 1순위 제출 후보로 본다
   - 다음 액션:
-    - 1순위: 새 OOF 정보원 검토
-    - 2순위: 경계 샘플 XAI/확률 패널로 더 이상 뒤집지 말아야 할 샘플과 새 후보를 분리
-    - 3순위: 기존 후보 미세 탐색은 중단
+    - 1순위 제출 후보: `oof/submissions/exp110_drop_test_0455_rank2_submit.csv`
+    - 동일 예측 파일: `oof/submissions/exp111_core_min_drop1_submit.csv`
+    - 2순위 후보: `oof/submissions/exp110_drop_test_0057_rank3_submit.csv`
+    - 3순위 후보: `oof/submissions/exp111_core_mean_drop1_submit.csv`
+    - 1개 drop 결과가 하락하면 2개 drop 후보는 제출 보류

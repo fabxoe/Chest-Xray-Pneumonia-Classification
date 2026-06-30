@@ -127,6 +127,9 @@
 | EXP-107 | Boundary bottleneck analysis | EXP-106 plausible row 기준 보호 샘플 병목과 비보호 watchlist 분석 | - | - | - | 분석 | - | 제출 없음 | - | `test_0504`가 최대 병목. 비보호 반복 변경 샘플은 `test_0568` 1개뿐 |
 | EXP-108 | Flip0568 rule candidates | EXP-107 watchlist 기반으로 EXP-56 대비 1~2개 변경 제출 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp108_flip0568_only_submit.csv | `test_0568` 단독 0->1도 EXP-56보다 하락. 이후 `test_0568=0` 유지 우선 |
 | EXP-109 | Extended guardrail filter | `test_0568=0`까지 포함한 최신 guardrail로 기존 제출 CSV 189개 재평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 새 제출 후보 0개 |
+| EXP-110 | ConvNeXt FP drop audit | ConvNeXt 계열 확률 불일치/낮은 margin 기반 EXP-56 양성 1개 drop 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp110_drop_test_0455_rank2_submit.csv | 후보 3개 생성. XAI 확인 후 `test_0455` 단독 1->0을 1순위로 판단 |
+| EXP-111 | ConvNeXt threshold replay | ConvNeXt score 분포 기준 EXP-56 양성 하위 샘플 1~2개 drop 후보 생성 | - | - | - | threshold replay | - | 제출 대기 | oof/submissions/exp111_core_min_drop1_submit.csv | 후보 7개 생성. `test_0455` 단독 후보는 EXP-110 rank2와 동일 |
+| EXP-112 | Drop candidate Grad-CAM panel | EXP-110/111 후보 7개에 대해 ConvNeXt fold0 class-1 Grad-CAM 패널 생성 | - | - | - | XAI 분석 | - | 제출 없음 | - | XAI 단독 판단은 금지. `test_0455`, `test_0057`, `test_0385`는 fold0 p1이 낮음 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5449,6 +5452,106 @@ oof/preds/exp109_extended_guardrail_report.csv
 oof/preds/exp109_extended_guardrail_passed.csv
 oof/preds/exp109_extended_guardrail_candidates.csv
 oof/preds/exp109_extended_guardrail_tree.md
+```
+
+## EXP-110. ConvNeXt hard-case FP drop audit
+
+### 처리 상태
+
+이수인님 일지의 핵심인 ConvNeXt 확률 순위와 hard case drop 전략을 우리 OOF 산출물 기준으로 재현했다. EXP-56에서 label 1인 샘플 중 ConvNeXt 계열 확률이 서로 갈리거나 margin이 낮은 샘플을 정렬하고, hard guardrail 11개와 `review_high_priority` 변경 제외 조건을 적용했다.
+
+### 결과
+
+| 우선순위 | 제출 파일 | 변경 샘플 | test label 0/1 | 근거 |
+|---:|---|---|---:|---|
+| 1 | `oof/submissions/exp110_drop_test_0172_rank1_submit.csv` | `test_0172: 1->0` | 229/395 | drop score 3.5865, ConvNeXt core vote1 3/4 |
+| 2 | `oof/submissions/exp110_drop_test_0455_rank2_submit.csv` | `test_0455: 1->0` | 229/395 | ConvNeXt core mean 0.5579, fold0 p1 낮음 |
+| 3 | `oof/submissions/exp110_drop_test_0057_rank3_submit.csv` | `test_0057: 1->0` | 229/395 | EXP-56 margin 0.1676, fold0 p1 낮음 |
+
+### 판단
+
+EXP-110은 제출 후보를 만들었다. 다만 1순위 ranking인 `test_0172`는 fold0 ConvNeXt p1이 0.456으로 완전히 낮지는 않고, XAI 패널에서도 폐 하부 쪽 반응이 남아 있다. 반면 `test_0455`는 EXP-110 rank2이지만 EXP-111 core_min drop1과 같은 샘플이고, fold0 ConvNeXt p1이 0.176으로 낮다. 따라서 실제 제출 1순위는 `exp110_drop_test_0455_rank2_submit.csv` 또는 동일 예측인 `exp111_core_min_drop1_submit.csv`로 본다.
+
+### 산출물
+
+```text
+scripts/run_exp110_convnext_fp_drop_audit.py
+reports/exp110_convnext_fp_drop_audit/exp110_convnext_fp_drop_ranking.csv
+oof/preds/exp110_convnext_fp_drop_candidates_summary.csv
+oof/submissions/exp110_drop_test_0172_rank1_submit.csv
+oof/submissions/exp110_drop_test_0455_rank2_submit.csv
+oof/submissions/exp110_drop_test_0057_rank3_submit.csv
+```
+
+## EXP-111. ConvNeXt threshold distribution replay
+
+### 처리 상태
+
+ConvNeXt 확률 분포에서 EXP-56 양성 중 score가 낮은 샘플을 threshold 상승으로 drop하는 상황을 재현했다. EXP-56 기준에서 1~2개만 `1->0`으로 바꾸며, label1 개수는 394~395로 유지했다.
+
+### 결과
+
+| 후보 | 변경 샘플 | test label 0/1 |
+|---|---|---:|
+| `oof/submissions/exp111_core_mean_drop1_submit.csv` | `test_0289: 1->0` | 229/395 |
+| `oof/submissions/exp111_core_min_drop1_submit.csv` | `test_0455: 1->0` | 229/395 |
+| `oof/submissions/exp111_core_disagreement_drop1_submit.csv` | `test_0013: 1->0` | 229/395 |
+| `oof/submissions/exp111_core_mean_drop2_submit.csv` | `test_0289`, `test_0385: 1->0` | 230/394 |
+| `oof/submissions/exp111_core_min_drop2_submit.csv` | `test_0289`, `test_0455: 1->0` | 230/394 |
+| `oof/submissions/exp111_ref_mean_drop2_submit.csv` | `test_0289`, `test_0303: 1->0` | 230/394 |
+| `oof/submissions/exp111_core_disagreement_drop2_submit.csv` | `test_0013`, `test_0172: 1->0` | 230/394 |
+
+### 판단
+
+EXP-111도 제출 후보를 만들었다. 1개 변경 후보 중 `exp111_core_min_drop1_submit.csv`는 EXP-110 rank2와 동일하게 `test_0455`만 drop한다. 따라서 중복 제출을 피하기 위해 실제 제출은 둘 중 하나만 사용한다. 2개 drop 후보는 1개 drop 결과를 본 뒤 검토한다.
+
+### 산출물
+
+```text
+scripts/run_exp111_convnext_threshold_replay.py
+reports/exp111_convnext_threshold_replay/exp111_positive_pool_by_core_mean.csv
+oof/preds/exp111_convnext_threshold_replay_summary.csv
+oof/submissions/exp111_core_mean_drop1_submit.csv
+oof/submissions/exp111_core_min_drop1_submit.csv
+oof/submissions/exp111_core_disagreement_drop1_submit.csv
+oof/submissions/exp111_core_mean_drop2_submit.csv
+oof/submissions/exp111_core_min_drop2_submit.csv
+oof/submissions/exp111_ref_mean_drop2_submit.csv
+oof/submissions/exp111_core_disagreement_drop2_submit.csv
+```
+
+## EXP-112. XAI panel for drop candidates
+
+### 처리 상태
+
+EXP-110/111 후보 7개를 대상으로 ConvNeXt fold0 checkpoint의 class-1 Grad-CAM 패널을 생성했다. 목적은 정답 추측이 아니라, drop 후보에서 ConvNeXt가 폐 영역, 가장자리, 촬영 품질 영역 중 어디에 반응하는지 확인하는 것이다.
+
+### 결과
+
+- 패널: `reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_panel.png`
+- 요약: `reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_summary.csv`
+- 대상 샘플 수: 7
+- device: `mps`
+
+주요 관찰:
+
+| sample | source | ConvNeXt fold0 p1 | 비고 |
+|---|---|---:|---|
+| `test_0455` | EXP-110 rank2 / EXP-111 core_min | 0.176 | 단일 drop 1순위 후보 |
+| `test_0057` | EXP-110 rank3 | 0.106 | p1 낮지만 EXP-95 action은 review |
+| `test_0385` | EXP-111 core_mean drop2 | 0.074 | 2개 drop 후보에만 포함 |
+
+### 판단
+
+Grad-CAM은 병변 여부를 확정하는 도구가 아니므로 XAI만으로 label을 바꾸지 않는다. 다만 후보 간 우선순위 조정에는 도움이 된다. 현재는 `test_0455` 단독 drop 후보가 가장 균형적이다. `test_0057`은 EXP-56 margin이 더 낮지만 review 샘플이고, `test_0385`는 단독 제출 후보가 아직 없으므로 후순위다.
+
+### 산출물
+
+```text
+scripts/run_exp112_drop_candidate_gradcam_panel.py
+reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_panel.png
+reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_summary.csv
+reports/exp112_drop_candidate_gradcam/result.json
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
