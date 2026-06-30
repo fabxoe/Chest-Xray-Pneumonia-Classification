@@ -125,7 +125,7 @@
 | EXP-104 | SwinV2 regularized stacking | ConvNeXt+EfficientNet+SwinV2 OOF feature를 Ridge/Logistic으로 제한 탐색 | - | - | - | Ridge/Logistic | 최고 0.98677 meta-CV | 제출 없음 | - | strict/relaxed 후보 0개. 모든 탐색 후보가 보호 샘플을 최소 1개 이상 위반 |
 | EXP-106 | No-Swin low-change search | SwinV2 제외, ConvNeXt/EfficientNet/ResNet seed pool로 보호 샘플 유지 후보 재탐색 | - | - | - | Ridge/Logistic | 최고 0.98926 meta-CV | 제출 없음 | - | candidate 0개. 강한 후보는 주로 `test_0504=1`로 돌아가고, 보호 통과 후보는 EXP-56과 중복 |
 | EXP-107 | Boundary bottleneck analysis | EXP-106 plausible row 기준 보호 샘플 병목과 비보호 watchlist 분석 | - | - | - | 분석 | - | 제출 없음 | - | `test_0504`가 최대 병목. 비보호 반복 변경 샘플은 `test_0568` 1개뿐 |
-| EXP-108 | Flip0568 rule candidates | EXP-107 watchlist 기반으로 EXP-56 대비 1~2개 변경 제출 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp108_flip0568_only_submit.csv | 1순위는 `test_0568` 단독 0->1. 보호 샘플/avoid-pair 통과 |
+| EXP-108 | Flip0568 rule candidates | EXP-107 watchlist 기반으로 EXP-56 대비 1~2개 변경 제출 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp108_flip0568_only_submit.csv | `test_0568` 단독 0->1도 EXP-56보다 하락. 이후 `test_0568=0` 유지 우선 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5370,6 +5370,15 @@ EXP-107에서 비보호 반복 변경 샘플이 `test_0568` 하나로 좁혀졌�
 
 `exp108_flip0377_only_recheck_submit.csv`는 `test_0377`의 모델 불일치가 크다는 점에서는 의미가 있지만, 이전 EXP-96에서 제출 우선순위를 낮췄던 계열이다. `exp108_flip0568_0377_submit.csv`는 2개 변경이라 1순위 결과를 본 뒤에만 검토한다.
 
+### 리더보드 결과
+
+- 제출 파일: `oof/submissions/exp108_flip0568_only_submit.csv`
+- Leaderboard score: `0.9567307692`
+- EXP-56 score: `0.9583333333`
+- 결과: EXP-56보다 하락
+
+`test_0568` 단독 `0->1` 변경도 public에서는 이득이 아니었다. EXP-58의 `test_0188 + test_0568` 동시 변경 하락과 함께 보면, 이후 후보 필터링에서는 `test_0568=0`을 유지 우선 방향으로 본다. `exp108_flip0377_only_recheck_submit.csv`와 `exp108_flip0568_0377_submit.csv`는 제출 우선순위를 낮춘다.
+
 ### 산출물
 
 ```text
@@ -5708,3 +5717,4 @@ reports/exp94_gradcam/report.md
 | 41 | oof/submissions/exp65_convnextv2_tiny_stage3_mean_submit.csv | ConvNeXt V2 Tiny stage3+head 5-fold mean | 0.97680 OOF | 0.9262820513 | - | 단독 mean이 보호 샘플을 다수 1로 바꾸며 크게 하락 |
 | 42 | oof/submissions/exp96_flip0188_only_submit.csv | EXP-95 suspicious rule candidate | - | 0.9567307692 | - | `test_0188` 1개만 0->1로 바꿨지만 EXP-56보다 하락. `test_0188=0` 유지 우선 |
 | 43 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | CoAtNet Nano fold0 smoke | 0.96456 fold0 | 0.8493589744 | - | label1 308, EXP-56 대비 90개 변경. Public 급락으로 단독/5-fold 확장 제외 |
+| 44 | oof/submissions/exp108_flip0568_only_submit.csv | EXP-107 watchlist rule candidate | - | 0.9567307692 | - | `test_0568` 1개만 0->1로 바꿨지만 EXP-56보다 하락. `test_0568=0` 유지 우선 |
