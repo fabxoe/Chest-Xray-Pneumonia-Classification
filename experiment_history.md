@@ -131,7 +131,9 @@
 | EXP-111 | ConvNeXt threshold replay | ConvNeXt score 분포 기준 EXP-56 양성 하위 샘플 1~2개 drop 후보 생성 | - | - | - | threshold replay | - | 0.9583333333 | oof/submissions/exp111_core_min_drop2_submit.csv | `test_0455=0` 유지 후 `test_0289` 추가 1->0은 하락. 이후 `test_0289=1` 유지 우선 |
 | EXP-112 | Drop candidate Grad-CAM panel | EXP-110/111 후보 7개에 대해 ConvNeXt fold0 class-1 Grad-CAM 패널 생성 | - | - | - | XAI 분석 | - | 제출 없음 | - | XAI 단독 판단은 금지. `test_0455`, `test_0057`, `test_0385`는 fold0 p1이 낮음 |
 | EXP-113 | Tree replan evidence table | EXP-95/110/111/112 산출물을 current-best 기준 evidence table로 통합 | - | - | - | 분석/재정렬 | - | 제출 없음 | - | 기준 제출물 차이, ranking 품질, public probing 정보를 분리해 후보 재정렬 |
-| EXP-114 | Current-best single drop candidates | EXP-110 winner 기준으로 단일 1->0 drop 후보 5개 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp114_drop_test_0057_only_submit.csv | 모든 후보는 `test_0455=0`, `test_0289=1` 유지. 1순위는 `test_0057`, evidence score 최고는 `test_0385` |
+| EXP-114 | Current-best single drop candidates | EXP-110 winner 기준으로 단일 1->0 drop 후보 5개 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9615384615 | oof/submissions/exp114_drop_test_0057_only_submit.csv | 새 최고점. `test_0455=0` 유지 후 `test_0057` 추가 1->0으로 EXP-110 대비 +1샘플 |
+| EXP-115 | Public result tree update | EXP-114 결과를 guardrail에 반영하고 새 기준선을 갱신 | - | - | - | 분석/트리 업데이트 | - | 제출 없음 | - | `test_0057=0`을 성공 방향으로 추가. 새 기준은 EXP-114 `0057` |
+| EXP-116 | After-0057 branch candidates | EXP-114 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | `test_0455=0`, `test_0057=0`, `test_0289=1` 유지. 1순위는 `test_0385` |
 
 ## EXP-00. 원본 Baseline
 
@@ -5629,6 +5631,16 @@ EXP-113 evidence table을 바탕으로 현재 최고 EXP-110 위에서만 단일
 
 계획상 제출 우선순위는 `test_0057`을 1순위로 유지한다. 다만 evidence score만 보면 `test_0385`가 가장 높다. `test_0385`는 fold0 ConvNeXt p1과 CAM center fraction이 모두 낮고 recommended_action도 keep이므로, `test_0057` 결과가 하락하면 바로 다음 우선순위로 올릴 수 있다.
 
+### 리더보드 결과
+
+- 제출 파일: `oof/submissions/exp114_drop_test_0057_only_submit.csv`
+- Public score: `0.9615384615`
+- 이전 최고 EXP-110: `0.9599358974`
+- 변화 폭: `+1/624` 샘플
+- 현재 최고 대비 변경: `test_0057: 1->0`
+
+`test_0455=0`을 유지한 상태에서 `test_0057=0`을 추가한 후보가 다시 1샘플 개선을 만들었다. 따라서 새 기준선은 EXP-114 `0057` 후보로 갱신하고, 이후 branch 후보는 `test_0455=0`, `test_0057=0`, `test_0289=1`을 모두 유지해야 한다.
+
 ### 검증
 
 - 모든 제출 CSV row 수: 624
@@ -5652,6 +5664,61 @@ oof/submissions/exp114_drop_test_0172_only_submit.csv
 oof/submissions/exp114_drop_test_0385_only_submit.csv
 oof/submissions/exp114_drop_test_0013_only_submit.csv
 oof/submissions/exp114_drop_test_0303_only_submit.csv
+```
+
+## EXP-115. Public result tree update
+
+### 처리 상태
+
+EXP-114 제출 결과를 이진트리 guardrail에 반영했다. 이제 성공한 drop은 누적 기준선에 포함하고, 실패한 drop은 금지 방향으로 유지한다.
+
+### 현재 tree 상태
+
+| sample | 유지 방향 | 근거 |
+|---|---:|---|
+| `test_0455` | 0 | EXP-110에서 +1샘플 |
+| `test_0057` | 0 | EXP-114에서 +1샘플 |
+| `test_0289` | 1 | EXP-111에서 0으로 바꾸자 -1샘플 |
+
+### 다음 branch 원칙
+
+기존 EXP-114 단일 drop 파일을 그대로 제출하지 않는다. 해당 파일들은 `test_0057=0`을 포함하지 않으므로 새 기준선을 되돌릴 수 있다. 다음 후보는 EXP-114 winner 위에서 남은 샘플을 1개씩 추가 drop하는 방식으로 재생성한다.
+
+## EXP-116. After-0057 branch candidates
+
+### 처리 상태
+
+EXP-114에서 `test_0057=0`이 public 상승으로 확인되었으므로, 새 기준선 위에서 남은 drop 후보를 다시 생성했다. 모든 후보는 `test_0455=0`, `test_0057=0`, `test_0289=1`을 유지한다.
+
+### 결과
+
+| 우선순위 | 제출 파일 | EXP-114 대비 변경 | test label 0/1 | 근거 |
+|---:|---|---|---:|---|
+| 1 | `oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv` | `test_0385: 1->0` | 231/393 | EXP-114 evidence score 최고, fold0 p1 0.074, cam center 0.102 |
+| 2 | `oof/submissions/exp116_after0057_drop_test_0172_only_submit.csv` | `test_0172: 1->0` | 231/393 | EXP-110 rank1 |
+| 3 | `oof/submissions/exp116_after0057_drop_test_0013_only_submit.csv` | `test_0013: 1->0` | 231/393 | EXP-111 disagreement 후보 |
+| 4 | `oof/submissions/exp116_after0057_drop_test_0303_only_submit.csv` | `test_0303: 1->0` | 231/393 | EXP-111 ref_mean 후보 |
+
+### 검증
+
+- 모든 제출 CSV row 수: 624
+- 컬럼: `file_name,label`
+- label 값: 0/1
+- EXP-114 대비 변경 수: 각 1개
+- `test_0455=0` 유지
+- `test_0057=0` 유지
+- `test_0289=1` 유지
+
+### 산출물
+
+```text
+scripts/run_exp116_branch_after_0057.py
+reports/exp116_branch_after_0057/exp116_after0057_branch_candidates_summary.csv
+oof/preds/exp116_after0057_branch_candidates_summary.csv
+oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv
+oof/submissions/exp116_after0057_drop_test_0172_only_submit.csv
+oof/submissions/exp116_after0057_drop_test_0013_only_submit.csv
+oof/submissions/exp116_after0057_drop_test_0303_only_submit.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.

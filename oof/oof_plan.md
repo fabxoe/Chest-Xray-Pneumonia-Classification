@@ -762,3 +762,17 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
       - 4순위: `oof/submissions/exp114_drop_test_0013_only_submit.csv`
       - 5순위: `oof/submissions/exp114_drop_test_0303_only_submit.csv`
     - 주의: evidence score만 보면 `test_0385`가 가장 높지만, 계획상 branch 순서는 `test_0057`부터 유지한다. `test_0057` 하락 시 `test_0385`를 바로 2순위로 올려도 된다.
+  - EXP-115 public result tree update:
+    - `exp114_drop_test_0057_only_submit.csv` 제출 결과 leaderboard `0.9615384615`
+    - EXP-110 대비 +1샘플 개선
+    - `test_0057=0`을 성공 방향으로 추가
+    - 새 기준 파일: `oof/submissions/exp114_drop_test_0057_only_submit.csv`
+  - EXP-116 after-0057 branch candidates:
+    - 실행 완료
+    - 모든 후보는 `test_0455=0`, `test_0057=0`, `test_0289=1` 유지
+    - 후보 4개 모두 EXP-114 대비 변경 수 1개, label 0/1은 231/393
+    - 다음 제출 후보:
+      - 1순위: `oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv`
+      - 2순위: `oof/submissions/exp116_after0057_drop_test_0172_only_submit.csv`
+      - 3순위: `oof/submissions/exp116_after0057_drop_test_0013_only_submit.csv`
+      - 4순위: `oof/submissions/exp116_after0057_drop_test_0303_only_submit.csv`
