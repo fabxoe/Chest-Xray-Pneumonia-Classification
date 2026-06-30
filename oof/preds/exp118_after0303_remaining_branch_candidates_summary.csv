@@ -1,0 +1,5 @@
+priority,candidate_file,submission_path,changed_sample,exp118_score,tree_drop_score,cnx_prob1,vote_0_count,has_direct_prior,xai_available,recommendation
+1,exp118_after0303_drop_test_0212_only_submit.csv,oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv,test_0212.png,0.7976923076923078,0.8076923076923078,0.5250837549567222,2,False,False,submit only after manual review; low direct evidence
+2,exp118_after0303_drop_test_0267_only_submit.csv,oof/submissions/exp118_after0303_drop_test_0267_only_submit.csv,test_0267.png,0.7882371794871795,0.7982371794871795,0.4524950712919235,1,False,False,submit only after manual review; low direct evidence
+3,exp118_after0303_drop_test_0022_only_submit.csv,oof/submissions/exp118_after0303_drop_test_0022_only_submit.csv,test_0022.png,0.7712500000000001,0.7812500000000001,0.593956682085991,1,False,False,submit only after manual review; low direct evidence
+4,exp118_after0303_drop_test_0525_only_submit.csv,oof/submissions/exp118_after0303_drop_test_0525_only_submit.csv,test_0525.png,0.7657211538461539,0.7757211538461539,0.5103168040513992,1,False,False,submit only after manual review; low direct evidence

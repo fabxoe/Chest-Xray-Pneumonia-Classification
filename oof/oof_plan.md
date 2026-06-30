@@ -785,5 +785,30 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `exp117_after0385_drop_test_0013_only_submit.csv` 제출 결과 leaderboard `0.9615384615`
     - EXP-116 대비 -1샘플 하락
     - `test_0013=1`을 실패 방향으로 추가
-    - 남은 제출 후보:
-      - 1순위: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+    - `exp117_after0385_drop_test_0303_only_submit.csv` 제출 결과 leaderboard `0.9647435897`
+    - EXP-116 대비 +1샘플 개선
+    - `test_0303=0`을 성공 방향으로 추가
+    - 현재 최고:
+      - `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+      - public `0.9647435897`
+      - 2026-07-01 기준 7위
+    - 남은 제출 기회: 4회
+    - 다음 후보는 기존 EXP-113 ranking을 그대로 이어 제출하지 않고, 성공/실패 방향을 모두 반영해 EXP-118에서 재랭킹 후 1개씩 제출한다.
+  - EXP-118 after-0303 remaining branch triage:
+    - 실행 완료
+    - 기준 제출: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+    - 성공 방향 유지: `test_0455=0`, `test_0057=0`, `test_0385=0`, `test_0303=0`
+    - 실패 방향 유지: `test_0289=1`, `test_0172=1`, `test_0013=1`
+    - 모든 후보는 현재 최고 대비 변경 수 1개, label 0/1은 233/391
+    - 후보 1순위:
+      - `oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv`
+      - 변경: `test_0212: 1->0`
+      - 단, direct prior/XAI 근거가 없어 이전 성공 branch보다 신뢰도는 낮음
+    - 후보 2순위:
+      - `oof/submissions/exp118_after0303_drop_test_0267_only_submit.csv`
+    - 후보 3순위:
+      - `oof/submissions/exp118_after0303_drop_test_0022_only_submit.csv`
+    - 후보 4순위:
+      - `oof/submissions/exp118_after0303_drop_test_0525_only_submit.csv`
+    - 제출 방침:
+      - 남은 4회를 한 번에 소진하지 않고, 1순위 제출 결과를 보고 다음 후보군 신뢰도를 재평가한다.

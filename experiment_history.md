@@ -134,7 +134,8 @@
 | EXP-114 | Current-best single drop candidates | EXP-110 winner 기준으로 단일 1->0 drop 후보 5개 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9615384615 | oof/submissions/exp114_drop_test_0057_only_submit.csv | 새 최고점. `test_0455=0` 유지 후 `test_0057` 추가 1->0으로 EXP-110 대비 +1샘플 |
 | EXP-115 | Public result tree update | EXP-114 결과를 guardrail에 반영하고 새 기준선을 갱신 | - | - | - | 분석/트리 업데이트 | - | 제출 없음 | - | `test_0057=0`을 성공 방향으로 추가. 새 기준은 EXP-114 `0057` |
 | EXP-116 | After-0057 branch candidates | EXP-114 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9631410256 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | 새 최고점. `test_0385` 추가 1->0으로 EXP-114 대비 +1샘플 |
-| EXP-117 | After-0385 branch candidates | EXP-116 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9615384615 | oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv | `test_0172`, `test_0013` 추가 1->0은 모두 하락. 이후 둘 다 1 유지 우선 |
+| EXP-117 | After-0385 branch candidates | EXP-116 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9647435897 | oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv | 새 최고점. `test_0303` 추가 1->0으로 EXP-116 대비 +1샘플. `test_0172`, `test_0013`은 1 유지 우선 |
+| EXP-118 | After-0303 remaining branch triage | EXP-117 winner 기준으로 남은 current-positive 1->0 후보 재랭킹 및 제출 CSV 4개 생성 | - | - | - | evidence triage | - | 제출 대기 | oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv | 남은 제출 기회 4회 기준 후보 생성. 상위 후보 모두 direct prior/XAI 근거가 약해 1개씩만 제출 권장 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5775,6 +5776,18 @@ EXP-116에서 `test_0385=0`이 public 상승으로 확인되었으므로, 새 �
 
 `test_0013`를 추가로 drop한 후보도 EXP-116보다 1샘플 낮아졌다. 따라서 이후 탐색에서는 `test_0013=1`도 우선 유지한다. 이제 EXP-117에서 남은 단일 branch 후보는 `test_0303` 하나뿐이다.
 
+### 최종 리더보드 결과
+
+- 제출 파일: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+- Public score: `0.9647435897`
+- 이전 최고 EXP-116: `0.9631410256`
+- 이전 최고 대비 변경: `test_0303: 1->0`
+- 결과: 이전 최고보다 +1샘플 개선
+- 2026-07-01 기준 순위: 7위
+- 남은 제출 기회: 4회
+
+`test_0303`은 EXP-116 위에서 추가 drop했을 때 public score를 1샘플 개선했다. 따라서 현재 성공 방향은 `test_0455=0`, `test_0057=0`, `test_0385=0`, `test_0303=0`이고, 실패 방향은 `test_0289=1`, `test_0172=1`, `test_0013=1`로 갱신한다. 남은 제출 기회가 4회뿐이므로 다음 후보는 기존 ranking을 그대로 이어가지 않고 EXP-117 winner 기준에서 evidence를 다시 재정렬한 뒤 제출한다.
+
 ### 검증
 
 - 모든 제출 CSV row 수: 624
@@ -5785,6 +5798,9 @@ EXP-116에서 `test_0385=0`이 public 상승으로 확인되었으므로, 새 �
 - `test_0057=0` 유지
 - `test_0385=0` 유지
 - `test_0289=1` 유지
+- `test_0303=0` 유지
+- `test_0172=1` 유지
+- `test_0013=1` 유지
 
 ### 산출물
 
@@ -5795,6 +5811,48 @@ oof/preds/exp117_after0385_branch_candidates_summary.csv
 oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv
 oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv
 oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv
+```
+
+## EXP-118. After-0303 remaining branch triage
+
+### 처리 상태
+
+EXP-117에서 `test_0303=0`이 public 상승으로 확인되었으므로, 새 최고 제출물 `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`을 기준으로 남은 current-positive 샘플을 다시 재정렬했다. 남은 제출 기회가 4회뿐이므로 기존 EXP-113 ranking을 그대로 이어 제출하지 않고, 성공/실패 방향을 guardrail로 반영했다.
+
+### 현재 tree 상태
+
+| sample | 유지 방향 | 근거 |
+|---|---:|---|
+| `test_0455` | 0 | EXP-110에서 +1샘플 |
+| `test_0057` | 0 | EXP-114에서 +1샘플 |
+| `test_0385` | 0 | EXP-116에서 +1샘플 |
+| `test_0303` | 0 | EXP-117에서 +1샘플 |
+| `test_0289` | 1 | EXP-111에서 0으로 바꾸자 -1샘플 |
+| `test_0172` | 1 | EXP-117에서 0으로 바꾸자 -1샘플 |
+| `test_0013` | 1 | EXP-117에서 0으로 바꾸자 -1샘플 |
+
+### 후보
+
+| 우선순위 | 제출 파일 | 현재 최고 대비 변경 | test label 0/1 | 판단 |
+|---:|---|---|---:|---|
+| 1 | `oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv` | `test_0212: 1->0` | 233/391 | 최우선 후보이나 direct prior/XAI 근거 없음 |
+| 2 | `oof/submissions/exp118_after0303_drop_test_0267_only_submit.csv` | `test_0267: 1->0` | 233/391 | ConvNeXt core 확률은 낮지만 vote0은 1개 |
+| 3 | `oof/submissions/exp118_after0303_drop_test_0022_only_submit.csv` | `test_0022: 1->0` | 233/391 | 근거 약함 |
+| 4 | `oof/submissions/exp118_after0303_drop_test_0525_only_submit.csv` | `test_0525: 1->0` | 233/391 | 근거 약함 |
+
+### 해석
+
+EXP-118 후보들은 모두 EXP-117 winner 대비 1개만 변경하며 CSV 검증은 통과했다. 다만 EXP-110~117의 성공 후보와 달리 직접적인 public branch prior 또는 XAI 근거가 부족하다. 따라서 남은 제출 4회를 모두 순차 사용하기보다, 우선 `test_0212` 후보 1개를 제출한 뒤 결과가 상승하면 그 방향을 새 기준으로 삼고, 하락하면 이 후보군 전체의 신뢰도를 낮추는 방식이 적절하다.
+
+### 산출물
+
+```text
+reports/exp118_remaining_submit_triage/exp118_remaining_drop_candidate_triage.csv
+oof/preds/exp118_after0303_remaining_branch_candidates_summary.csv
+oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv
+oof/submissions/exp118_after0303_drop_test_0267_only_submit.csv
+oof/submissions/exp118_after0303_drop_test_0022_only_submit.csv
+oof/submissions/exp118_after0303_drop_test_0525_only_submit.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
@@ -6128,3 +6186,4 @@ reports/exp94_gradcam/report.md
 | 48 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | After-0057 binary-tree branch drop | - | 0.9631410256 | 8 | EXP-114 대비 `test_0385` 1개만 1->0으로 추가 변경해 +1샘플 개선. 2026-07-01 기준 8위 |
 | 49 | oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9615384615 | - | EXP-116 대비 `test_0172` 1개만 1->0으로 추가 변경했지만 하락. `test_0172=1` 유지 우선 |
 | 50 | oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9615384615 | - | EXP-116 대비 `test_0013` 1개만 1->0으로 추가 변경했지만 하락. `test_0013=1` 유지 우선 |
+| 51 | oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9647435897 | 7 | EXP-116 대비 `test_0303` 1개만 1->0으로 추가 변경해 +1샘플 개선. 현재 최고점, 남은 제출 기회 4회 |
