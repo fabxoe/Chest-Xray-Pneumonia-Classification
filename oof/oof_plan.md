@@ -779,7 +779,9 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 실행 완료
     - 모든 후보는 `test_0455=0`, `test_0057=0`, `test_0385=0`, `test_0289=1` 유지
     - 후보 3개 모두 EXP-116 대비 변경 수 1개, label 0/1은 232/392
-    - 다음 제출 후보:
-      - 1순위: `oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv`
-      - 2순위: `oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv`
-      - 3순위: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+    - `exp117_after0385_drop_test_0172_only_submit.csv` 제출 결과 leaderboard `0.9615384615`
+    - EXP-116 대비 -1샘플 하락
+    - `test_0172=1`을 실패 방향으로 추가
+    - 남은 제출 후보:
+      - 1순위: `oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv`
+      - 2순위: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
