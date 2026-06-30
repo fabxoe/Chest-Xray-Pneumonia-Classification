@@ -133,7 +133,8 @@
 | EXP-113 | Tree replan evidence table | EXP-95/110/111/112 산출물을 current-best 기준 evidence table로 통합 | - | - | - | 분석/재정렬 | - | 제출 없음 | - | 기준 제출물 차이, ranking 품질, public probing 정보를 분리해 후보 재정렬 |
 | EXP-114 | Current-best single drop candidates | EXP-110 winner 기준으로 단일 1->0 drop 후보 5개 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9615384615 | oof/submissions/exp114_drop_test_0057_only_submit.csv | 새 최고점. `test_0455=0` 유지 후 `test_0057` 추가 1->0으로 EXP-110 대비 +1샘플 |
 | EXP-115 | Public result tree update | EXP-114 결과를 guardrail에 반영하고 새 기준선을 갱신 | - | - | - | 분석/트리 업데이트 | - | 제출 없음 | - | `test_0057=0`을 성공 방향으로 추가. 새 기준은 EXP-114 `0057` |
-| EXP-116 | After-0057 branch candidates | EXP-114 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | `test_0455=0`, `test_0057=0`, `test_0289=1` 유지. 1순위는 `test_0385` |
+| EXP-116 | After-0057 branch candidates | EXP-114 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9631410256 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | 새 최고점. `test_0385` 추가 1->0으로 EXP-114 대비 +1샘플 |
+| EXP-117 | After-0385 branch candidates | EXP-116 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv | `test_0455=0`, `test_0057=0`, `test_0385=0`, `test_0289=1` 유지 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5699,6 +5700,16 @@ EXP-114에서 `test_0057=0`이 public 상승으로 확인되었으므로, 새 �
 | 3 | `oof/submissions/exp116_after0057_drop_test_0013_only_submit.csv` | `test_0013: 1->0` | 231/393 | EXP-111 disagreement 후보 |
 | 4 | `oof/submissions/exp116_after0057_drop_test_0303_only_submit.csv` | `test_0303: 1->0` | 231/393 | EXP-111 ref_mean 후보 |
 
+### 리더보드 결과
+
+- 제출 파일: `oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv`
+- Public score: `0.9631410256`
+- 이전 최고 EXP-114: `0.9615384615`
+- 변화 폭: `+1/624` 샘플
+- 현재 최고 대비 변경: `test_0385: 1->0`
+
+`test_0455=0`, `test_0057=0`을 유지한 상태에서 `test_0385=0`을 추가한 후보가 다시 1샘플 개선을 만들었다. 따라서 새 기준선은 EXP-116 `0385` 후보로 갱신하고, 이후 branch 후보는 `test_0455=0`, `test_0057=0`, `test_0385=0`, `test_0289=1`을 모두 유지해야 한다.
+
 ### 검증
 
 - 모든 제출 CSV row 수: 624
@@ -5719,6 +5730,51 @@ oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv
 oof/submissions/exp116_after0057_drop_test_0172_only_submit.csv
 oof/submissions/exp116_after0057_drop_test_0013_only_submit.csv
 oof/submissions/exp116_after0057_drop_test_0303_only_submit.csv
+```
+
+## EXP-117. After-0385 branch candidates
+
+### 처리 상태
+
+EXP-116에서 `test_0385=0`이 public 상승으로 확인되었으므로, 새 기준선 위에서 남은 drop 후보를 다시 생성한다. 후보는 `test_0172`, `test_0013`, `test_0303` 세 개로 제한한다.
+
+### 현재 tree 상태
+
+| sample | 유지 방향 | 근거 |
+|---|---:|---|
+| `test_0455` | 0 | EXP-110에서 +1샘플 |
+| `test_0057` | 0 | EXP-114에서 +1샘플 |
+| `test_0385` | 0 | EXP-116에서 +1샘플 |
+| `test_0289` | 1 | EXP-111에서 0으로 바꾸자 -1샘플 |
+
+### 결과
+
+| 우선순위 | 제출 파일 | EXP-116 대비 변경 | test label 0/1 | 근거 |
+|---:|---|---|---:|---|
+| 1 | `oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv` | `test_0172: 1->0` | 232/392 | EXP-110 rank1, 모델 disagreement 3 |
+| 2 | `oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv` | `test_0013: 1->0` | 232/392 | EXP-111 disagreement 후보 |
+| 3 | `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv` | `test_0303: 1->0` | 232/392 | EXP-111 ref_mean 후보 |
+
+### 검증
+
+- 모든 제출 CSV row 수: 624
+- 컬럼: `file_name,label`
+- label 값: 0/1
+- EXP-116 대비 변경 수: 각 1개
+- `test_0455=0` 유지
+- `test_0057=0` 유지
+- `test_0385=0` 유지
+- `test_0289=1` 유지
+
+### 산출물
+
+```text
+scripts/run_exp117_branch_after_0385.py
+reports/exp117_branch_after_0385/exp117_after0385_branch_candidates_summary.csv
+oof/preds/exp117_after0385_branch_candidates_summary.csv
+oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv
+oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv
+oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
