@@ -735,6 +735,11 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 실행 완료
     - ConvNeXt score 하위 EXP-56 양성 샘플을 1~2개 drop하는 후보 7개 생성
     - `exp111_core_min_drop1_submit.csv`는 `test_0455` 단독 drop으로 EXP-110 rank2와 동일 예측이므로 중복 제출하지 않음
+    - `exp111_core_min_drop2_submit.csv` 제출 결과:
+      - leaderboard: `0.9583333333`
+      - 현재 최고 EXP-110 `0.9599358974`보다 하락
+      - EXP-110 대비 추가 변경은 `test_0289: 1->0` 1개뿐
+      - 이후 `test_0289=1`을 우선 보호 방향으로 유지
   - EXP-112 Drop candidate Grad-CAM panel:
     - 실행 완료
     - 대상 샘플 7개
@@ -743,5 +748,6 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - 다음 액션:
     - 기존 EXP-110/111 후보를 그대로 추가 제출하지 않는다. 이 파일들은 EXP-56 기준이므로 `test_0455=0`을 다시 1로 되돌릴 수 있다.
     - 다음 실험은 EXP-113으로 잡고, 새 기준선 `exp110_drop_test_0455_rank2_submit.csv` 위에서 추가 1개 drop 후보를 재생성한다.
-    - 우선 추가 검토 샘플: `test_0057`, `test_0172`, `test_0289`, `test_0013`, `test_0385`, `test_0303`
-    - 후보 조건: `test_0455=0` 포함 최신 보호 샘플 유지, 현재 최고 대비 변경 수 1개, label1 394 우선
+    - 우선 추가 검토 샘플: `test_0057`, `test_0172`, `test_0013`, `test_0385`, `test_0303`
+    - 제외/보호: `test_0455=0`, `test_0289=1`
+    - 후보 조건: 최신 보호 샘플 유지, 현재 최고 대비 변경 수 1개, label1 394 우선

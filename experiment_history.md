@@ -128,7 +128,7 @@
 | EXP-108 | Flip0568 rule candidates | EXP-107 watchlist 기반으로 EXP-56 대비 1~2개 변경 제출 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp108_flip0568_only_submit.csv | `test_0568` 단독 0->1도 EXP-56보다 하락. 이후 `test_0568=0` 유지 우선 |
 | EXP-109 | Extended guardrail filter | `test_0568=0`까지 포함한 최신 guardrail로 기존 제출 CSV 189개 재평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 새 제출 후보 0개 |
 | EXP-110 | ConvNeXt FP drop audit | ConvNeXt 계열 확률 불일치/낮은 margin 기반 EXP-56 양성 1개 drop 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9599358974 | oof/submissions/exp110_drop_test_0455_rank2_submit.csv | 새 최고점. `test_0455` 단독 1->0으로 EXP-56 대비 +1샘플, 2026-06-30 기준 12위 |
-| EXP-111 | ConvNeXt threshold replay | ConvNeXt score 분포 기준 EXP-56 양성 하위 샘플 1~2개 drop 후보 생성 | - | - | - | threshold replay | - | 제출 보류 | oof/submissions/exp111_core_min_drop1_submit.csv | 후보 7개 생성. `test_0455` 단독 후보는 EXP-110 rank2와 동일하므로 중복 제출 불필요 |
+| EXP-111 | ConvNeXt threshold replay | ConvNeXt score 분포 기준 EXP-56 양성 하위 샘플 1~2개 drop 후보 생성 | - | - | - | threshold replay | - | 0.9583333333 | oof/submissions/exp111_core_min_drop2_submit.csv | `test_0455=0` 유지 후 `test_0289` 추가 1->0은 하락. 이후 `test_0289=1` 유지 우선 |
 | EXP-112 | Drop candidate Grad-CAM panel | EXP-110/111 후보 7개에 대해 ConvNeXt fold0 class-1 Grad-CAM 패널 생성 | - | - | - | XAI 분석 | - | 제출 없음 | - | XAI 단독 판단은 금지. `test_0455`, `test_0057`, `test_0385`는 fold0 p1이 낮음 |
 
 ## EXP-00. 원본 Baseline
@@ -5516,6 +5516,16 @@ ConvNeXt 확률 분포에서 EXP-56 양성 중 score가 낮은 샘플을 thresho
 
 EXP-111도 제출 후보를 만들었다. 1개 변경 후보 중 `exp111_core_min_drop1_submit.csv`는 EXP-110 rank2와 동일하게 `test_0455`만 drop한다. 실제 제출에서 EXP-110 rank2가 새 최고점이 되었으므로, 해당 중복 파일은 제출하지 않는다. 이후 2개 drop 후보를 검토할 때는 EXP-56 기준 파일을 그대로 제출하지 않고, 새 기준선인 EXP-110 rank2 위에서 `test_0455=0`을 유지한 상태로 추가 drop 후보를 다시 생성해야 한다.
 
+### 리더보드 결과
+
+- 제출 파일: `oof/submissions/exp111_core_min_drop2_submit.csv`
+- Public score: `0.9583333333`
+- 현재 최고 EXP-110: `0.9599358974`
+- 현재 최고 대비 변경: `test_0289: 1->0`
+- 결과: 현재 최고보다 하락
+
+`test_0289`를 추가로 drop한 후보는 EXP-110보다 1샘플 낮아졌다. 따라서 이후 탐색에서는 `test_0289=1`을 우선 유지한다. 이 결과는 2개 drop 전략 자체가 틀렸다는 뜻은 아니지만, `test_0455=0` 이후 바로 이어서 `test_0289=0`을 추가하는 방향은 public에서 이득이 아니었다.
+
 ### 산출물
 
 ```text
@@ -5891,3 +5901,4 @@ reports/exp94_gradcam/report.md
 | 43 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | CoAtNet Nano fold0 smoke | 0.96456 fold0 | 0.8493589744 | - | label1 308, EXP-56 대비 90개 변경. Public 급락으로 단독/5-fold 확장 제외 |
 | 44 | oof/submissions/exp108_flip0568_only_submit.csv | EXP-107 watchlist rule candidate | - | 0.9567307692 | - | `test_0568` 1개만 0->1로 바꿨지만 EXP-56보다 하락. `test_0568=0` 유지 우선 |
 | 45 | oof/submissions/exp110_drop_test_0455_rank2_submit.csv | ConvNeXt hard-case FP drop audit | - | 0.9599358974 | 12 | 새 최고점. `test_0455` 1개만 1->0으로 바꿔 EXP-56 대비 +1샘플 개선 |
+| 46 | oof/submissions/exp111_core_min_drop2_submit.csv | ConvNeXt threshold replay 추가 drop | - | 0.9583333333 | - | EXP-110 대비 `test_0289` 1개만 1->0으로 추가 변경했지만 하락. `test_0289=1` 유지 우선 |
