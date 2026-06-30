@@ -119,6 +119,10 @@
 | EXP-98 | New model family precheck | MaxViT/CoAtNet/SwinV2/DeiT 후보의 timm 지원, 파라미터, smoke 우선순위 점검 | - | - | - | 사전 검토 | - | 제출 없음 | - | 1순위 MaxViT Tiny fold0 smoke, 2순위 CoAtNet Nano |
 | EXP-99 | MaxViT Tiny fold0 smoke | `maxvit_tiny_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96552 fold0 | 제출 없음 | oof/submissions/exp99_maxvit_tiny_fold0_smoke_submit.csv | EXP-56 대비 38개 변경, guardrail 7개 위반으로 5-fold 확장 보류 |
 | EXP-100 | CoAtNet Nano fold0 smoke | `coatnet_nano_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96456 fold0 | 0.8493589744 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | EXP-56 대비 90개 변경, label1 308로 과도하게 보수적. Public 급락으로 단독/5-fold 확장 제외 |
+| EXP-101 | SwinV2-Tiny fold0 smoke | Gemini 생성 산출물 로컬 검증. `swinv2_tiny_window8_256.ms_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.97414 fold0 | 제출 없음 | oof/submissions/exp101_swinv2_tiny_fold0_smoke_submit.csv | label1 456, EXP-56 대비 68개 변경, guardrail 8개 위반. 단독 제출 금지, OOF feature 후보 |
+| EXP-102 | DeiT-Small fold0 smoke | Gemini 생성 산출물 로컬 검증. `deit3_small_patch16_224.fb_in1k` head+last blocks 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.91858 fold0 | 제출 없음 | oof/submissions/exp102_deit_small_fold0_smoke_submit.csv | label1 197, EXP-56 대비 213개 변경. 단독/OOF 확장 우선순위 낮음 |
+| EXP-103 | SwinV2-Tiny partial OOF | Gemini 생성 partial OOF 로컬 검증. fold0/fold1까지만 존재 | 2 x 2 folds partial | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | fold0 0.97414 / fold1 0.97124 | 제출 없음 | - | 아직 5-fold OOF 미완료. fold2~4 완료 전 stacking 사용 금지 |
+| EXP-104 | SwinV2 regularized stacking script | Gemini 생성 스크립트 로컬 문법 검증. ConvNeXt+EfficientNet+SwinV2 stacking용 | - | - | - | Ridge/Logistic | 미실행 | 제출 없음 | - | EXP-103 full OOF가 필요하므로 현재 실행 보류 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5032,6 +5036,127 @@ CoAtNet Nano는 MaxViT보다 guardrail fail 수는 적었지만, test label1이 
 - 차이: `-0.1089743589`
 
 fold0 validation accuracy는 0.96456으로 완전히 낮지는 않았지만, public score는 크게 하락했다. 원인은 단일 fold smoke 모델이 test에서 class 1을 과도하게 줄인 점(label1 308)과 EXP-56 대비 변경 수가 90개로 컸던 점으로 본다. 따라서 CoAtNet Nano 단독 제출과 5-fold 확장은 제외한다. 이 결과는 validation 지표만이 아니라 test label 분포, 보호 샘플, 기존 최고 후보 대비 변경 수를 함께 봐야 한다는 근거로 남긴다.
+
+## EXP-101. SwinV2-Tiny fold0 smoke
+
+### 처리 상태
+
+이 실험은 Gemini 세션에서 생성된 산출물을 현재 로컬에서 검증한 것이다. 내가 직접 학습을 실행한 결과로 기록하지 않고, `Gemini generated / locally verified` 상태로 분리해 둔다.
+
+### 로컬 검증
+
+- 스크립트 문법: `py_compile` 통과
+- JSON 결과 파일: 파싱 통과
+- 제출 CSV: 624 rows, columns `file_name,label`, sample submission order 일치
+- label 값: 0/1만 존재
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 모델 | `swinv2_tiny_window8_256.ms_in1k` |
+| fold | 0 |
+| best epoch | 1 |
+| fold0 valid accuracy | 0.97414 |
+| precision | 0.97826 |
+| recall | 0.98710 |
+| F1 | 0.98266 |
+| confusion matrix | `[[252, 17], [10, 765]]` |
+| test label 0/1 | 168/456 |
+| EXP-56 대비 변경 수 | 68 |
+| guardrail fail count | 8 |
+
+Guardrail 실패 샘플:
+
+```text
+test_0025: 0 -> 1
+test_0049: 0 -> 1
+test_0141: 1 -> 0
+test_0188: 0 -> 1
+test_0244: 0 -> 1
+test_0490: 0 -> 1
+test_0504: 0 -> 1
+test_0539: 0 -> 1
+```
+
+### 판단
+
+SwinV2-Tiny fold0 smoke는 validation recall이 높고 ConvNeXt/EfficientNet과 다른 방향의 feature가 될 가능성은 있다. 하지만 단독 test 예측은 label1 456으로 매우 공격적이며, 보호 샘플 8개를 위반한다. 따라서 단독 제출은 금지하고, 5-fold OOF를 완성한 뒤 낮은 영향의 stacking feature로만 검토한다.
+
+## EXP-102. DeiT-Small fold0 smoke
+
+### 처리 상태
+
+이 실험도 Gemini 세션에서 생성된 산출물을 현재 로컬에서 검증한 것이다. `Gemini generated / locally verified` 상태로 기록한다.
+
+### 로컬 검증
+
+- 스크립트 문법: `py_compile` 통과
+- JSON 결과 파일: 파싱 통과
+- 제출 CSV: 624 rows, columns `file_name,label`, sample submission order 일치
+- label 값: 0/1만 존재
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 모델 | `deit3_small_patch16_224.fb_in1k` |
+| fold | 0 |
+| best epoch | 2 |
+| fold0 valid accuracy | 0.91858 |
+| precision | 0.98592 |
+| recall | 0.90323 |
+| F1 | 0.94276 |
+| confusion matrix | `[[259, 10], [75, 700]]` |
+| test label 0/1 | 427/197 |
+| EXP-56 대비 변경 수 | 213 |
+| guardrail fail count | 3 |
+
+Guardrail 실패 샘플:
+
+```text
+test_0141: 1 -> 0
+test_0201: 1 -> 0
+test_0222: 1 -> 0
+```
+
+### 판단
+
+DeiT-Small은 fold0 validation accuracy와 recall이 낮고, test label1이 197개로 과도하게 보수적이다. EXP-56 대비 변경 수도 213개로 매우 커서 단독 제출 및 5-fold 확장 우선순위가 낮다. SwinV2보다 후순위로 둔다.
+
+## EXP-103. SwinV2-Tiny partial OOF
+
+### 처리 상태
+
+Gemini 세션에서 생성된 partial OOF 산출물이다. 현재 로컬에는 fold0/fold1만 존재한다. 5-fold OOF가 아니므로 아직 EXP-104 stacking의 입력으로 사용하지 않는다.
+
+### 로컬 검증
+
+- `exp103_swinv2_tiny_oof_fold0_oof_probs.csv`: 1044 rows, fold 0
+- `exp103_swinv2_tiny_oof_fold1_oof_probs.csv`: 1043 rows, fold 1
+- fold1 JSON 결과 파일: 파싱 통과
+- `scripts/run_exp103_swinv2_remaining_oof.py`: `py_compile` 통과
+
+### 현재 결과
+
+| fold | valid accuracy | precision | recall | F1 | confusion matrix |
+|---:|---:|---:|---:|---:|---|
+| 0 | 0.97414 | 0.97826 | 0.98710 | 0.98266 | `[[252, 17], [10, 765]]` |
+| 1 | 0.97124 | 0.99733 | 0.96387 | 0.98031 | `[[266, 2], [28, 747]]` |
+
+### 판단
+
+fold0/fold1 기준으로는 SwinV2가 단독 smoke보다 안정적으로 보일 가능성이 있다. 하지만 fold2~4가 없기 때문에 OOF meta-model에 넣으면 fold coverage가 깨진다. 다음 작업은 fold2~4를 완료해 full OOF를 만든 뒤, EXP-104 regularized stacking을 실행하는 것이다.
+
+## EXP-104. SwinV2 regularized stacking script
+
+### 처리 상태
+
+Gemini 세션에서 생성된 스크립트만 존재하며 아직 실행하지 않았다. 로컬에서 `py_compile`은 통과했다.
+
+### 판단
+
+스크립트는 ConvNeXt, EfficientNet, SwinV2 probability/rank/margin feature를 Ridge/Logistic으로 탐색하도록 구성되어 있다. 다만 `exp103_swinv2_tiny_oof_oof_probs.csv`와 `exp103_swinv2_tiny_oof_test_probs_mean.csv` 같은 full OOF 산출물이 필요하므로, 현재 상태에서는 실행하면 안 된다. EXP-103 fold2~4 완료 후 실행한다.
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 

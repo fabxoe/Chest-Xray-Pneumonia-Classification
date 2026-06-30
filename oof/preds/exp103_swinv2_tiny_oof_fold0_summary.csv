@@ -1,0 +1,2 @@
+exp,model,timm_model,fold,best_epoch,valid_accuracy,valid_precision,valid_recall,valid_f1,valid_cm,test_label0,test_label1,changed_vs_exp56,guardrail_fail_count,elapsed_sec,submission
+exp101,swinv2_tiny_fold0_smoke,swinv2_tiny_window8_256.ms_in1k,0,1,0.9741379310344828,0.9782608695652174,0.9870967741935484,0.9826589595375722,"[[252, 17], [10, 765]]",168,456,68,8,343.3,oof/submissions/exp101_swinv2_tiny_fold0_smoke_submit.csv

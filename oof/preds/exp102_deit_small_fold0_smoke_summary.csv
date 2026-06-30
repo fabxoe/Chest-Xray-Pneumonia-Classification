@@ -1,0 +1,2 @@
+exp,model,timm_model,fold,best_epoch,valid_accuracy,valid_precision,valid_recall,valid_f1,valid_cm,test_label0,test_label1,changed_vs_exp56,guardrail_fail_count,elapsed_sec,submission
+exp102,deit_small_fold0_smoke,deit3_small_patch16_224.fb_in1k,0,2,0.9185823754789272,0.9859154929577465,0.9032258064516129,0.9427609427609428,"[[259, 10], [75, 700]]",427,197,213,3,156.4,oof/submissions/exp102_deit_small_fold0_smoke_submit.csv

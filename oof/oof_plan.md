@@ -641,3 +641,39 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
   - Public score: `0.8493589744`
   - 해석: fold0 validation은 0.96456이었지만 public에서 크게 하락. label1 308, EXP-56 대비 90개 변경, 보호 샘플 실패가 실제 위험 신호였음
   - 후속 결정: CoAtNet Nano 단독 제출 및 5-fold 확장은 제외. 새 모델 family smoke는 validation보다 label 분포/guardrail/변경 수를 우선 확인
+- EXP-101~104 Gemini 생성 산출물 로컬 검증.
+  - 공통 처리 원칙:
+    - 내가 직접 실행한 결과가 아니라 `Gemini generated / locally verified`로 분리 기록
+    - 제출 CSV 형식, JSON 파싱, 스크립트 문법만 로컬에서 검증
+    - full OOF가 완성되지 않은 결과는 stacking 입력으로 사용하지 않음
+  - EXP-101 SwinV2-Tiny fold0 smoke:
+    - 모델: `swinv2_tiny_window8_256.ms_in1k`
+    - fold0 valid accuracy: 0.97414
+    - precision/recall/F1: 0.97826 / 0.98710 / 0.98266
+    - confusion matrix: `[[252, 17], [10, 765]]`
+    - test label 0/1: 168/456
+    - EXP-56 대비 변경 수: 68
+    - guardrail fail count: 8
+    - 판단: 단독 제출 금지. full OOF 완료 후 낮은 영향 stacking feature로만 검토
+  - EXP-102 DeiT-Small fold0 smoke:
+    - 모델: `deit3_small_patch16_224.fb_in1k`
+    - fold0 valid accuracy: 0.91858
+    - precision/recall/F1: 0.98592 / 0.90323 / 0.94276
+    - confusion matrix: `[[259, 10], [75, 700]]`
+    - test label 0/1: 427/197
+    - EXP-56 대비 변경 수: 213
+    - guardrail fail count: 3
+    - 판단: 단독 제출 및 5-fold 확장 우선순위 낮음
+  - EXP-103 SwinV2-Tiny partial OOF:
+    - 현재 fold0/fold1만 존재
+    - fold0 valid accuracy: 0.97414
+    - fold1 valid accuracy: 0.97124
+    - fold2~4 미완료
+    - 판단: full OOF 전에는 EXP-104 stacking 실행 금지
+  - EXP-104 SwinV2 regularized stacking:
+    - 스크립트 문법 검증 완료
+    - 필요 입력인 SwinV2 full OOF가 없어 현재 실행 보류
+  - 다음 액션:
+    - 1순위: EXP-103 fold2~4 완료
+    - 2순위: full OOF 병합 파일 생성
+    - 3순위: EXP-104 regularized stacking 실행
