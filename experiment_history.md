@@ -123,6 +123,7 @@
 | EXP-102 | DeiT-Small fold0 smoke | Gemini 생성 산출물 로컬 검증. `deit3_small_patch16_224.fb_in1k` head+last blocks 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.91858 fold0 | 제출 없음 | oof/submissions/exp102_deit_small_fold0_smoke_submit.csv | label1 197, EXP-56 대비 213개 변경. 단독/OOF 확장 우선순위 낮음 |
 | EXP-103 | SwinV2-Tiny 5-fold OOF | Gemini partial 산출물에서 fold0/fold1 재사용, fold2~4 로컬 실행 완료 | 2 x 5 folds | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96990 OOF | 제출 없음 | oof/submissions/exp103_swinv2_tiny_oof_mean_submit.csv | 단독 mean은 label1 427, EXP-56 대비 53개 변경, guardrail 7개 위반. EXP-104 stacking feature로만 사용 |
 | EXP-104 | SwinV2 regularized stacking | ConvNeXt+EfficientNet+SwinV2 OOF feature를 Ridge/Logistic으로 제한 탐색 | - | - | - | Ridge/Logistic | 최고 0.98677 meta-CV | 제출 없음 | - | strict/relaxed 후보 0개. 모든 탐색 후보가 보호 샘플을 최소 1개 이상 위반 |
+| EXP-106 | No-Swin low-change search | SwinV2 제외, ConvNeXt/EfficientNet/ResNet seed pool로 보호 샘플 유지 후보 재탐색 | - | - | - | Ridge/Logistic | 최고 0.98926 meta-CV | 제출 없음 | - | candidate 0개. 강한 후보는 주로 `test_0504=1`로 돌아가고, 보호 통과 후보는 EXP-56과 중복 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5244,6 +5245,61 @@ EXP-104는 제출 후보를 만들지 못했다. 핵심 원인은 meta-CV나 lab
 ```text
 scripts/run_exp104_swinv2_regularized_stacking.py
 oof/preds/exp104_swinv2_stacking_summary.csv
+```
+
+## EXP-106. No-Swin low-change search
+
+### 처리 상태
+
+EXP-104에서 SwinV2 포함 후보가 보호 샘플을 계속 깨는 경향을 보였으므로, SwinV2를 제외하고 기존 강한 OOF pool만으로 low-change 후보를 다시 탐색했다. 입력은 ConvNeXt 계열 seed, EfficientNet-B0 계열 seed, ResNet18 OOF probability이며, EXP-56 winner를 기준으로 후보를 필터링했다.
+
+### 설정
+
+- 입력 feature:
+  - ConvNeXt-Tiny OOF/test probability
+  - ConvNeXt-Tiny seed123 OOF/test probability
+  - ConvNeXt-Tiny seed777 OOF/test probability
+  - ConvNeXt-Tiny Lion OOF/test probability
+  - EfficientNet-B0 OOF/test probability
+  - EfficientNet-B0 seed123 OOF/test probability
+  - ResNet18 OOF/test probability
+- meta-model:
+  - RidgeClassifier
+  - LogisticRegression
+- 필터:
+  - 보호 샘플 10개 유지
+  - `test_0188=1`과 `test_0568=1` 동시 후보 제외
+  - test label1 394~401
+  - EXP-56 대비 변경 1~6개
+  - meta-CV floor: EXP-56 기준 -0.0015 이내
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 21780 |
+| candidate 수 | 0 |
+| 보호 샘플 전체 통과 row 수 | 34 |
+| label band 통과 row 수 | 6553 |
+| low-change 통과 row 수 | 7487 |
+| preferred low-change 통과 row 수 | 2602 |
+| meta-CV floor 통과 row 수 | 17057 |
+| EXP-56과 다른 row 수 | 21746 |
+| 최고 meta-CV | 0.98926 |
+
+low-change, label band, meta-CV floor를 통과한 row는 5784개였지만 보호 샘플 위반이 많았다. 특히 이 후보군에서 `test_0504`를 EXP-56 방향인 0으로 유지하지 못한 row가 5383개로 가장 많았다. 보호 샘플을 모두 유지한 row 34개는 대부분 `cnx_eff_compact` 계열이며, EXP-56과 동일 예측이어서 새 제출 파일로 저장하지 않았다.
+
+### 판단
+
+EXP-106은 제출 후보를 만들지 못했다. 다만 결론은 명확하다. SwinV2를 제외해도 현재 강한 OOF feature pool에서 점수가 높아지는 후보는 `test_0504=1`로 되돌아가는 경향이 강하다. 반대로 `test_0504=0`을 포함한 보호 샘플을 모두 지키면 EXP-56과 같은 예측으로 수렴한다.
+
+따라서 현재 feature pool의 단순 Ridge/Logistic low-change 탐색은 거의 소진된 것으로 본다. 다음 실험은 같은 pool의 미세 threshold보다, 새 정보원 확보 또는 EXP-56 주변 경계 샘플의 근거 분석 쪽이 더 타당하다.
+
+### 산출물
+
+```text
+scripts/run_exp106_no_swin_low_change_search.py
+oof/preds/exp106_no_swin_low_change_summary.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.

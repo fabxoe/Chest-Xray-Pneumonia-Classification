@@ -687,7 +687,14 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 보호 샘플 전체 통과 row 수: 0
     - 최고 SwinV2 포함 meta-CV: 0.98677
     - 판단: 모든 후보가 보호 샘플을 최소 1개 이상 위반. 제출 후보 없음
+  - EXP-106 No-Swin low-change search:
+    - 실행 완료
+    - 탐색 row 수: 21780
+    - candidate 수: 0
+    - 보호 샘플 전체 통과 row 수: 34
+    - 최고 meta-CV: 0.98926
+    - 판단: SwinV2를 제외해도 강한 후보는 주로 `test_0504=1`로 되돌아가고, 보호 샘플을 모두 유지한 row는 EXP-56과 동일 예측이라 제출 후보 없음
   - 다음 액션:
-    - 1순위: SwinV2 low-weight/pruned stacking으로 영향 축소
-    - 2순위: SwinV2 제외, ConvNeXt/EfficientNet/ResNet pool에서 1개 샘플 low-change 재탐색
-    - 3순위: 새 모델 확장보다 EXP-56 보호 샘플을 유지하는 calibration/threshold 탐색
+    - 1순위: EXP-56 주변 경계 샘플 분석으로 다음 후보를 좁힘
+    - 2순위: 새 OOF 정보원 추가 여부 검토
+    - 3순위: SwinV2는 단독/일반 stacking이 아니라 매우 낮은 영향의 보조 feature로만 재검토
