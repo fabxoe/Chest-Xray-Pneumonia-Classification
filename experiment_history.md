@@ -5170,7 +5170,7 @@ reports/exp94_gradcam/report.md
   - 현재 최고 EXP-52 대비 `test_0504` 하나만 1->0
   - `test_0222=1` 포함 보호 샘플 6개 모두 유지
 - `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv` 제출 결과 leaderboard score `0.9583333333`으로 최고점 갱신
-- 최고 순위는 최신 public leaderboard 기준 13위로 확인
+- 최고점은 `0.9583333333`으로 유지 중이나, 2026-06-30 public leaderboard 기준 순위는 15위로 하락
 - EXP-56 결과를 바탕으로 `test_0504=0`을 보호 조건에 추가
 - EXP-57에서 EXP-56 winner 기준 보호 샘플 7개 유지 low-change search 완료
   - 최고 meta-CV accuracy `0.98696`
@@ -5350,7 +5350,7 @@ reports/exp94_gradcam/report.md
 | 34 | oof/submissions/exp52_logistic_cnx_eff_prob_only_p0p25_t0p0_submit.csv | OOF Logistic, ConvNeXt+EfficientNet prob only low-change | 0.98658 meta-CV | 0.9567307692 | 14 | 최고점 갱신, EXP-51 대비 `test_0490` 1개만 1->0 |
 | 35 | oof/submissions/exp52_ridge_cnx_eff_prob_margin_p500_tm0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet prob/margin low-change | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0201`까지 1->0으로 바꿔 하락 |
 | 36 | oof/submissions/exp55_ridge_cnx123_eff_prob_rank_p50_tm0p1_submit.csv | OOF Ridge, ConvNeXt seed123+EfficientNet prob/rank | 0.98677 meta-CV | 0.9551282051 | 19 | `test_0222` 1개만 1->0으로 바꿨지만 하락 |
-| 37 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet compact | 0.98658 meta-CV | 0.9583333333 | 13 | 최고점 갱신, `test_0504` 1개만 1->0 |
+| 37 | oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv | OOF Ridge, ConvNeXt+EfficientNet compact | 0.98658 meta-CV | 0.9583333333 | 15 | 최고점은 유지 중이나 2026-06-30 기준 순위는 15위로 하락. `test_0504` 1개만 1->0 |
 | 38 | oof/submissions/exp58_svc_all_margin_stats_isotonic_p0p2_t0p575_submit.csv | Calibrated SVC, OOF margin stats | 0.98639 meta-CV | 0.9551282051 | 19 | `test_0188`, `test_0568` 두 개를 0->1로 바꿨지만 하락 |
 | 39 | oof/submissions/exp66_ridge_all_prob_stats_with_cnxv2_p10_t0p15_submit.csv | ConvNeXt V2 포함 OOF Ridge stacking | 0.98696 meta-CV | 0.9567307692 | 13 | `test_0141` 1개만 1->0으로 바꿨지만 EXP-56보다 하락 |
 | 40 | oof/submissions/exp79_ridge_cnx_lion_eff_prob_only_alpha500_t0p2_submit.csv | Lion OOF 포함 Ridge stacking | 0.98447 meta-CV | 0.9567307692 | - | `test_0049` 1개만 0->1로 바꿨지만 EXP-56보다 하락 |
