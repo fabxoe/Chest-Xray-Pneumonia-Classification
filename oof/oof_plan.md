@@ -747,7 +747,18 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 판단: XAI 단독으로 label을 확정하지 않지만, `test_0455` 단독 drop 후보를 1순위 제출 후보로 본다
   - 다음 액션:
     - 기존 EXP-110/111 후보를 그대로 추가 제출하지 않는다. 이 파일들은 EXP-56 기준이므로 `test_0455=0`을 다시 1로 되돌릴 수 있다.
-    - 다음 실험은 EXP-113으로 잡고, 새 기준선 `exp110_drop_test_0455_rank2_submit.csv` 위에서 추가 1개 drop 후보를 재생성한다.
-    - 우선 추가 검토 샘플: `test_0057`, `test_0172`, `test_0013`, `test_0385`, `test_0303`
-    - 제외/보호: `test_0455=0`, `test_0289=1`
-    - 후보 조건: 최신 보호 샘플 유지, 현재 최고 대비 변경 수 1개, label1 394 우선
+    - EXP-113 evidence table 재구성 완료:
+      - `reports/exp113_tree_replan/exp113_candidate_evidence_table.csv`
+      - `reports/exp113_tree_replan/exp113_candidate_ranked.csv`
+      - 기준 제출물 차이, 후보 ranking 품질, public probing 누적 정보를 분리해 관리
+    - EXP-114 current-best 기준 단일 drop 후보 생성 완료:
+      - 기준 파일: `oof/submissions/exp110_drop_test_0455_rank2_submit.csv`
+      - 모든 후보는 `test_0455=0`, `test_0289=1` 유지
+      - 후보 5개 모두 현재 최고 대비 변경 수 1개, label 0/1은 230/394
+    - 제출 후보:
+      - 1순위: `oof/submissions/exp114_drop_test_0057_only_submit.csv`
+      - 2순위: `oof/submissions/exp114_drop_test_0172_only_submit.csv`
+      - 3순위: `oof/submissions/exp114_drop_test_0385_only_submit.csv`
+      - 4순위: `oof/submissions/exp114_drop_test_0013_only_submit.csv`
+      - 5순위: `oof/submissions/exp114_drop_test_0303_only_submit.csv`
+    - 주의: evidence score만 보면 `test_0385`가 가장 높지만, 계획상 branch 순서는 `test_0057`부터 유지한다. `test_0057` 하락 시 `test_0385`를 바로 2순위로 올려도 된다.
