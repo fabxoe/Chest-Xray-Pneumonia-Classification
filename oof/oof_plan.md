@@ -782,6 +782,8 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - `exp117_after0385_drop_test_0172_only_submit.csv` 제출 결과 leaderboard `0.9615384615`
     - EXP-116 대비 -1샘플 하락
     - `test_0172=1`을 실패 방향으로 추가
+    - `exp117_after0385_drop_test_0013_only_submit.csv` 제출 결과 leaderboard `0.9615384615`
+    - EXP-116 대비 -1샘플 하락
+    - `test_0013=1`을 실패 방향으로 추가
     - 남은 제출 후보:
-      - 1순위: `oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv`
-      - 2순위: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+      - 1순위: `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`

@@ -134,7 +134,7 @@
 | EXP-114 | Current-best single drop candidates | EXP-110 winner 기준으로 단일 1->0 drop 후보 5개 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9615384615 | oof/submissions/exp114_drop_test_0057_only_submit.csv | 새 최고점. `test_0455=0` 유지 후 `test_0057` 추가 1->0으로 EXP-110 대비 +1샘플 |
 | EXP-115 | Public result tree update | EXP-114 결과를 guardrail에 반영하고 새 기준선을 갱신 | - | - | - | 분석/트리 업데이트 | - | 제출 없음 | - | `test_0057=0`을 성공 방향으로 추가. 새 기준은 EXP-114 `0057` |
 | EXP-116 | After-0057 branch candidates | EXP-114 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9631410256 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | 새 최고점. `test_0385` 추가 1->0으로 EXP-114 대비 +1샘플 |
-| EXP-117 | After-0385 branch candidates | EXP-116 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9615384615 | oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv | `test_0172` 추가 1->0은 하락. 이후 `test_0172=1` 유지 우선 |
+| EXP-117 | After-0385 branch candidates | EXP-116 winner 기준으로 남은 단일 1->0 drop branch 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9615384615 | oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv | `test_0172`, `test_0013` 추가 1->0은 모두 하락. 이후 둘 다 1 유지 우선 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5765,6 +5765,16 @@ EXP-116에서 `test_0385=0`이 public 상승으로 확인되었으므로, 새 �
 
 `test_0172`를 추가로 drop한 후보는 EXP-116보다 1샘플 낮아졌다. 따라서 이후 탐색에서는 `test_0172=1`을 우선 유지한다. 현재 성공 방향은 `test_0455=0`, `test_0057=0`, `test_0385=0`이고, 실패 방향은 `test_0289=1`, `test_0172=1`이다.
 
+### 추가 리더보드 결과
+
+- 제출 파일: `oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv`
+- Public score: `0.9615384615`
+- 현재 최고 EXP-116: `0.9631410256`
+- 현재 최고 대비 변경: `test_0013: 1->0`
+- 결과: 현재 최고보다 하락
+
+`test_0013`를 추가로 drop한 후보도 EXP-116보다 1샘플 낮아졌다. 따라서 이후 탐색에서는 `test_0013=1`도 우선 유지한다. 이제 EXP-117에서 남은 단일 branch 후보는 `test_0303` 하나뿐이다.
+
 ### 검증
 
 - 모든 제출 CSV row 수: 624
@@ -6117,3 +6127,4 @@ reports/exp94_gradcam/report.md
 | 47 | oof/submissions/exp114_drop_test_0057_only_submit.csv | Current-best binary-tree single drop | - | 0.9615384615 | - | EXP-110 대비 `test_0057` 1개만 1->0으로 추가 변경해 +1샘플 개선. `test_0057=0` 유지 우선 |
 | 48 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | After-0057 binary-tree branch drop | - | 0.9631410256 | 8 | EXP-114 대비 `test_0385` 1개만 1->0으로 추가 변경해 +1샘플 개선. 2026-07-01 기준 8위 |
 | 49 | oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9615384615 | - | EXP-116 대비 `test_0172` 1개만 1->0으로 추가 변경했지만 하락. `test_0172=1` 유지 우선 |
+| 50 | oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9615384615 | - | EXP-116 대비 `test_0013` 1개만 1->0으로 추가 변경했지만 하락. `test_0013=1` 유지 우선 |
