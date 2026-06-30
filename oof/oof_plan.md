@@ -701,7 +701,14 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 최대 병목: `test_0504` 위반 5383/5784 rows
     - 다음 병목: `test_0490`, `test_0539`, `test_0049`, `test_0188`
     - 비보호 반복 변경 샘플은 `test_0568` 1개뿐
+  - EXP-108 Flip0568 rule candidates:
+    - 실행 완료
+    - 1순위 제출 후보: `oof/submissions/exp108_flip0568_only_submit.csv`
+    - EXP-56 대비 변경: `test_0568: 0->1`
+    - test label 0/1: 227/397
+    - 보호 샘플/avoid-pair 조건 통과
+    - 비교 후보: `exp108_flip0377_only_recheck_submit.csv`, `exp108_flip0568_0377_submit.csv`
   - 다음 액션:
-    - 1순위: `test_0504`, `test_0490`, `test_0539`, `test_0049`, `test_0568` 모델별 확률/XAI 패널 생성
-    - 2순위: 새 OOF 정보원 추가 여부 검토
-    - 3순위: SwinV2는 단독/일반 stacking이 아니라 매우 낮은 영향의 보조 feature로만 재검토
+    - 1순위: EXP-108 1순위 후보 제출 결과 반영
+    - 2순위: 하락 시 `test_0568=0` 유지 조건을 강화하고 새 OOF 정보원 검토
+    - 3순위: 상승 시 2개 변경 후보 또는 XAI 패널로 다음 경계 샘플 검토

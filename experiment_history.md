@@ -125,6 +125,7 @@
 | EXP-104 | SwinV2 regularized stacking | ConvNeXt+EfficientNet+SwinV2 OOF feature를 Ridge/Logistic으로 제한 탐색 | - | - | - | Ridge/Logistic | 최고 0.98677 meta-CV | 제출 없음 | - | strict/relaxed 후보 0개. 모든 탐색 후보가 보호 샘플을 최소 1개 이상 위반 |
 | EXP-106 | No-Swin low-change search | SwinV2 제외, ConvNeXt/EfficientNet/ResNet seed pool로 보호 샘플 유지 후보 재탐색 | - | - | - | Ridge/Logistic | 최고 0.98926 meta-CV | 제출 없음 | - | candidate 0개. 강한 후보는 주로 `test_0504=1`로 돌아가고, 보호 통과 후보는 EXP-56과 중복 |
 | EXP-107 | Boundary bottleneck analysis | EXP-106 plausible row 기준 보호 샘플 병목과 비보호 watchlist 분석 | - | - | - | 분석 | - | 제출 없음 | - | `test_0504`가 최대 병목. 비보호 반복 변경 샘플은 `test_0568` 1개뿐 |
+| EXP-108 | Flip0568 rule candidates | EXP-107 watchlist 기반으로 EXP-56 대비 1~2개 변경 제출 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp108_flip0568_only_submit.csv | 1순위는 `test_0568` 단독 0->1. 보호 샘플/avoid-pair 통과 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5340,6 +5341,47 @@ reports/exp107_boundary_bottleneck/exp107_protected_bottleneck.csv
 reports/exp107_boundary_bottleneck/exp107_top_overall_rows.csv
 reports/exp107_boundary_bottleneck/exp107_top_plausible_rows.csv
 reports/exp107_boundary_bottleneck/exp107_unprotected_watchlist.csv
+```
+
+## EXP-108. Flip0568 rule candidates
+
+### 처리 상태
+
+EXP-107에서 비보호 반복 변경 샘플이 `test_0568` 하나로 좁혀졌으므로, EXP-56 winner를 기준으로 아주 작은 변경 후보를 생성했다. 목적은 새 학습이나 복잡한 stacking이 아니라, EXP-56 대비 1개 변경 후보를 실제 제출 파일로 마련하는 것이다.
+
+### 생성 후보
+
+| 우선순위 | 제출 파일 | EXP-56 대비 변경 | test label 0/1 | 보호 샘플 | 비고 |
+|---:|---|---|---:|---|---|
+| 1 | `oof/submissions/exp108_flip0568_only_submit.csv` | `test_0568: 0->1` | 227/397 | 통과 | EXP-107 watchlist 단독 확인 후보 |
+| 2 | `oof/submissions/exp108_flip0377_only_recheck_submit.csv` | `test_0377: 0->1` | 227/397 | 통과 | EXP-96에서 생성했던 방향 재확인용 |
+| 3 | `oof/submissions/exp108_flip0568_0377_submit.csv` | `test_0568`, `test_0377: 0->1` | 226/398 | 통과 | 공격적 비교 후보 |
+
+### 변경 샘플 근거
+
+| sample | EXP-56 label | EXP-56 margin | model vote 1 | suspicious score | EXP-95 action |
+|---|---:|---:|---:|---:|---|
+| `test_0568` | 0 | -0.13983 | 2 | 0.87271 | keep |
+| `test_0377` | 0 | -0.13886 | 6 | 0.97590 | review_high_priority |
+
+### 판단
+
+1순위 제출 후보는 `exp108_flip0568_only_submit.csv`다. EXP-58에서 `test_0188`과 `test_0568`을 동시에 1로 바꾼 후보는 하락했지만, `test_0568` 단독 변경은 아직 확인하지 않았다. 다만 EXP-95에서는 `test_0568`의 model vote 1이 2개뿐이고 action도 keep이므로, 기대 이득은 크지 않다. 점수 변화 폭은 최대 1/624 수준이다.
+
+`exp108_flip0377_only_recheck_submit.csv`는 `test_0377`의 모델 불일치가 크다는 점에서는 의미가 있지만, 이전 EXP-96에서 제출 우선순위를 낮췄던 계열이다. `exp108_flip0568_0377_submit.csv`는 2개 변경이라 1순위 결과를 본 뒤에만 검토한다.
+
+### 산출물
+
+```text
+scripts/run_exp108_flip0568_candidates.py
+oof/submissions/exp108_flip0568_only_submit.csv
+oof/submissions/exp108_flip0377_only_recheck_submit.csv
+oof/submissions/exp108_flip0568_0377_submit.csv
+oof/preds/exp108_flip0568_candidates_summary.csv
+oof/preds/exp108_changed_sample_context.csv
+oof/preds/exp108_flip0568_only_changed_vs_exp56.csv
+oof/preds/exp108_flip0377_only_recheck_changed_vs_exp56.csv
+oof/preds/exp108_flip0568_0377_changed_vs_exp56.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
