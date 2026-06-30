@@ -138,6 +138,8 @@
 | EXP-118 | After-0303 remaining branch triage | EXP-117 winner 기준으로 남은 current-positive 1->0 후보 재랭킹 및 제출 CSV 4개 생성 | - | - | - | evidence triage | - | 제출 대기 | oof/submissions/exp118_after0303_drop_test_0212_only_submit.csv | 남은 제출 기회 4회 기준 후보 생성. 상위 후보 모두 direct prior/XAI 근거가 약해 1개씩만 제출 권장 |
 | EXP-119 | RF/SVM/Gaussian evidence reranking | 현재 최고 기준 current-positive 후보에 RF/ExtraTrees/SVM/Gaussian image feature를 적용해 재랭킹 | - | - | - | RF/ExtraTrees/LinearSVC/Logistic/Ridge | RF meta-CV 0.98735 | 제출 없음 | reports/exp119_rf_svm_gaussian_rerank/exp119_rf_svm_gaussian_candidate_ranking.csv | `test_0547`이 1순위로 상승했지만 절대 class-0 근거는 강하지 않아 고위험 후보 |
 | EXP-120 | After-0303 top-1 RF/SVM/Gaussian drop | EXP-119 1순위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv | 현재 최고 대비 `test_0547` 1개만 1->0. 남은 제출 4회 중 1회 사용 후보 |
+| EXP-121 | Evidence ablation consensus | RF-only/SVM-only/Gaussian-only/2개 조합/3개 조합을 분리해 후보 일관성 검증 | - | - | - | ranking ablation | - | 제출 없음 | reports/exp121_evidence_ablation_consensus/exp121_evidence_ablation_consensus_ranking.csv | 세 근거를 합친 EXP-119보다 분해 검증이 더 적합. `test_0390`이 consensus 1위 |
+| EXP-122 | After-0303 consensus single drop | EXP-121 consensus 1위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv | 현재 최고 대비 `test_0390` 1개만 1->0. EXP-120보다 근거 일관성은 높지만 여전히 고위험 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5938,6 +5940,74 @@ EXP-119의 1순위 후보인 `test_0547`만 현재 최고에서 `1->0`으로 바
 oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv
 oof/preds/exp120_after0303_drop_test_0547_only_changed_vs_exp117.csv
 oof/preds/exp120_after0303_top1_submit_summary.csv
+```
+
+## EXP-121. Evidence ablation consensus
+
+### 처리 상태
+
+EXP-119에서는 RF, SVM, Gaussian evidence를 한 번에 섞어 `test_0547`을 1순위로 만들었다. 하지만 남은 제출 기회가 4회뿐이고, 세 근거의 의미가 서로 다르기 때문에 개별 근거와 2개 조합을 분리해 다시 확인했다.
+
+### 판단 기준
+
+- RF/ExtraTrees: 기존 OOF/model probability와 이미지 통계의 비선형 조합을 학습하는 tabular classifier
+- SVM: decision boundary 근처의 선형 분리 신호
+- Gaussian evidence: label 직접 근거가 아니라 blur/edge/texture 민감도 기반 영상 품질 신호
+- 따라서 세 근거를 단순 합산하면 약한 보조 신호가 강한 모델 신호처럼 과대평가될 수 있다.
+- 남은 제출에서는 단일 근거 1위보다, 여러 근거에서 반복적으로 상위에 드는 후보를 우선한다.
+
+### Top consensus 후보
+
+| rank | sample | consensus score | single-source top10 | pair top10 | total top10 | support count | RF p0 | ExtraTrees p0 | SVM p0-like | tree score | 판단 |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
+| 1 | `test_0390` | 0.98573 | 2 | 2 | 6 | 2 | 0.20083 | 0.24331 | 0.42217 | 0.69559 | EXP-122 후보 |
+| 2 | `test_0315` | 0.98155 | 2 | 3 | 7 | 4 | 0.21186 | 0.29501 | 0.40353 | 0.59688 | 후보이나 EXP-122보다 후순위 |
+| 3 | `test_0478` | 0.97637 | 2 | 3 | 6 | 5 | 0.21712 | 0.32096 | 0.42017 | 0.56250 | 후보이나 public 근거 없음 |
+| 4 | `test_0009` | 0.97451 | 2 | 3 | 7 | 2 | 0.19173 | 0.24120 | 0.41041 | 0.56579 | 후보이나 public 근거 없음 |
+| 5 | `test_0596` | 0.97052 | 2 | 1 | 3 | 4 | 0.42273 | 0.49124 | 0.53975 | 0.63221 | RF/SVM 절대 p0는 강하지만 Gaussian support 약함 |
+
+### 해석
+
+`test_0547`은 EXP-119 통합 점수에서는 1위였지만, evidence를 분해하면 consensus 상위 5개에 들지 못했다. 반면 `test_0390`은 RF/SVM 쪽과 일부 조합에서 반복적으로 상위에 들어 더 일관된 후보로 판단했다. 다만 RF p0, ExtraTrees p0가 0.5를 넘는 수준은 아니므로 “정상이라고 확신하는 후보”가 아니라 “남은 제출 1회를 쓴다면 더 합리적인 후보”로 해석한다.
+
+### 산출물
+
+```text
+scripts/run_exp121_evidence_ablation_consensus.py
+reports/exp121_evidence_ablation_consensus/exp121_evidence_ablation_consensus_ranking.csv
+reports/exp121_evidence_ablation_consensus/exp121_top20_by_rf_only.csv
+reports/exp121_evidence_ablation_consensus/exp121_top20_by_svm_only.csv
+reports/exp121_evidence_ablation_consensus/exp121_top20_by_gaussian_only.csv
+```
+
+## EXP-122. After-0303 consensus single drop
+
+### 처리 상태
+
+EXP-121 consensus 1위인 `test_0390`만 현재 최고에서 `1->0`으로 바꾼 제출 파일을 생성했다.
+
+### 후보
+
+- 제출 파일: `oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv`
+- 변경: `test_0390: 1->0`
+- 현재 최고 대비 변경 수: 1개
+- label 분포: 0/1 = 233/391
+- CSV 검증:
+  - row 수 624
+  - 컬럼 `file_name,label`
+  - sample submission과 file order 동일
+  - label 값 0/1
+
+### 제출 판단
+
+남은 4회 중 하나를 사용한다면 EXP-120 `test_0547`보다 EXP-122 `test_0390`을 먼저 제출하는 쪽이 낫다. 이유는 EXP-122가 RF/SVM/Gaussian을 한 번에 합친 점수가 아니라, 분리된 evidence와 2개 조합에서 반복적으로 상위에 오른 후보이기 때문이다. 다만 public 방향 검증은 아직 없으므로 하락하면 `test_0390=1`을 실패 guardrail에 추가하고 다음 branch를 다시 재정렬한다.
+
+### 산출물
+
+```text
+oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv
+oof/preds/exp122_after0303_consensus_drop_test_0390_changed_vs_exp117.csv
+oof/preds/exp122_after0303_consensus_submit_summary.csv
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.

@@ -850,3 +850,37 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 제출 방침:
       - 남은 4회 중 1회를 쓸 수 있는 고위험 후보
       - 하락하면 EXP-119 계열 ranking 신뢰도를 낮추고 기존 current-best branch 전략으로 복귀
+  - EXP-121 evidence ablation consensus:
+    - 실행 완료
+    - RF/SVM/Gaussian evidence를 한 번에 합치지 않고 개별/2개 조합/3개 조합으로 분해
+    - 이유:
+      - RF/ExtraTrees는 OOF feature 기반 비선형 tabular 판단
+      - SVM은 boundary 근처 선형 분리 신호
+      - Gaussian evidence는 label 근거가 아니라 영상 texture/edge 민감도 보조 신호
+      - 세 근거를 단순 합산하면 보조 신호가 과대평가될 수 있음
+    - consensus top5:
+      - `test_0390`
+      - `test_0315`
+      - `test_0478`
+      - `test_0009`
+      - `test_0596`
+    - EXP-119 1위 `test_0547`은 분해 검증에서 consensus 상위권이 아니므로 우선순위 하락
+    - 출력:
+      - `reports/exp121_evidence_ablation_consensus/exp121_evidence_ablation_consensus_ranking.csv`
+      - `reports/exp121_evidence_ablation_consensus/exp121_top20_by_rf_only.csv`
+      - `reports/exp121_evidence_ablation_consensus/exp121_top20_by_svm_only.csv`
+      - `reports/exp121_evidence_ablation_consensus/exp121_top20_by_gaussian_only.csv`
+  - EXP-122 after-0303 consensus single drop:
+    - 제출 파일 생성 완료
+    - `oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv`
+    - 현재 최고 대비 변경: `test_0390: 1->0`
+    - 변경 수 1개, label 0/1은 233/391
+    - CSV 검증 완료:
+      - row 수 624
+      - 컬럼 `file_name,label`
+      - sample submission과 file order 동일
+      - label은 0/1만 존재
+    - 제출 우선순위:
+      - 남은 제출 4회 중 하나를 쓴다면 EXP-120 `test_0547`보다 EXP-122 `test_0390` 우선
+      - 상승하면 `test_0390=0` 성공 방향으로 고정
+      - 하락하면 `test_0390=1` 실패 guardrail에 추가하고 다음 branch 재정렬
