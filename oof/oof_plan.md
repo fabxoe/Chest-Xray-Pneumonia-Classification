@@ -725,18 +725,23 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
       - `oof/submissions/exp110_drop_test_0455_rank2_submit.csv`
       - `oof/submissions/exp110_drop_test_0057_rank3_submit.csv`
     - test label 0/1은 모두 229/395
+    - 제출 결과:
+      - 제출 파일: `oof/submissions/exp110_drop_test_0455_rank2_submit.csv`
+      - leaderboard: `0.9599358974`
+      - 2026-06-30 기준 12위
+      - EXP-56 `0.9583333333` 대비 +1샘플 개선
+      - `test_0455: 1->0` 방향이 public에서 이득으로 확인되어 `test_0455=0`을 새 보호 조건에 추가
   - EXP-111 ConvNeXt threshold replay:
     - 실행 완료
     - ConvNeXt score 하위 EXP-56 양성 샘플을 1~2개 drop하는 후보 7개 생성
-    - `exp111_core_min_drop1_submit.csv`는 `test_0455` 단독 drop으로 EXP-110 rank2와 동일 예측
+    - `exp111_core_min_drop1_submit.csv`는 `test_0455` 단독 drop으로 EXP-110 rank2와 동일 예측이므로 중복 제출하지 않음
   - EXP-112 Drop candidate Grad-CAM panel:
     - 실행 완료
     - 대상 샘플 7개
     - 패널: `reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_panel.png`
     - 판단: XAI 단독으로 label을 확정하지 않지만, `test_0455` 단독 drop 후보를 1순위 제출 후보로 본다
   - 다음 액션:
-    - 1순위 제출 후보: `oof/submissions/exp110_drop_test_0455_rank2_submit.csv`
-    - 동일 예측 파일: `oof/submissions/exp111_core_min_drop1_submit.csv`
-    - 2순위 후보: `oof/submissions/exp110_drop_test_0057_rank3_submit.csv`
-    - 3순위 후보: `oof/submissions/exp111_core_mean_drop1_submit.csv`
-    - 1개 drop 결과가 하락하면 2개 drop 후보는 제출 보류
+    - 기존 EXP-110/111 후보를 그대로 추가 제출하지 않는다. 이 파일들은 EXP-56 기준이므로 `test_0455=0`을 다시 1로 되돌릴 수 있다.
+    - 다음 실험은 EXP-113으로 잡고, 새 기준선 `exp110_drop_test_0455_rank2_submit.csv` 위에서 추가 1개 drop 후보를 재생성한다.
+    - 우선 추가 검토 샘플: `test_0057`, `test_0172`, `test_0289`, `test_0013`, `test_0385`, `test_0303`
+    - 후보 조건: `test_0455=0` 포함 최신 보호 샘플 유지, 현재 최고 대비 변경 수 1개, label1 394 우선
