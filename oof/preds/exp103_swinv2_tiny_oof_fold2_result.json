@@ -1,0 +1,76 @@
+{
+  "exp_id": "exp103",
+  "model": "swinv2_tiny_oof",
+  "fold": 2,
+  "seed": 44,
+  "best_epoch": 2,
+  "history": [
+    {
+      "loss": 0.20570582196461118,
+      "accuracy": 0.9204218600191755,
+      "precision": 0.9942857142857143,
+      "recall": 0.8980645161290323,
+      "f1": 0.943728813559322,
+      "confusion_matrix": [
+        [
+          264,
+          4
+        ],
+        [
+          79,
+          696
+        ]
+      ],
+      "epoch": 1,
+      "train_loss": 0.1924194694462545
+    },
+    {
+      "loss": 0.10884477545168275,
+      "accuracy": 0.959731543624161,
+      "precision": 0.9880159786950732,
+      "recall": 0.9574193548387097,
+      "f1": 0.9724770642201835,
+      "confusion_matrix": [
+        [
+          259,
+          9
+        ],
+        [
+          33,
+          742
+        ]
+      ],
+      "epoch": 2,
+      "train_loss": 0.10937963026802716
+    }
+  ],
+  "final_metrics": {
+    "loss": 0.10884477545168275,
+    "accuracy": 0.959731543624161,
+    "precision": 0.9880159786950732,
+    "recall": 0.9574193548387097,
+    "f1": 0.9724770642201835,
+    "confusion_matrix": [
+      [
+        259,
+        9
+      ],
+      [
+        33,
+        742
+      ]
+    ]
+  },
+  "train_size": 4173,
+  "valid_size": 1043,
+  "test_pred_counts": {
+    "0": 200,
+    "1": 424
+  },
+  "paths": {
+    "model": "oof/models/exp103_swinv2_tiny_oof_fold2.pt",
+    "oof_probs": "oof/preds/exp103_swinv2_tiny_oof_fold2_oof_probs.csv",
+    "test_probs": "oof/preds/exp103_swinv2_tiny_oof_fold2_test_probs.csv"
+  },
+  "elapsed_sec": 264.8
+}

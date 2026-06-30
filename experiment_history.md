@@ -121,7 +121,7 @@
 | EXP-100 | CoAtNet Nano fold0 smoke | `coatnet_nano_rw_224.sw_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96456 fold0 | 0.8493589744 | oof/submissions/exp100_coatnet_nano_fold0_smoke_submit.csv | EXP-56 대비 90개 변경, label1 308로 과도하게 보수적. Public 급락으로 단독/5-fold 확장 제외 |
 | EXP-101 | SwinV2-Tiny fold0 smoke | Gemini 생성 산출물 로컬 검증. `swinv2_tiny_window8_256.ms_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.97414 fold0 | 제출 없음 | oof/submissions/exp101_swinv2_tiny_fold0_smoke_submit.csv | label1 456, EXP-56 대비 68개 변경, guardrail 8개 위반. 단독 제출 금지, OOF feature 후보 |
 | EXP-102 | DeiT-Small fold0 smoke | Gemini 생성 산출물 로컬 검증. `deit3_small_patch16_224.fb_in1k` head+last blocks 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.91858 fold0 | 제출 없음 | oof/submissions/exp102_deit_small_fold0_smoke_submit.csv | label1 197, EXP-56 대비 213개 변경. 단독/OOF 확장 우선순위 낮음 |
-| EXP-103 | SwinV2-Tiny partial OOF | Gemini 생성 partial OOF 로컬 검증. fold0/fold1까지만 존재 | 2 x 2 folds partial | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | fold0 0.97414 / fold1 0.97124 | 제출 없음 | - | 아직 5-fold OOF 미완료. fold2~4 완료 전 stacking 사용 금지 |
+| EXP-103 | SwinV2-Tiny 5-fold OOF | Gemini partial 산출물에서 fold0/fold1 재사용, fold2~4 로컬 실행 완료 | 2 x 5 folds | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96990 OOF | 제출 없음 | oof/submissions/exp103_swinv2_tiny_oof_mean_submit.csv | 단독 mean은 label1 427, EXP-56 대비 53개 변경, guardrail 7개 위반. EXP-104 stacking feature로만 사용 |
 | EXP-104 | SwinV2 regularized stacking script | Gemini 생성 스크립트 로컬 문법 검증. ConvNeXt+EfficientNet+SwinV2 stacking용 | - | - | - | Ridge/Logistic | 미실행 | 제출 없음 | - | EXP-103 full OOF가 필요하므로 현재 실행 보류 |
 
 ## EXP-00. 원본 Baseline
@@ -5124,29 +5124,73 @@ test_0222: 1 -> 0
 
 DeiT-Small은 fold0 validation accuracy와 recall이 낮고, test label1이 197개로 과도하게 보수적이다. EXP-56 대비 변경 수도 213개로 매우 커서 단독 제출 및 5-fold 확장 우선순위가 낮다. SwinV2보다 후순위로 둔다.
 
-## EXP-103. SwinV2-Tiny partial OOF
+## EXP-103. SwinV2-Tiny 5-fold OOF
 
 ### 처리 상태
 
-Gemini 세션에서 생성된 partial OOF 산출물이다. 현재 로컬에는 fold0/fold1만 존재한다. 5-fold OOF가 아니므로 아직 EXP-104 stacking의 입력으로 사용하지 않는다.
+Gemini 세션에서 생성된 partial OOF 산출물 중 fold0/fold1을 재사용하고, 현재 로컬에서 fold2~4를 추가 실행해 5-fold OOF를 완성했다. 단독 제출 후보가 아니라 EXP-104 regularized stacking의 feature 후보로 사용한다.
 
 ### 로컬 검증
 
-- `exp103_swinv2_tiny_oof_fold0_oof_probs.csv`: 1044 rows, fold 0
-- `exp103_swinv2_tiny_oof_fold1_oof_probs.csv`: 1043 rows, fold 1
-- fold1 JSON 결과 파일: 파싱 통과
+- `exp103_swinv2_tiny_oof_oof_probs.csv`: 5216 rows, duplicate file name 0
+- `exp103_swinv2_tiny_oof_test_probs_by_fold.csv`: 3120 rows
+- `exp103_swinv2_tiny_oof_test_probs_mean.csv`: 624 rows
+- `exp103_swinv2_tiny_oof_mean_submit.csv`: 624 rows, sample submission order 일치, label 0/1만 존재
+- fold1~4 JSON 결과 파일: 파싱 통과
 - `scripts/run_exp103_swinv2_remaining_oof.py`: `py_compile` 통과
 
-### 현재 결과
+### Fold 결과
 
 | fold | valid accuracy | precision | recall | F1 | confusion matrix |
 |---:|---:|---:|---:|---:|---|
 | 0 | 0.97414 | 0.97826 | 0.98710 | 0.98266 | `[[252, 17], [10, 765]]` |
 | 1 | 0.97124 | 0.99733 | 0.96387 | 0.98031 | `[[266, 2], [28, 747]]` |
+| 2 | 0.95973 | 0.98802 | 0.95742 | 0.97248 | `[[259, 9], [33, 742]]` |
+| 3 | 0.97315 | 0.97823 | 0.98581 | 0.98201 | `[[251, 17], [11, 764]]` |
+| 4 | 0.97124 | 0.97941 | 0.98194 | 0.98067 | `[[252, 16], [14, 761]]` |
+
+### OOF 및 test mean 결과
+
+| 항목 | 값 |
+|---|---:|
+| OOF accuracy | 0.96990 |
+| OOF precision | 0.98411 |
+| OOF recall | 0.97523 |
+| OOF F1 | 0.97965 |
+| OOF confusion matrix | `[[1280, 61], [96, 3779]]` |
+| test mean label 0/1 | 197/427 |
+| EXP-56 대비 변경 수 | 53 |
+| guardrail fail count | 7 |
+
+Guardrail 실패 샘플:
+
+```text
+test_0049: 0 -> 1
+test_0141: 1 -> 0
+test_0188: 0 -> 1
+test_0244: 0 -> 1
+test_0490: 0 -> 1
+test_0504: 0 -> 1
+test_0539: 0 -> 1
+```
+
+### 산출물
+
+```text
+scripts/run_exp103_swinv2_remaining_oof.py
+oof/preds/exp103_swinv2_tiny_oof_oof_probs.csv
+oof/preds/exp103_swinv2_tiny_oof_test_probs_by_fold.csv
+oof/preds/exp103_swinv2_tiny_oof_test_probs_mean.csv
+oof/preds/exp103_swinv2_tiny_oof_fold_summary.csv
+oof/preds/exp103_swinv2_tiny_oof_combined_result.json
+oof/preds/exp103_swinv2_tiny_oof_changed_vs_exp56.csv
+oof/preds/exp103_swinv2_tiny_oof_guardrail.csv
+oof/submissions/exp103_swinv2_tiny_oof_mean_submit.csv
+```
 
 ### 판단
 
-fold0/fold1 기준으로는 SwinV2가 단독 smoke보다 안정적으로 보일 가능성이 있다. 하지만 fold2~4가 없기 때문에 OOF meta-model에 넣으면 fold coverage가 깨진다. 다음 작업은 fold2~4를 완료해 full OOF를 만든 뒤, EXP-104 regularized stacking을 실행하는 것이다.
+SwinV2-Tiny는 full OOF 기준으로 기존 ConvNeXt/EfficientNet strong pool보다 낮고, 단독 mean test 예측도 label1 427로 공격적이다. 보호 샘플 7개를 위반하므로 단독 제출은 하지 않는다. 다만 기존 CNN 계열과 다른 inductive bias를 가진 full OOF feature가 생겼으므로, 다음 단계에서 EXP-104 regularized stacking에 낮은 영향으로 넣어볼 수 있다.
 
 ## EXP-104. SwinV2 regularized stacking script
 

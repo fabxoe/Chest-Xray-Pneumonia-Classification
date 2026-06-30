@@ -664,16 +664,24 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - EXP-56 대비 변경 수: 213
     - guardrail fail count: 3
     - 판단: 단독 제출 및 5-fold 확장 우선순위 낮음
-  - EXP-103 SwinV2-Tiny partial OOF:
-    - 현재 fold0/fold1만 존재
+  - EXP-103 SwinV2-Tiny 5-fold OOF:
+    - Gemini partial 산출물에서 fold0/fold1 재사용, fold2~4 로컬 실행 완료
     - fold0 valid accuracy: 0.97414
     - fold1 valid accuracy: 0.97124
-    - fold2~4 미완료
-    - 판단: full OOF 전에는 EXP-104 stacking 실행 금지
+    - fold2 valid accuracy: 0.95973
+    - fold3 valid accuracy: 0.97315
+    - fold4 valid accuracy: 0.97124
+    - OOF accuracy: 0.96990
+    - OOF precision/recall/F1: 0.98411 / 0.97523 / 0.97965
+    - OOF confusion matrix: `[[1280, 61], [96, 3779]]`
+    - test mean label 0/1: 197/427
+    - EXP-56 대비 변경 수: 53
+    - guardrail fail count: 7
+    - 판단: 단독 mean 제출 금지. EXP-104 stacking feature로만 사용
   - EXP-104 SwinV2 regularized stacking:
     - 스크립트 문법 검증 완료
-    - 필요 입력인 SwinV2 full OOF가 없어 현재 실행 보류
+    - 필요 입력인 SwinV2 full OOF가 생성됐으므로 다음 실행 후보
   - 다음 액션:
-    - 1순위: EXP-103 fold2~4 완료
-    - 2순위: full OOF 병합 파일 생성
-    - 3순위: EXP-104 regularized stacking 실행
+    - 1순위: EXP-104 regularized stacking 실행
+    - 2순위: SwinV2 feature 포함 후보의 guardrail/label 분포 확인
+    - 3순위: 통과 후보가 없으면 SwinV2 low-weight/pruned stacking으로 축소

@@ -19,7 +19,8 @@ from torchvision import transforms
 EXP_ID = "exp103"
 MODEL_NAME = "swinv2_tiny_oof"
 TIMM_MODEL = "swinv2_tiny_window8_256.ms_in1k"
-FOLDS_TO_RUN = [1, 2, 3, 4]
+ALL_FOLDS = [0, 1, 2, 3, 4]
+FOLDS_TO_RUN = [2, 3, 4]
 SEED = 42
 IMG_SIZE = 256
 BATCH_SIZE = 12
@@ -301,11 +302,44 @@ def load_fold0_summary():
     return row
 
 
+def load_existing_fold_summary(fold):
+    result_path = PRED_DIR / f"{EXP_ID}_{MODEL_NAME}_fold{fold}_result.json"
+    if not result_path.exists():
+        raise FileNotFoundError(f"Existing fold result not found: {result_path}")
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    metrics = result["final_metrics"]
+    test_counts = result.get("test_pred_counts", {})
+    model_path = result["paths"]["model"]
+    oof_path = result["paths"]["oof_probs"]
+    test_path = result["paths"]["test_probs"]
+    return {
+        "exp": EXP_ID,
+        "model": MODEL_NAME,
+        "fold": fold,
+        "best_epoch": result["best_epoch"],
+        "train_size": result["train_size"],
+        "valid_size": result["valid_size"],
+        "valid_accuracy": metrics["accuracy"],
+        "valid_precision": metrics["precision"],
+        "valid_recall": metrics["recall"],
+        "valid_f1": metrics["f1"],
+        "valid_cm": str(metrics["confusion_matrix"]),
+        "elapsed_sec": result["elapsed_sec"],
+        "oof_rows": len(pd.read_csv(oof_path)),
+        "test_rows": len(pd.read_csv(test_path)),
+        "test_label0": test_counts.get(0, test_counts.get("0", 0)),
+        "test_label1": test_counts.get(1, test_counts.get("1", 0)),
+        "model_path": model_path,
+        "oof_probs": oof_path,
+        "test_probs": test_path,
+    }
+
+
 def combine_outputs(summary_rows):
     print("Combining fold outputs...", flush=True)
     oof_parts = []
     test_parts = []
-    for fold in [0] + FOLDS_TO_RUN:
+    for fold in ALL_FOLDS:
         oof_parts.append(pd.read_csv(PRED_DIR / f"{EXP_ID}_{MODEL_NAME}_fold{fold}_oof_probs.csv"))
         test_parts.append(pd.read_csv(PRED_DIR / f"{EXP_ID}_{MODEL_NAME}_fold{fold}_test_probs.csv"))
 
@@ -381,7 +415,7 @@ def main():
         raise ValueError(f"fold merge mismatch: train={len(train_all)} folds={len(folds)}")
     test_df = pd.read_csv("test.csv")
 
-    summary_rows = [load_fold0_summary()]
+    summary_rows = [load_fold0_summary(), load_existing_fold_summary(1)]
     for fold in FOLDS_TO_RUN:
         summary_rows.append(train_one_fold(fold, train_all, test_df, device))
 
