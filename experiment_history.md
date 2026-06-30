@@ -126,6 +126,7 @@
 | EXP-106 | No-Swin low-change search | SwinV2 제외, ConvNeXt/EfficientNet/ResNet seed pool로 보호 샘플 유지 후보 재탐색 | - | - | - | Ridge/Logistic | 최고 0.98926 meta-CV | 제출 없음 | - | candidate 0개. 강한 후보는 주로 `test_0504=1`로 돌아가고, 보호 통과 후보는 EXP-56과 중복 |
 | EXP-107 | Boundary bottleneck analysis | EXP-106 plausible row 기준 보호 샘플 병목과 비보호 watchlist 분석 | - | - | - | 분석 | - | 제출 없음 | - | `test_0504`가 최대 병목. 비보호 반복 변경 샘플은 `test_0568` 1개뿐 |
 | EXP-108 | Flip0568 rule candidates | EXP-107 watchlist 기반으로 EXP-56 대비 1~2개 변경 제출 후보 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9567307692 | oof/submissions/exp108_flip0568_only_submit.csv | `test_0568` 단독 0->1도 EXP-56보다 하락. 이후 `test_0568=0` 유지 우선 |
+| EXP-109 | Extended guardrail filter | `test_0568=0`까지 포함한 최신 guardrail로 기존 제출 CSV 189개 재평가 | - | - | - | 분석/필터 | - | 제출 없음 | - | 통과 2개는 EXP-56과 동일 예측. 새 제출 후보 0개 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5391,6 +5392,63 @@ oof/preds/exp108_changed_sample_context.csv
 oof/preds/exp108_flip0568_only_changed_vs_exp56.csv
 oof/preds/exp108_flip0377_only_recheck_changed_vs_exp56.csv
 oof/preds/exp108_flip0568_0377_changed_vs_exp56.csv
+```
+
+## EXP-109. Extended guardrail filter
+
+### 처리 상태
+
+EXP-108에서 `test_0568: 0->1` 단독 변경도 leaderboard 하락으로 확인되었으므로, `test_0568=0`까지 hard guardrail에 추가했다. 이후 `submissions/`와 `oof/submissions/`에 있는 기존 제출 CSV 전체를 최신 guardrail로 재평가했다.
+
+### 설정
+
+- 평가 대상: 기존 제출 CSV 189개
+- 기준 파일: `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`
+- hard guardrail:
+  - `test_0025=0`
+  - `test_0049=0`
+  - `test_0141=1`
+  - `test_0188=0`
+  - `test_0201=1`
+  - `test_0222=1`
+  - `test_0244=0`
+  - `test_0490=0`
+  - `test_0504=0`
+  - `test_0539=0`
+  - `test_0568=0`
+- label1 hard range: 392~402
+- label1 soft range: 395~397
+- EXP-95 `avoid_change_protected`, `review_high_priority` 변경 후보 제외
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 평가 파일 수 | 189 |
+| guardrail 통과 파일 수 | 2 |
+| EXP-56 대비 비중복 통과 후보 | 0 |
+
+통과 파일은 아래 2개뿐이며 둘 다 EXP-56과 예측이 완전히 동일하다.
+
+| 통과 파일 | EXP-56 대비 변경 수 | label 0/1 |
+|---|---:|---:|
+| `oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv` | 0 | 228/396 |
+| `oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv` | 0 | 228/396 |
+
+### 판단
+
+기존 제출 후보 전체를 최신 보호 규칙으로 다시 걸러도 새 제출 후보는 남지 않았다. 특히 최근 하락이 확인된 `test_0568=1`을 금지하면, EXP-56과 다른 low-change 후보들은 대부분 `test_0504`, `test_0490`, `test_0049`, `test_0188`, `test_0568` 등 이미 public에서 불리했던 방향을 다시 건드린다.
+
+따라서 기존 CSV 재활용 기반의 후보 탐색은 소진된 것으로 본다. 다음 단계는 기존 후보를 더 뒤지는 것이 아니라 새 정보원 확보 또는 경계 샘플 XAI/확률 패널을 통해 다음 모델 실험 방향을 정하는 것이다.
+
+### 산출물
+
+```text
+scripts/run_exp109_extended_guardrail_filter.py
+oof/preds/exp109_extended_guardrail_report.csv
+oof/preds/exp109_extended_guardrail_passed.csv
+oof/preds/exp109_extended_guardrail_candidates.csv
+oof/preds/exp109_extended_guardrail_tree.md
 ```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.

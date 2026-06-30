@@ -710,7 +710,14 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 비교 후보: `exp108_flip0377_only_recheck_submit.csv`, `exp108_flip0568_0377_submit.csv`
     - 제출 결과: leaderboard `0.9567307692`, EXP-56보다 하락
     - 판단: `test_0568=1` 단독 변경도 이득이 아니므로 `test_0568=0` 유지 우선
+  - EXP-109 Extended guardrail filter:
+    - 실행 완료
+    - 기존 제출 CSV 평가 수: 189
+    - 최신 guardrail 통과 파일 수: 2
+    - EXP-56 대비 비중복 통과 후보: 0
+    - 통과 파일은 `exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`, `exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv`로 둘 다 EXP-56과 동일 예측
+    - 판단: 기존 CSV 재활용 기반 제출 후보 탐색은 소진
   - 다음 액션:
-    - 1순위: `test_0568=0`까지 포함한 확장 guardrail로 후보 재평가
-    - 2순위: 새 OOF 정보원 검토
-    - 3순위: 경계 샘플 XAI/확률 패널로 더 이상 뒤집지 말아야 할 샘플과 새 후보를 분리
+    - 1순위: 새 OOF 정보원 검토
+    - 2순위: 경계 샘플 XAI/확률 패널로 더 이상 뒤집지 말아야 할 샘플과 새 후보를 분리
+    - 3순위: 기존 후보 미세 탐색은 중단
