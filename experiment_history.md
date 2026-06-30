@@ -122,7 +122,7 @@
 | EXP-101 | SwinV2-Tiny fold0 smoke | Gemini 생성 산출물 로컬 검증. `swinv2_tiny_window8_256.ms_in1k` head+last stage 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.97414 fold0 | 제출 없음 | oof/submissions/exp101_swinv2_tiny_fold0_smoke_submit.csv | label1 456, EXP-56 대비 68개 변경, guardrail 8개 위반. 단독 제출 금지, OOF feature 후보 |
 | EXP-102 | DeiT-Small fold0 smoke | Gemini 생성 산출물 로컬 검증. `deit3_small_patch16_224.fb_in1k` head+last blocks 2 epoch smoke | 2 fold0 | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.91858 fold0 | 제출 없음 | oof/submissions/exp102_deit_small_fold0_smoke_submit.csv | label1 197, EXP-56 대비 213개 변경. 단독/OOF 확장 우선순위 낮음 |
 | EXP-103 | SwinV2-Tiny 5-fold OOF | Gemini partial 산출물에서 fold0/fold1 재사용, fold2~4 로컬 실행 완료 | 2 x 5 folds | AdamW | stage 2e-5 / head 8e-5 | Weighted CrossEntropyLoss | 0.96990 OOF | 제출 없음 | oof/submissions/exp103_swinv2_tiny_oof_mean_submit.csv | 단독 mean은 label1 427, EXP-56 대비 53개 변경, guardrail 7개 위반. EXP-104 stacking feature로만 사용 |
-| EXP-104 | SwinV2 regularized stacking script | Gemini 생성 스크립트 로컬 문법 검증. ConvNeXt+EfficientNet+SwinV2 stacking용 | - | - | - | Ridge/Logistic | 미실행 | 제출 없음 | - | EXP-103 full OOF가 필요하므로 현재 실행 보류 |
+| EXP-104 | SwinV2 regularized stacking | ConvNeXt+EfficientNet+SwinV2 OOF feature를 Ridge/Logistic으로 제한 탐색 | - | - | - | Ridge/Logistic | 최고 0.98677 meta-CV | 제출 없음 | - | strict/relaxed 후보 0개. 모든 탐색 후보가 보호 샘플을 최소 1개 이상 위반 |
 
 ## EXP-00. 원본 Baseline
 
@@ -5192,15 +5192,59 @@ oof/submissions/exp103_swinv2_tiny_oof_mean_submit.csv
 
 SwinV2-Tiny는 full OOF 기준으로 기존 ConvNeXt/EfficientNet strong pool보다 낮고, 단독 mean test 예측도 label1 427로 공격적이다. 보호 샘플 7개를 위반하므로 단독 제출은 하지 않는다. 다만 기존 CNN 계열과 다른 inductive bias를 가진 full OOF feature가 생겼으므로, 다음 단계에서 EXP-104 regularized stacking에 낮은 영향으로 넣어볼 수 있다.
 
-## EXP-104. SwinV2 regularized stacking script
+## EXP-104. SwinV2 regularized stacking
 
 ### 처리 상태
 
-Gemini 세션에서 생성된 스크립트만 존재하며 아직 실행하지 않았다. 로컬에서 `py_compile`은 통과했다.
+EXP-103 full OOF를 생성한 뒤 `scripts/run_exp104_swinv2_regularized_stacking.py`를 실행했다. ConvNeXt, EfficientNet-B0, SwinV2 probability/rank/margin feature를 Ridge/Logistic으로 탐색하고, EXP-56 대비 low-change 및 보호 샘플 조건을 적용했다.
+
+### 설정
+
+- 입력 feature:
+  - ConvNeXt OOF/test probability
+  - EfficientNet-B0 OOF/test probability
+  - SwinV2 OOF/test probability
+  - probability rank, margin, uncertainty, all-model statistics
+- meta-model:
+  - RidgeClassifier
+  - LogisticRegression
+- 탐색:
+  - Ridge alpha: 1500~15000
+  - Logistic C: 0.005~0.2
+  - threshold: -0.10~0.20
+- 필터:
+  - 보호 샘플 10개 유지
+  - `test_0188=1`과 `test_0568=1` 동시 후보 제외
+  - test label1 394~401
+  - EXP-56 대비 변경 1~8개
+  - meta-CV floor: EXP-56 기준 -0.0015 이내
+
+### 결과
+
+| 항목 | 값 |
+|---|---:|
+| 탐색 row 수 | 2520 |
+| SwinV2 포함 row 수 | 1440 |
+| strict candidate 수 | 0 |
+| relaxed candidate 수 | 0 |
+| 보호 샘플 전체 통과 row 수 | 0 |
+| label band 통과 row 수 | 420 |
+| low-change 통과 row 수 | 577 |
+| meta-CV floor 통과 row 수 | 1191 |
+| 최고 SwinV2 포함 meta-CV | 0.98677 |
 
 ### 판단
 
-스크립트는 ConvNeXt, EfficientNet, SwinV2 probability/rank/margin feature를 Ridge/Logistic으로 탐색하도록 구성되어 있다. 다만 `exp103_swinv2_tiny_oof_oof_probs.csv`와 `exp103_swinv2_tiny_oof_test_probs_mean.csv` 같은 full OOF 산출물이 필요하므로, 현재 상태에서는 실행하면 안 된다. EXP-103 fold2~4 완료 후 실행한다.
+EXP-104는 제출 후보를 만들지 못했다. 핵심 원인은 meta-CV나 label 분포가 아니라 보호 샘플이다. 모든 탐색 row가 보호 샘플을 최소 1개 이상 위반했고, SwinV2를 포함한 상위 후보들도 주로 `test_0504`, `test_0539`, 또는 `test_0188` 방향에서 EXP-56 이후 public-informed guardrail과 충돌했다.
+
+따라서 SwinV2 full OOF는 독립 feature로는 확보했지만, 현재 제한 조건에서는 성능 개선 후보가 아니다. 다음 단계는 SwinV2를 더 약하게 쓰는 low-weight/pruned stacking이나, 아예 SwinV2를 제외하고 기존 ConvNeXt/EfficientNet/ResNet 계열에서 1개 샘플 개선 후보를 찾는 쪽이 더 타당하다.
+
+### 산출물
+
+```text
+scripts/run_exp104_swinv2_regularized_stacking.py
+oof/preds/exp104_swinv2_stacking_summary.csv
+```
 
 다만 모델이 class 1을 거의 부정한 샘플에서 계산한 class-1 CAM은 약하거나 불안정할 수 있다. Grad-CAM은 반응 위치 경향을 보여줄 뿐 실제 병변을 봤다고 단정할 수 없다.
 

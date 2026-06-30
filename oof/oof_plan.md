@@ -679,9 +679,15 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - guardrail fail count: 7
     - 판단: 단독 mean 제출 금지. EXP-104 stacking feature로만 사용
   - EXP-104 SwinV2 regularized stacking:
-    - 스크립트 문법 검증 완료
-    - 필요 입력인 SwinV2 full OOF가 생성됐으므로 다음 실행 후보
+    - 실행 완료
+    - 탐색 row 수: 2520
+    - SwinV2 포함 row 수: 1440
+    - strict candidate 수: 0
+    - relaxed candidate 수: 0
+    - 보호 샘플 전체 통과 row 수: 0
+    - 최고 SwinV2 포함 meta-CV: 0.98677
+    - 판단: 모든 후보가 보호 샘플을 최소 1개 이상 위반. 제출 후보 없음
   - 다음 액션:
-    - 1순위: EXP-104 regularized stacking 실행
-    - 2순위: SwinV2 feature 포함 후보의 guardrail/label 분포 확인
-    - 3순위: 통과 후보가 없으면 SwinV2 low-weight/pruned stacking으로 축소
+    - 1순위: SwinV2 low-weight/pruned stacking으로 영향 축소
+    - 2순위: SwinV2 제외, ConvNeXt/EfficientNet/ResNet pool에서 1개 샘플 low-change 재탐색
+    - 3순위: 새 모델 확장보다 EXP-56 보호 샘플을 유지하는 calibration/threshold 탐색
