@@ -888,3 +888,22 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 다음 방침:
       - EXP-121 consensus 점수는 단독 제출 결정 근거로 사용하지 않고 보조 근거로만 사용
       - 다음 후보는 public 성공 방향과 가까운 branch 후보 위주로 다시 재정렬
+  - EXP-123 augmentation and XAI review:
+    - 실행 완료
+    - 기존 학습 증강은 대부분 `Resize(224) + HorizontalFlip(0.5) + Rotation(5~7)` 구조
+    - TTA는 `original + horizontal flip`
+    - 결론:
+      - X-ray에서는 좌우 방향 정보와 marker/심장 위치가 의미 있을 수 있어 horizontal flip을 안전한 기본 증강으로 보기 어렵다.
+      - rotation도 불필요한 촬영 방향 변형을 만들 수 있으므로 줄이는 편이 타당하다.
+      - Center crop은 주요 학습 스크립트에서 거의 쓰지 않았고, 다음에도 쓰지 않는 쪽이 안전하다.
+      - 다음 학습형 후보는 `Resize 384`, no flip, no rotation, weak brightness/contrast.
+    - EXP-112 Grad-CAM 대조:
+      - public에서 성공한 drop 후보 평균 ConvNeXt fold0 p1 `0.2251`
+      - 실패한 keep-1 후보 평균 ConvNeXt fold0 p1 `0.6042`
+      - 성공 drop 후보의 CAM center fraction 평균 `0.1696`, 실패 후보 평균 `0.3210`
+      - 성공 drop 후보는 폐 중심보다 주변/상단/측면 반응 가능성이 더 커 보임
+    - 산출물:
+      - `reports/exp123_augmentation_xai_review/exp123_augmentation_xai_review.md`
+    - 다음 학습 후보:
+      - ConvNeXt-Tiny 384 no-flip/no-rotation fold0 smoke
+      - 효과가 있으면 5-fold OOF 확장 검토

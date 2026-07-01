@@ -140,6 +140,7 @@
 | EXP-120 | After-0303 top-1 RF/SVM/Gaussian drop | EXP-119 1순위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv | 현재 최고 대비 `test_0547` 1개만 1->0. 남은 제출 4회 중 1회 사용 후보 |
 | EXP-121 | Evidence ablation consensus | RF-only/SVM-only/Gaussian-only/2개 조합/3개 조합을 분리해 후보 일관성 검증 | - | - | - | ranking ablation | - | 제출 없음 | reports/exp121_evidence_ablation_consensus/exp121_evidence_ablation_consensus_ranking.csv | 세 근거를 합친 EXP-119보다 분해 검증이 더 적합. `test_0390`이 consensus 1위 |
 | EXP-122 | After-0303 consensus single drop | EXP-121 consensus 1위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9631410256 | oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv | 현재 최고 대비 `test_0390` 1개만 1->0으로 바꿨지만 -1샘플 하락. `test_0390=1` 유지 우선 |
+| EXP-123 | Augmentation and XAI review | 기존 flip/rotation/TTA 결과와 Grad-CAM 반응 위치를 검토해 다음 증강 방향 정리 | - | - | - | 분석 | - | 제출 없음 | reports/exp123_augmentation_xai_review/exp123_augmentation_xai_review.md | 다음 학습형 후보는 `384 resize + no flip/no rotation + weak brightness/contrast`. 하락 augmentation/TTA는 폐 중심 근거가 안정적이지 않았을 가능성 |
 
 ## EXP-00. 원본 Baseline
 
