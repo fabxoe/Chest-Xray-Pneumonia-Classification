@@ -880,7 +880,11 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
       - 컬럼 `file_name,label`
       - sample submission과 file order 동일
       - label은 0/1만 존재
-    - 제출 우선순위:
-      - 남은 제출 4회 중 하나를 쓴다면 EXP-120 `test_0547`보다 EXP-122 `test_0390` 우선
-      - 상승하면 `test_0390=0` 성공 방향으로 고정
-      - 하락하면 `test_0390=1` 실패 guardrail에 추가하고 다음 branch 재정렬
+    - 제출 결과:
+      - public `0.9631410256`
+      - 현재 최고 `0.9647435897` 대비 -1샘플 하락
+      - `test_0390=1` 실패 guardrail 추가
+      - 남은 제출 기회: 3회
+    - 다음 방침:
+      - EXP-121 consensus 점수는 단독 제출 결정 근거로 사용하지 않고 보조 근거로만 사용
+      - 다음 후보는 public 성공 방향과 가까운 branch 후보 위주로 다시 재정렬

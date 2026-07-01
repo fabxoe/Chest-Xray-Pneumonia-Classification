@@ -139,7 +139,7 @@
 | EXP-119 | RF/SVM/Gaussian evidence reranking | 현재 최고 기준 current-positive 후보에 RF/ExtraTrees/SVM/Gaussian image feature를 적용해 재랭킹 | - | - | - | RF/ExtraTrees/LinearSVC/Logistic/Ridge | RF meta-CV 0.98735 | 제출 없음 | reports/exp119_rf_svm_gaussian_rerank/exp119_rf_svm_gaussian_candidate_ranking.csv | `test_0547`이 1순위로 상승했지만 절대 class-0 근거는 강하지 않아 고위험 후보 |
 | EXP-120 | After-0303 top-1 RF/SVM/Gaussian drop | EXP-119 1순위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp120_after0303_drop_test_0547_only_submit.csv | 현재 최고 대비 `test_0547` 1개만 1->0. 남은 제출 4회 중 1회 사용 후보 |
 | EXP-121 | Evidence ablation consensus | RF-only/SVM-only/Gaussian-only/2개 조합/3개 조합을 분리해 후보 일관성 검증 | - | - | - | ranking ablation | - | 제출 없음 | reports/exp121_evidence_ablation_consensus/exp121_evidence_ablation_consensus_ranking.csv | 세 근거를 합친 EXP-119보다 분해 검증이 더 적합. `test_0390`이 consensus 1위 |
-| EXP-122 | After-0303 consensus single drop | EXP-121 consensus 1위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 제출 대기 | oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv | 현재 최고 대비 `test_0390` 1개만 1->0. EXP-120보다 근거 일관성은 높지만 여전히 고위험 |
+| EXP-122 | After-0303 consensus single drop | EXP-121 consensus 1위 후보 단일 1->0 제출 파일 생성 | - | - | - | 규칙 기반 후보 생성 | - | 0.9631410256 | oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv | 현재 최고 대비 `test_0390` 1개만 1->0으로 바꿨지만 -1샘플 하락. `test_0390=1` 유지 우선 |
 
 ## EXP-00. 원본 Baseline
 
@@ -6000,7 +6000,7 @@ EXP-121 consensus 1위인 `test_0390`만 현재 최고에서 `1->0`으로 바꾼
 
 ### 제출 판단
 
-남은 4회 중 하나를 사용한다면 EXP-120 `test_0547`보다 EXP-122 `test_0390`을 먼저 제출하는 쪽이 낫다. 이유는 EXP-122가 RF/SVM/Gaussian을 한 번에 합친 점수가 아니라, 분리된 evidence와 2개 조합에서 반복적으로 상위에 오른 후보이기 때문이다. 다만 public 방향 검증은 아직 없으므로 하락하면 `test_0390=1`을 실패 guardrail에 추가하고 다음 branch를 다시 재정렬한다.
+제출 결과 public `0.9631410256`으로 현재 최고 `0.9647435897`보다 1샘플 하락했다. 따라서 `test_0390: 1->0` 방향은 실패로 보고, 이후 탐색에서는 `test_0390=1`을 유지한다. EXP-121의 분리 consensus 방식은 EXP-119 단순 합산보다 구조적으로 낫지만, 이번 결과상 단독 제출 후보를 고르는 근거로는 충분하지 않았다. 다음 branch에서는 RF/SVM/Gaussian evidence를 보조 점수로만 사용하고, public 성공 방향과 더 가까운 후보를 우선한다.
 
 ### 산출물
 
@@ -6342,3 +6342,4 @@ reports/exp94_gradcam/report.md
 | 49 | oof/submissions/exp117_after0385_drop_test_0172_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9615384615 | - | EXP-116 대비 `test_0172` 1개만 1->0으로 추가 변경했지만 하락. `test_0172=1` 유지 우선 |
 | 50 | oof/submissions/exp117_after0385_drop_test_0013_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9615384615 | - | EXP-116 대비 `test_0013` 1개만 1->0으로 추가 변경했지만 하락. `test_0013=1` 유지 우선 |
 | 51 | oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv | After-0385 binary-tree branch drop | - | 0.9647435897 | 7 | EXP-116 대비 `test_0303` 1개만 1->0으로 추가 변경해 +1샘플 개선. 현재 최고점, 남은 제출 기회 4회 |
+| 52 | oof/submissions/exp122_after0303_consensus_drop_test_0390_only_submit.csv | After-0303 RF/SVM/Gaussian consensus drop | - | 0.9631410256 | - | 현재 최고 대비 `test_0390` 1개만 1->0으로 바꿨지만 -1샘플 하락. `test_0390=1` 유지 우선, 남은 제출 기회 3회 |
