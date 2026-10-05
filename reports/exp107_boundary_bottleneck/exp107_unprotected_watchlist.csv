@@ -1,2 +1,0 @@
-sample_id,exp56_label,change_count,change_rate,pred1_rate,mean_score,median_score,file_name,recommended_action,suspicious_score,vote_1_count,model_disagrees_with_exp56,prob_mean,prob_std,exp56_score_margin
-test_0568,0,390,0.06742738589211618,0.06742738589211618,-0.4715183554884124,-0.3934715899807202,test_0568.png,keep,0.8727083333333334,2,2,0.2328747097245649,0.2001156092442743,0.1398310482231475

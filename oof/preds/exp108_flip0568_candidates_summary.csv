@@ -1,4 +1,0 @@
-candidate,path,changed_vs_exp56,changed_samples,test_label0,test_label1,protected_ok,avoid_pair_ok,changed_csv
-exp108_flip0568_only,/Users/fabxoe/workbench/open_hackerton/oof/submissions/exp108_flip0568_only_submit.csv,1,test_0568.png:0->1,227,397,True,True,/Users/fabxoe/workbench/open_hackerton/oof/preds/exp108_flip0568_only_changed_vs_exp56.csv
-exp108_flip0377_only_recheck,/Users/fabxoe/workbench/open_hackerton/oof/submissions/exp108_flip0377_only_recheck_submit.csv,1,test_0377.png:0->1,227,397,True,True,/Users/fabxoe/workbench/open_hackerton/oof/preds/exp108_flip0377_only_recheck_changed_vs_exp56.csv
-exp108_flip0568_0377,/Users/fabxoe/workbench/open_hackerton/oof/submissions/exp108_flip0568_0377_submit.csv,2,test_0377.png:0->1;test_0568.png:0->1,226,398,True,True,/Users/fabxoe/workbench/open_hackerton/oof/preds/exp108_flip0568_0377_changed_vs_exp56.csv

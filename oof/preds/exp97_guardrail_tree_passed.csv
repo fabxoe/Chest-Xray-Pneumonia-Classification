@@ -1,3 +1,0 @@
-path,file_name,source_dir,valid_format,pass_guardrail,risk_score,fail_reasons,warnings,changed_vs_exp56,changed_files,label0,label1,test_0025_label,test_0049_label,test_0141_label,test_0188_label,test_0201_label,test_0222_label,test_0244_label,test_0490_label,test_0504_label,test_0539_label,high_priority_changed,protected_changed,review_changed,mean_suspicious_score_changed
-oof/submissions/exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv,exp55_ridge_cnx_eff_compact_p3000_t0p025_submit.csv,oof/submissions,True,True,0,,,0,,228,396,0,0,1,0,1,1,0,0,0,0,0,0,0,0.0
-oof/submissions/exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv,exp56_ridge_cnx_eff_compact_p3000_t0p025_submit.csv,oof/submissions,True,True,0,,,0,,228,396,0,0,1,0,1,1,0,0,0,0,0,0,0,0.0

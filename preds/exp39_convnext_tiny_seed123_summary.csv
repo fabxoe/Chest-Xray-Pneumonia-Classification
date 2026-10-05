@@ -1,2 +1,0 @@
-exp,model,best_epoch,valid_accuracy,valid_precision,valid_recall,valid_f1,valid_cm,test_label0,test_label1,changed_vs_exp26,test_0244_pred,test_0025_pred,test_0539_pred,submission,model_path
-EXP-39,ConvNeXt-Tiny seed123 stage4+classifier,4,0.9789272030651341,0.993455497382199,0.9780927835051546,0.9857142857142858,"[[263, 5], [17, 759]]",215,409,19,0,1,1,submissions/exp39_convnext_tiny_seed123_submit.csv,models/exp39_convnext_tiny_seed123_best.pt

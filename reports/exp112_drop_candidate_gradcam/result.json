@@ -1,6 +1,0 @@
-{
-  "samples": 7,
-  "panel": "/Users/fabxoe/workbench/open_hackerton/reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_panel.png",
-  "summary": "/Users/fabxoe/workbench/open_hackerton/reports/exp112_drop_candidate_gradcam/exp112_drop_candidate_gradcam_summary.csv",
-  "device": "mps"
-}

@@ -1,2 +1,0 @@
-exp,model,best_epoch,valid_accuracy,valid_precision,valid_recall,valid_f1,valid_cm,test_label0,test_label1,changed_vs_exp26,test_0244_pred,test_0025_pred,test_0539_pred,submission
-exp42,EfficientNetV2-S,5,0.8726053639846744,0.9834586466165414,0.8427835051546392,0.9077029840388618,"[[257, 11], [122, 654]]",288,336,114,1,1,0,submissions/exp42_efficientnet_v2_s_submit.csv
