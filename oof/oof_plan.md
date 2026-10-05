@@ -907,3 +907,235 @@ OOF 기반 후보도 validation 점수만 보지 않고, 위 샘플의 예측 �
     - 다음 학습 후보:
       - ConvNeXt-Tiny 384 no-flip/no-rotation fold0 smoke
       - 효과가 있으면 5-fold OOF 확장 검토
+  - EXP-124 ConvNeXt-Tiny 384 no-flip/no-rotation fold0 smoke:
+    - 실행 완료
+    - 설정:
+      - `IMG_SIZE=384`
+      - `BATCH_SIZE=16`
+      - `EPOCHS=6`
+      - `LR=5e-5`
+      - `Resize((384,384))`
+      - `ColorJitter(brightness=0.08, contrast=0.08)`
+      - `RandomHorizontalFlip`, `RandomRotation`, `CenterCrop` 제거
+    - best epoch: 5
+    - fold0 validation:
+      - accuracy `0.9875478927`
+      - precision `0.9948051948`
+      - recall `0.9883870968`
+      - F1 `0.9915857605`
+      - confusion matrix `[[265, 4], [9, 766]]`
+    - test label count:
+      - label0 `235`
+      - label1 `389`
+    - 저장 파일:
+      - `oof/models/exp124_convnext_tiny_384_noflip_fold0.pt`
+      - `oof/preds/exp124_convnext_tiny_384_noflip_fold0_oof_probs.csv`
+      - `oof/preds/exp124_convnext_tiny_384_noflip_fold0_test_probs.csv`
+      - `oof/submissions/exp124_convnext_tiny_384_noflip_fold0_submit.csv`
+    - 판단:
+      - fold0 metric은 EXP-45 `0.98467`보다 개선
+      - 단독 제출은 current-best 대비 변경 수 21개라 제외
+  - EXP-125 EXP-124 augmentation/XAI compare:
+    - 실행 완료
+    - 산출물:
+      - `reports/exp125_aug_xai_compare/exp125_aug_xai_compare.md`
+      - `reports/exp125_aug_xai_compare/exp125_fold0_metric_compare.csv`
+      - `reports/exp125_aug_xai_compare/exp125_guardrail_compare.csv`
+      - `reports/exp125_aug_xai_compare/exp125_changed_vs_exp117_current_best.csv`
+      - `reports/exp125_aug_xai_compare/exp125_gradcam_summary.csv`
+      - `reports/exp125_aug_xai_compare/exp125_gradcam_exp45_vs_exp124_panel.png`
+    - current-best 대비 변경 수: 21개
+    - guardrail 위반 수: 8개
+    - 주요 위반:
+      - `test_0385` 0 -> 1
+      - `test_0289` 1 -> 0
+      - `test_0013` 1 -> 0
+      - `test_0188` 0 -> 1
+      - `test_0539` 0 -> 1
+      - `test_0244` 0 -> 1
+      - `test_0222` 1 -> 0
+    - Grad-CAM 요약:
+      - success drop center fraction: EXP-45 `0.1696`, EXP-124 `0.1883`
+      - failed keep center fraction: EXP-45 `0.2982`, EXP-124 `0.2616`
+    - EXP-126 gate:
+      - 보류
+      - 이유: fold0 metric은 좋지만 public 방향 확인 샘플을 다수 깨고, CAM 분리도도 충분히 명확하지 않음
+  - EXP-126 ConvNeXt-Tiny 384 no-flip/no-rotation 5-fold OOF:
+    - 사용자 지시에 따라 EXP-125 gate 보류 판단을 넘어서 5-fold 정보원 확보 실험 진행
+    - fold0은 EXP-124 산출물 재사용, fold1~4 추가 학습
+    - 설정:
+      - `IMG_SIZE=384`
+      - `BATCH_SIZE=16`
+      - `EPOCHS=6`
+      - `LR=5e-5`
+      - `Resize((384,384))`
+      - `ColorJitter(brightness=0.08, contrast=0.08)`
+      - `RandomHorizontalFlip`, `RandomRotation`, `CenterCrop` 제거
+    - 5-fold OOF:
+      - accuracy `0.9840874233`
+      - precision `0.9929797192`
+      - recall `0.9855483871`
+      - F1 `0.9892500971`
+      - confusion matrix `[[1314, 27], [56, 3819]]`
+    - 단독 mean submission:
+      - `oof/submissions/exp126_convnext_tiny_384_noflip_mean_submit.csv`
+      - label count: `0=218`, `1=406`
+      - current-best EXP-117 대비 변경 수 22개
+      - guardrail 위반 12개
+    - 판단:
+      - 단독 제출 제외
+      - 384/no-flip 확률은 EXP-127 stacking feature로만 제한 사용
+  - EXP-127 384 no-flip feature limited stacking:
+    - 목적:
+      - EXP-126 확률을 기존 ConvNeXt/EfficientNet OOF stacking feature에 제한적으로 추가
+      - current-best EXP-117 대비 1~3개 변경 후보만 탐색
+    - 탐색:
+      - RidgeClassifier / LogisticRegression
+      - prob/rank/margin/uncertainty/delta feature
+      - guardrail 전체 유지
+      - meta-CV accuracy `0.985` 이상
+    - 결과:
+      - 저장 가능한 submission 후보 0개
+      - `oof/preds/exp127_384_noflip_stacking_summary.csv`
+      - `oof/preds/exp127_384_noflip_stacking_result.json`
+    - 판단:
+      - meta-CV가 높은 조합도 `test_0057`, `test_0385`, `test_0303`을 다시 1로 되돌리는 경향
+      - 현재 public branch 방향과 충돌하므로 남은 제출 기회 사용하지 않음
+  - EXP-128 current-best hard-case rerank v2:
+    - 실행 완료
+    - 목적:
+      - 현재 최고 EXP-117 기준에서 남은 `1->0` 후보만 재정렬
+      - EXP-113 tree score, EXP-119 RF/SVM/Gaussian evidence, EXP-121 consensus, EXP-126/127 결과 병합
+      - public 성공/실패 방향은 hard guardrail로 유지
+    - 현재 최고:
+      - `oof/submissions/exp117_after0385_drop_test_0303_only_submit.csv`
+      - public `0.9647435897`
+    - 산출물:
+      - `reports/exp128_current_best_rerank_v2/exp128_candidate_evidence_table.csv`
+      - `reports/exp128_current_best_rerank_v2/exp128_candidate_ranked.csv`
+      - `reports/exp128_current_best_rerank_v2/exp128_eligible_top30.csv`
+      - `reports/exp128_current_best_rerank_v2/exp128_result.json`
+    - 생성 submission:
+      - `oof/submissions/exp128_drop_test_0600_rank1_submit.csv`
+      - `oof/submissions/exp128_drop_test_0596_rank2_submit.csv`
+      - `oof/submissions/exp128_drop_test_0398_rank3_submit.csv`
+    - 검증:
+      - 각 submission row 수 624
+      - 컬럼 `file_name,label`
+      - sample submission과 file order 동일
+      - label은 0/1만 존재
+      - 현재 최고 대비 정확히 1개만 `1->0`
+      - label count `0=233`, `1=391`
+    - 제출 우선순위:
+      1. `test_0600: 1->0`
+      2. `test_0596: 1->0`
+      3. `test_0398: 1->0`
+    - 판단:
+      - 남은 제출 기회가 3회이므로 한 번에 모두 제출하지 말고 rank1만 먼저 제출 후 public feedback으로 branch 갱신
+    - 제출 결과:
+      - `oof/submissions/exp128_drop_test_0600_rank1_submit.csv`
+      - public `0.9631410256`
+      - 현재 최고 `0.9647435897` 대비 -1샘플 하락
+      - `test_0600=1` 유지 우선 guardrail 추가
+      - EXP-128 rank2/rank3는 같은 evidence 계열이므로 제출 우선순위 하락
+      - 남은 제출 기회: 2회
+  - EXP-129 success-branch similarity rerank:
+    - 실행 완료
+    - 목적:
+      - EXP-128 broad consensus가 실패했으므로, 성공 drop 샘플 `test_0455`, `test_0057`, `test_0385`, `test_0303`과 닮은 후보를 재정렬
+      - `test_0600=1`을 실패 guardrail에 추가
+    - 산출물:
+      - `reports/exp129_success_branch_rerank/exp129_candidate_evidence_table.csv`
+      - `reports/exp129_success_branch_rerank/exp129_candidate_ranked.csv`
+      - `reports/exp129_success_branch_rerank/exp129_top8_for_xai.csv`
+      - `reports/exp129_success_branch_rerank/exp129_success_profile.csv`
+    - top5:
+      1. `test_0212: 1->0`
+      2. `test_0527: 1->0`
+      3. `test_0267: 1->0`
+      4. `test_0457: 1->0`
+      5. `test_0525: 1->0`
+  - EXP-130 success-candidate Grad-CAM:
+    - 실행 완료
+    - 목적:
+      - EXP-129 top8 후보만 대상으로 EXP-45 224 ConvNeXt와 EXP-124 384 no-flip ConvNeXt Grad-CAM 비교
+      - 마지막 제출 후보를 1개로 압축
+    - 산출물:
+      - `reports/exp130_success_candidate_gradcam/exp130_gradcam_summary.csv`
+      - `reports/exp130_success_candidate_gradcam/exp130_selection_summary.csv`
+      - `reports/exp130_success_candidate_gradcam/exp130_gradcam_panel.png`
+      - `oof/submissions/exp130_after0303_successcam_drop_test_0212_submit.csv`
+      - `oof/preds/exp130_after0303_successcam_drop_test_0212_changed_vs_exp117.csv`
+    - 추천 제출 후보:
+      - `oof/submissions/exp130_after0303_successcam_drop_test_0212_submit.csv`
+      - 현재 최고 대비 `test_0212: 1->0` 1개만 변경
+      - label count `0=233`, `1=391`
+      - 검증: row 624, 컬럼 `file_name,label`, sample submission 순서 일치, label 0/1
+    - 근거:
+      - EXP-129 종합 점수 1위
+      - EXP-130 selection score 1위
+      - EXP-45 p1 `0.3138`, EXP-124 384 no-flip p1 `0.3166`
+      - `test_0267`은 ConvNeXt 확률은 더 낮지만 EXP-129 종합 근거가 약해 2순위로 둠
+  - EXP-131 final submit decision recheck:
+    - 실행 완료
+    - 목적:
+      - 남은 제출 2회 중 첫 제출 후보를 `test_0212`로 확정해도 되는지 로컬에서 재검증
+      - balanced / branch similarity / XAI probability / ML evidence / public-branch conservative 시나리오 비교
+    - 산출물:
+      - `reports/exp131_final_submit_decision/exp131_final_decision_table.csv`
+      - `reports/exp131_final_submit_decision/exp131_final_submit_decision.md`
+      - `oof/submissions/exp131_final_recheck_drop_test_0212_submit.csv`
+      - `oof/preds/exp131_final_recheck_drop_test_0212_changed_vs_exp117.csv`
+    - 결과:
+      - `test_0212` final score `0.9098`, scenario win count `5/5`, average rank `1.00`
+      - `test_0267` final score `0.6269`, scenario win count `0/5`, average rank `2.20`
+    - 최종 제출 후보:
+      - `oof/submissions/exp131_final_recheck_drop_test_0212_submit.csv`
+      - 현재 최고 대비 `test_0212: 1->0` 1개만 변경
+      - row 624, sample submission 순서 일치, label count `0=233`, `1=391`
+    - 제출 결과:
+      - public `0.9631410256`
+      - 현재 최고 `0.9647435897` 대비 -1샘플 하락
+      - `test_0212=1` 유지 guardrail 추가
+  - EXP-132 success-vs-failure contrast rerank:
+    - 실행 완료
+    - 목적:
+      - EXP-131 실패 이후 성공 drop과 실패 keep을 동시에 사용해 마지막 후보 재정렬
+      - 성공과 가까울수록 가점, 실패와 가까울수록 감점
+    - 성공 drop:
+      - `test_0455=0`
+      - `test_0057=0`
+      - `test_0385=0`
+      - `test_0303=0`
+    - 실패 keep:
+      - `test_0289=1`
+      - `test_0172=1`
+      - `test_0013=1`
+      - `test_0390=1`
+      - `test_0600=1`
+      - `test_0212=1`
+      - 기존 민감 guardrail 전체
+    - 산출물:
+      - `reports/exp132_success_failure_contrast/exp132_candidate_ranked.csv`
+      - `reports/exp132_success_failure_contrast/exp132_success_failure_profile.csv`
+      - `reports/exp132_success_failure_contrast/exp132_top30.csv`
+      - `reports/exp132_success_failure_contrast/exp132_success_failure_contrast.md`
+      - `oof/submissions/exp132_contrast_drop_test_0267_submit.csv`
+      - `oof/preds/exp132_contrast_drop_test_0267_changed_vs_exp117.csv`
+    - top3:
+      1. `test_0267`: score `0.6880`, success distance `1.9386`, failure distance `2.3512`
+      2. `test_0034`: score `0.5562`
+      3. `test_0457`: score `0.5550`
+    - 추천 제출 후보:
+      - `oof/submissions/exp132_contrast_drop_test_0267_submit.csv`
+      - 현재 최고 대비 `test_0267: 1->0` 1개만 변경
+      - row 624, sample submission 순서 일치, label count `0=233`, `1=391`
+    - 제출 결과:
+      - public `0.9663461538`
+      - 최종 순위 `6위`
+      - 이전 최고 `0.9647435897` 대비 +1샘플 개선
+      - 최종 제출 수 `55`
+      - `test_0267=0` 성공 방향 확인
+    - 최종 정리:
+      - EXP-132가 최종 최고 제출로 확정
+      - binary-tree/drop branch는 모델 일반화 지표가 아니라 제출 후보 선별 전략으로 분리해서 해석

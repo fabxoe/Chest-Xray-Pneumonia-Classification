@@ -27,3 +27,71 @@ oof/models/
 # Temporary outputs
 tmp/
 temp/
+
+# Raw datasets
+train/
+test/
+train.csv
+test.csv
+sample_submission.csv
+
+# Model checkpoints
+models/
+*.pt
+*.pth
+*.ckpt
+
+# Local / system
+.DS_Store
+**/.DS_Store
+.venv/
+venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# Unrelated project
+cancer_xgb_hackathon/
+
+# Generated outputs / bulk submissions
+output/
+submissions/
+
+# Raw datasets
+train/
+test/
+train.csv
+test.csv
+sample_submission.csv
+
+# Model checkpoints
+models/
+*.pt
+*.pth
+*.ckpt
+
+# Local / system
+.DS_Store
+**/.DS_Store
+.venv/
+venv/
+__pycache__/
+.ipynb_checkpoints/
+
+# Unrelated project
+cancer_xgb_hackathon/
+
+# Generated outputs / bulk submissions
+output/
+submissions/
+
+# OOF model checkpoints
+oof/models/
+
+# Large generated reports
+output/
+reports/*.zip
+reports/final/*.pdf
+reports/final/versions/
+
+# Python environment selector
+.python-version
